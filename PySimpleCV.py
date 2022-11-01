@@ -7,11 +7,6 @@ import matplotlib
 import pandas as pd
 matplotlib.use('TkAgg')
 
-# CV_file = 'example_CV_data.txt'
-# df=pd.read_table(CV_file, skiprows=1, sep='\t', header=None, usecols=[0,1])
-# df = np.array(df)
-# cv_size = df.shape[0]
-
 def search_string_in_file(file_name, string_to_search):
     line_number = 0
     list_of_results = []
@@ -26,11 +21,9 @@ def CV_file2df(CV_file):
     if CV_file.endswith(".csv"):
         df = pd.read_csv(CV_file,usecols=[0,1])
         df = np.array(df)
-        # sg.popup(df, keep_on_top=True)
     elif CV_file.endswith(".txt"):
         df = pd.read_table(CV_file, sep='\t', header=None, usecols=[0,1])
         df = np.array(df)
-        # sg.popup(df, keep_on_top=True)
     elif CV_file.endswith(".par"):
         # Search for line match beginning and end of CV data and give ln number
         start_segment = search_string_in_file('example_CV.par', 'Definition=Segment')[0][0]
@@ -41,7 +34,6 @@ def CV_file2df(CV_file):
         footer = ln_count-end_segment
         df = pd.read_csv(CV_file,skiprows=start_segment, skipfooter=footer,usecols=[2,3],engine='python')
         df = np.array(df)
-        # sg.popup(pd_line_count, keep_on_top=True)
     else:
         raise Exception("Unknown file type, please choose .csv, .par")
     return df
@@ -113,7 +105,7 @@ layout = [
     [sg.Text('End 1'),sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
     [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
     [sg.Text('End 2'),sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
-    [sg.Button('Exit'),sg.Button('About PySimpleCV')]
+    [sg.Button('Clear plot'),sg.Button('Exit'),sg.Button('About PySimpleCV')]
 ]
 
 window = sg.Window('PySimpleCV', layout, finalize=True, element_justification='center')
@@ -134,6 +126,9 @@ while True:
             break
         case "About PySimpleCV":
             About_PySimpleCV()
+        case "Clear plot":
+            ax.cla()
+            fig_agg.draw()
         case "Open CV File":
             CV_file = sg.popup_get_file('Choose CV file')
             # If cancel, close the window, go back to beginning
