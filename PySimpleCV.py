@@ -4,77 +4,10 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import PySimpleGUI as sg 
 import matplotlib 
-import pandas as pd
+# import pandas as pd
 matplotlib.use('TkAgg')
 
-def search_string_in_file(file_name, string_to_search):
-    line_number = 0
-    list_of_results = []
-    with open(file_name, 'r') as read_obj:
-        for line in read_obj:
-            line_number += 1
-            if string_to_search in line:
-                list_of_results.append((line_number, line.rstrip()))
-    return list_of_results
-
-def CV_file2df(CV_file):
-    if CV_file.endswith(".csv"):
-        df = pd.read_csv(CV_file,usecols=[0,1])
-        df = np.array(df)
-    elif CV_file.endswith(".txt"):
-        df = pd.read_table(CV_file, sep='\t', header=None, usecols=[0,1])
-        df = np.array(df)
-    elif CV_file.endswith(".par"):
-        # Search for line match beginning and end of CV data and give ln number
-        start_segment = search_string_in_file('example_CV.par', 'Definition=Segment')[0][0]
-        end_segment = search_string_in_file('example_CV.par', '</Segment')[0][0]
-        # Count file total line number
-        with open(CV_file) as f:
-            ln_count = sum(1 for _ in f)
-        footer = ln_count-end_segment
-        df = pd.read_csv(CV_file,skiprows=start_segment, skipfooter=footer,usecols=[2,3],engine='python')
-        df = np.array(df)
-    else:
-        raise Exception("Unknown file type, please choose .csv, .par")
-    return df
-
-def get_CV(CV_file,cut_val,jpa_lns,jpa_lne,jpc_lns,jpc_lne):
-    df = CV_file2df(CV_file)
-    
-    if jpa_lns == jpa_lne:
-        jpa_lne = jpa_lns+1
-    if jpa_lns > jpa_lne:
-        save_val_jpa = jpa_lns
-        jpa_lns = jpa_lne
-        jpa_lne = save_val_jpa
-    if jpc_lns == jpc_lne:
-        jpc_lne = jpc_lns+1
-    if jpc_lns > jpc_lne:
-        save_val_jpc = jpc_lns
-        jpc_lns = jpc_lne
-        jpc_lne = save_val_jpc
-
-    volt = df[cut_val:,0] # exclude some index to remove artifacts
-    current = df[cut_val:,1]
-    
-    jpa_lnfit = np.polyfit(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne], 1)
-    idx_jpa_max = np.argmax(current)
-    jpa_base = volt[idx_jpa_max]*jpa_lnfit[0]+jpa_lnfit[1]
-    jpa_abs = current[idx_jpa_max]
-    jpa = jpa_abs - jpa_base
-
-    jpa_ref_ln = np.linspace(volt[jpa_lns],volt[idx_jpa_max],100)
-    jpa_ref = jpa_ref_ln*jpa_lnfit[0]+jpa_lnfit[1]
-
-    jpc_lnfit = np.polyfit(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne], 1)
-    idx_jpc_min = np.argmin(current) #Find index of jpc peak
-    jpc_base = volt[idx_jpc_min]*jpc_lnfit[0]+jpc_lnfit[1]
-    jpc_abs = current[idx_jpc_min]
-    jpc = jpc_base - jpc_abs
-
-    jpc_ref_ln = np.linspace(volt[jpc_lns],volt[idx_jpc_min],100)
-    jpc_ref = jpc_ref_ln*jpc_lnfit[0]+jpc_lnfit[1]
-    return volt, current, jpa_ref_ln, jpa_ref, idx_jpa_max, jpa_abs, jpa_base, jpc_ref_ln, jpc_ref, idx_jpc_min, jpc_abs, jpc_base, jpa_lns, jpa_lne, jpc_lns, jpc_lne, jpa, jpc
+from main_func import CV_file2df, get_CV
 
 def get_CV_init(CV_file):
     df = CV_file2df(CV_file)
@@ -130,13 +63,14 @@ while True:
             ax.cla()
             fig_agg.draw()
         case "Open CV File":
-            CV_file = sg.popup_get_file('Choose CV file')
+            CV_file_new = sg.popup_get_file('Choose CV file')
             # If cancel, close the window, go back to beginning
-            if CV_file is None:
+            if CV_file_new is None:
                 continue
-            elif CV_file == '':
+            elif CV_file_new == '':
                 continue
             try:
+                CV_file = CV_file_new
                 cv_size, volt, current = get_CV_init(CV_file) # Only need the cv_size so set to [0]
                 window['sl_cut_val'].Update(range=(0,cv_size))
                 window['sl_jpa_lns'].Update(range=(0,cv_size))
