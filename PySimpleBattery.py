@@ -64,7 +64,7 @@ def About_PySimpleBattery():
 
 layout = [
     [sg.Canvas(key='-CANVAS-')],
-    [sg.Button("Open Battery File"),sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
+    [sg.Button("Open Battery File"),sg.Text('.xls files')],
     [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
     [sg.Text('Average voltage efficiency='), sg.Text('', key = 'output_ve'),sg.Text('%')],
     [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%')],
@@ -80,6 +80,8 @@ canvas = window['-CANVAS-'].tk_canvas
 
 fig = Figure()
 ax1 = fig.add_subplot(111)
+ax2 = ax1.twinx()
+ax2.set_ylabel("Current")
 ax1.set_xlabel("Time")
 ax1.set_ylabel("Voltage")
 ax1.grid()
@@ -93,6 +95,9 @@ while True:
         case "About PySimpleBattery":
             About_PySimpleBattery()
         case "Clear plot":
+            # ax1.cla()
+            ax2.cla()
+            ax2.clear() 
             ax1.cla()
             fig_agg.draw()
         case "Open Battery File":
@@ -121,13 +126,14 @@ while True:
                 window['output_ve'].Update(np.round(VE_avg*100,3))
                 window['output_ce'].Update(np.round(CE_avg*100,3))
                 window['output_ee'].Update(np.round(EE_avg*100,3))
-                ax1.grid()
-                ax1.plot(time_df, volt_df, '-')
+                ax1.plot(time_df, volt_df, '-',color='blue')
+                ax2.plot(time_df, current_df, '--',color='red')
                 ax1.grid()
                 fig_agg.draw()
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
         case 'cycle_start' | 'cycle_end':
+            # ax2 = ax1.twinx() #This should be here
             # # Get value of cycle end
             cycle_end = int(values['cycle_end'])
             # Update start range equal to end
@@ -145,18 +151,17 @@ while True:
             CE_avg = np.average(CE_arr[cycle_start-1:cycle_end])
             EE_avg = VE_avg * CE_avg
             
-            
             ax1.plot(time_df, volt_df, color='blue')
             left_bound = time_df[cycle_idx_start:cycle_idx_end][0]
             right_bound = time_df[cycle_idx_start:cycle_idx_end][-1]
             ax1.set_xlim(left=left_bound,right=right_bound)
             ax1.set_xlabel("Time")
             ax1.set_ylabel("Voltage")
-            
-            ax2 = ax1.twinx()
-            ax2.set_xlabel("Time")
-            ax2.set_ylabel("Current")
+    
+            ax2.cla()
             ax2.plot(time_df, current_df,'--',color='red')
+            ax2.set_ylabel("Current")
+            
             window['output_ve'].Update(np.round(VE_avg*100,3))
             window['output_ce'].Update(np.round(CE_avg*100,3))
             window['output_ee'].Update(np.round(EE_avg*100,3))
