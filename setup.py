@@ -2,7 +2,7 @@ from setuptools import find_packages
 from setuptools import setup
 setup(
    name='PySimpleCV',
-   version='1.0',
+   version='1.2',
    description='Small GUI software to plot CV and battery cycles',
    author='Kavin Teenakul',
    author_email='kevin_tee@protonmail.com',
