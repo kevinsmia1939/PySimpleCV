@@ -7,7 +7,7 @@ import matplotlib
 # import pandas as pd
 matplotlib.use('TkAgg')
 
-from main_func import CV_file2df, get_CV
+from PYSimpleCV_main_func import CV_file2df, get_CV
 
 def get_CV_init(CV_file):
     df = CV_file2df(CV_file)

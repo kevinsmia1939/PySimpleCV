@@ -1,6 +1,5 @@
 LICENSE
 README.md
-pyproject.toml
 setup.py
 PySimpleCV/PySimpleBattery.py
 PySimpleCV/PySimpleCV.py
