@@ -1,0 +1,12 @@
+LICENSE
+README.md
+setup.py
+PySimpleCV/PySimpleBattery.py
+PySimpleCV/PySimpleCV.py
+PySimpleCV/__init__.py
+PySimpleCV/main_func.py
+PySimpleCV.egg-info/PKG-INFO
+PySimpleCV.egg-info/SOURCES.txt
+PySimpleCV.egg-info/dependency_links.txt
+PySimpleCV.egg-info/requires.txt
+PySimpleCV.egg-info/top_level.txt
