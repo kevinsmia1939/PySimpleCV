@@ -7,5 +7,5 @@ For .csv and .txt, first column must be voltage and second column is current.
 Battery cycling support .xls with state (C_CC, D_CC, R) columns.
 
 
-![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/cv_screenshot.png?raw=true)
-![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/battery_screenshot.png?raw=true)
+![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/logo/cv_screenshot.png?raw=true)
+![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/logo/battery_screenshot.png?raw=true)
