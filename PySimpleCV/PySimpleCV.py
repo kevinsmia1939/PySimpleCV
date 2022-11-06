@@ -227,7 +227,7 @@ while True:
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
         case 'cycle_start' | 'cycle_end':
-            # ax2 = ax1.twinx() #This should be here
+            # ax2 = ax1.twinx() #This should not be here
             # # Get value of cycle end
             cycle_end = int(values['cycle_end'])
             # Update start range equal to end
