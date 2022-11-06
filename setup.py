@@ -8,6 +8,7 @@ setup(
    author_email='kevin_tee@protonmail.com',
    url="https://github.com/kevinsmia1939/PySimpleCV",
    packages=['PySimpleCV'],  #same as name
-   install_requires=['numpy', 'pandas', 'PySimpleGUI', 'scipy', 'matplotlib'],
-   scripts=['PySimpleCV/PySimpleCV.py', 'PySimpleCV/PySimpleBattery.py']
+   python_requires='>3.10.0'
+   install_requires=['numpy', 'pandas', 'PySimpleGUI', 'matplotlib'],
+   scripts=['PySimpleCV/PySimpleCV.py', 'PySimpleCV/PySimpleCV_main_func.py']
 )
