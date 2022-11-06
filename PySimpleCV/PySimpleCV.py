@@ -91,7 +91,7 @@ bat_layout = [
     [sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
     [sg.Text('Cycle start'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_start', enable_events=True, disabled=True)],
     [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_end', enable_events=True, disabled=True)],
-    [sg.Button('Clear plot'),sg.Button('Exit'),sg.Button('About PySimpleBattery')]
+    [sg.Button('Clear plot'),sg.Button('Exit')]
     ]
 
 layout =[[sg.TabGroup([[  sg.Tab('Cyclic Voltammetry', cv_layout),
@@ -118,7 +118,7 @@ ax_bat_current = ax_bat_volt.twinx()
 ax_bat_current.set_ylabel("Current")
 ax_bat_volt.set_xlabel("Time")
 ax_bat_volt.set_ylabel("Voltage")
-
+ax_bat_volt.grid()
 fig_agg_cv = draw_figure(canvas_cv, fig_cv)
 fig_agg_bat = draw_figure(canvas_bat, fig_bat)
 
