@@ -2,7 +2,7 @@
 Name=PySimpleCV
 GenericName=Calculate and plot Cyclic voltammogram and battery cycling
 Comment=Calculate and plot Cyclic voltammogram and battery cycling
-Exec=PySimpleCV.py %F
+Exec=PySimpleCV %F
 Icon=com.github.kevinsmia1939.PySimpleCV
 Terminal=false
 Type=Application
