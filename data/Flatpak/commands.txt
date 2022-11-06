@@ -1,0 +1,1 @@
+python3 flatpak-pip-generator setuptools_scm_git_archive setuptools_scm certifi pyparsing pillow packaging cppy kiwisolver fonttools cycler contourpy pandas -o dependencies && fb
