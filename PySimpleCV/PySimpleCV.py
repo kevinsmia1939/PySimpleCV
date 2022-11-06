@@ -79,7 +79,7 @@ cv_layout = [
     [sg.Text('End 1'),sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
     [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
     [sg.Text('End 2'),sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
-    [sg.Button('Clear plot'),sg.Button('Exit'),sg.Button('About PySimpleCV')]
+    [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('About PySimpleCV')]
 ]
 
 bat_layout = [
@@ -91,7 +91,7 @@ bat_layout = [
     [sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
     [sg.Text('Cycle start'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_start', enable_events=True, disabled=True)],
     [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_end', enable_events=True, disabled=True)],
-    [sg.Button('Clear plot'),sg.Button('Exit')]
+    [sg.Button('Clear plot',key='bat_clear'),sg.Button('Exit', key='exit_2')]
     ]
 
 layout =[[sg.TabGroup([[  sg.Tab('Cyclic Voltammetry', cv_layout),
@@ -125,11 +125,11 @@ fig_agg_bat = draw_figure(canvas_bat, fig_bat)
 while True:
     event, values = window.read()
     match event:
-        case sg.WIN_CLOSED | "Exit":
+        case sg.WIN_CLOSED | 'exit' | 'exit_2':
             break
         case "About PySimpleCV":
             About_PySimpleCV()
-        case "Clear plot":
+        case 'cv_clear':
             ax_cv.cla()
             fig_agg_cv.draw()
         case "Open CV File":
@@ -187,10 +187,7 @@ while True:
             window['output_jpc'].Update(np.round(jpc,3))
             window['output_rev'].Update(np.round(jpa/jpc,3))
             fig_agg_cv.draw()
-        # case "About PySimpleBattery":
-        #     About_PySimpleBattery()
-        case "Clear plot":
-            # ax1.cla()
+        case 'bat_clear':
             ax_bat_current.cla()
             ax_bat_volt.cla()
             fig_agg_bat.draw()
