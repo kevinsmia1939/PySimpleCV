@@ -1,0 +1,4 @@
+[submodule "data/flathub"]
+	path = data/flathub
+	url = https://github.com/kevinsmia1939/flathub.git
+	branch = com.github.kevinsmia1939.PySimpleCV
