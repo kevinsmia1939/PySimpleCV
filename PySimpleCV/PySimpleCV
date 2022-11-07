@@ -89,8 +89,8 @@ bat_layout = [
     [sg.Text('Average voltage efficiency='), sg.Text('', key = 'output_ve'),sg.Text('%')],
     [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%')],
     [sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
-    [sg.Text('Cycle start'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_start', enable_events=True, disabled=True)],
-    [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_end', enable_events=True, disabled=True)],
+    [sg.Text('Cycle start'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
+    [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
     [sg.Button('Clear plot',key='bat_clear'),sg.Button('Exit', key='exit_2')]
     ]
 
@@ -121,6 +121,9 @@ ax_bat_volt.set_ylabel("Voltage")
 ax_bat_volt.grid()
 fig_agg_cv = draw_figure(canvas_cv, fig_cv)
 fig_agg_bat = draw_figure(canvas_bat, fig_bat)
+
+cycle_start = 1
+cycle_end = 1
 
 while True:
     event, values = window.read()
@@ -209,7 +212,7 @@ while True:
                 window['cycle_start'].Update(range=(1,tot_cycle_number))
                 window['cycle_end'].Update(range=(1,tot_cycle_number))
                 # cycle_start will be enabled when cycle_end change, cycle_start cannot exceed cycle_end
-                window['cycle_end'].Update(disabled=False)
+                # window['cycle_end'].Update(disabled=False)
                 window['bat_file_use'].Update(bat_file)
                 VE_avg = np.average(VE_arr)
                 CE_avg = np.average(CE_arr)
@@ -224,14 +227,32 @@ while True:
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
         case 'cycle_start' | 'cycle_end':
+            # window['cycle_end'].Update(disabled=False)
+            # window['cycle_start'].Update(disabled=False)
+            cycle_start = int(values['cycle_start'])
+            
+            if cycle_start > cycle_end:
+                cycle_end = cycle_start
+                window['cycle_end'].Update(cycle_end)
+                
+            cycle_end = int(values['cycle_end'])
+            if cycle_end < cycle_start:
+                cycle_start = cycle_end
+                window['cycle_start'].Update(cycle_start)
+            # cycle_end = cycle_start
+            
+            
+            # cycle_end = int(values['cycle_end'])
             # ax2 = ax1.twinx() #This should not be here
             # # Get value of cycle end
-            cycle_end = int(values['cycle_end'])
-            # Update start range equal to end
-            window['cycle_start'].Update(range=(1,cycle_end))
-            # Enable start slider
-            window['cycle_start'].Update(disabled=False)
-            cycle_start = int(values['cycle_start'])
+            # cycle_end = int(values['cycle_end'])
+            # # Update start range equal to end
+            # window['cycle_start'].Update(range=(1,cycle_end))
+            # # Enable start slider
+            # window['cycle_start'].Update(disabled=False)
+            # cycle_start = int(values['cycle_start'])
+            
+            # window['cycle_end'].Update(range=(cycle_start,cycle_end))
             ax_bat_volt.cla()
             ax_bat_volt.grid()
             # Start plotting
