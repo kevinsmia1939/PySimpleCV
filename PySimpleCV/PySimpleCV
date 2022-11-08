@@ -221,7 +221,7 @@ while True:
                 VE_avg = np.average(VE_arr)
                 CE_avg = np.average(CE_arr)
                 EE_avg = VE_avg * CE_avg
-                df_display=pd.DataFrame([VE_arr,CE_arr,EE_arr]) # Create dataframe to display in multiline output
+                df_display=pd.DataFrame([VE_arr*100,CE_arr*100,EE_arr*100]) # Create dataframe to display in multiline output
                 df_display=df_display.T
                 df_display.columns = ['Volt', 'Current', 'Energy']
                 df_display.index = df_display.index + 1 # Start index at 1 for nice looking
