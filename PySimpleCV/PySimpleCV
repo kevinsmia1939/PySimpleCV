@@ -225,7 +225,7 @@ while True:
                 df_display=df_display.T
                 df_display.columns = ['Volt', 'Current', 'Energy']
                 df_display.index = df_display.index + 1 # Start index at 1 for nice looking
-                window['output_arr'].Update(df_display)
+                window['output_arr'].Update(df_display.to_string()) # Make sure to print all lines
                 window['tot_cycle'].Update(tot_cycle_number)
                 window['output_ve'].Update(np.round(VE_avg*100,3))
                 window['output_ce'].Update(np.round(CE_avg*100,3))
