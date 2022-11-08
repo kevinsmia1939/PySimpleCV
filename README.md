@@ -1,16 +1,14 @@
 # PySimpleCV
-Graphical user interface for plotting the cyclic voltammogram and calculating jpa, jpc, reversibility.
-PySimpleCV also plots battery cycles and calculates efficiencies.
+Graphical user interface for plotting the cyclic voltammogram and calculating jpa, jpc, and reversibility.
+PySimpleCV also plots battery cycles and calculates efficiencies. Written in pure Python.
 
-Currently support VersaStudio (.par), .csv, and .txt.
-For .csv and .txt, first column must be voltage and second column is current.
+Currently supports VersaStudio (.par),.csv, and.txt.
+For.csv and.txt, the first column must be voltage and the second column is current.
+Battery cycling support in.xls files with state (C_CC, D_CC, R) columns
+Support copy-paste battery efficiency.
 
-Battery cycling support .xls with state (C_CC, D_CC, R) columns.
-
-Written in pure Python.
 Modules used.
-Numpy, Matplotlib, PySimpleGUI, pandas
-
+Numpy, Matplotlib, PySimpleGUI, and Pandas
 
 ![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/cv_screenshot.png?raw=true)
 ![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/battery_screenshot.png?raw=true)
