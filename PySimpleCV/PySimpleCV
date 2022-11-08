@@ -103,7 +103,6 @@ layout =[[sg.TabGroup([[  sg.Tab('Cyclic Voltammetry', cv_layout),
 ]]
           
 window = sg.Window('PySimpleCV', layout, finalize=True, element_justification='center')
-# canvas = window['-CANVAS-'].tk_canvas
 
 
 canvas_cv = window['-CANVAS_cv-'].tk_canvas
