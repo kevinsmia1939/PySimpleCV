@@ -4,6 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import PySimpleGUI as sg 
 import matplotlib 
+import pandas as pd
 matplotlib.use('TkAgg')
 
 from PySimpleCV_main_func import CV_file2df, get_CV, battery_xls2df, find_seg_start_end
@@ -86,9 +87,11 @@ bat_layout = [
     [sg.Canvas(key='-CANVAS_bat-')],
     [sg.Button("Open Battery File"),sg.Text('.xls files')],
     [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
-    [sg.Text('Average voltage efficiency='), sg.Text('', key = 'output_ve'),sg.Text('%')],
-    [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%')],
-    [sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
+    [sg.Text('Average voltage efficiency='), sg.Text('', key = 'output_ve'),sg.Text('%'), sg.Text('Total number of cycles='),sg.Text('', key= 'tot_cycle')],
+    [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%'), sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
+    [sg.Text('Voltage, current, energy efficiency for each row of cycle(%), press ctrl+c to copy')],
+    [sg.Text('To copy to spreadsheet, select space as delimiter and merge delimters.')],
+    [sg.Multiline('',size=(70,5), disabled=True, key = 'output_arr')],
     [sg.Text('Cycle start'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
     [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
     [sg.Button('Clear plot',key='bat_clear'),sg.Button('Exit', key='exit_2')]
@@ -124,7 +127,7 @@ fig_agg_bat = draw_figure(canvas_bat, fig_bat)
 
 cycle_start = 1
 cycle_end = 1
-
+marker_number = 40
 while True:
     event, values = window.read()
     match event:
@@ -209,14 +212,21 @@ while True:
                 charge_seq, discharge_seq, rest_seq = find_state_seg(state_df)
                 tot_cycle_number = np.shape(charge_seq)[0]
                 VE_arr, CE_arr = get_bat_eff(df, row_size, time_df, volt_df, current_df, capacity_df, state_df, 1, tot_cycle_number, charge_seq, discharge_seq)
+                EE_arr = VE_arr * CE_arr
+                window['cycle_end'].Update(disabled=False)
+                window['cycle_start'].Update(disabled=False)
                 window['cycle_start'].Update(range=(1,tot_cycle_number))
                 window['cycle_end'].Update(range=(1,tot_cycle_number))
-                # cycle_start will be enabled when cycle_end change, cycle_start cannot exceed cycle_end
-                # window['cycle_end'].Update(disabled=False)
                 window['bat_file_use'].Update(bat_file)
                 VE_avg = np.average(VE_arr)
                 CE_avg = np.average(CE_arr)
                 EE_avg = VE_avg * CE_avg
+                df_display=pd.DataFrame([VE_arr,CE_arr,EE_arr]) # Create dataframe to display in multiline output
+                df_display=df_display.T
+                df_display.columns = ['Volt', 'Current', 'Energy']
+                df_display.index = df_display.index + 1 # Start index at 1 for nice looking
+                window['output_arr'].Update(df_display)
+                window['tot_cycle'].Update(tot_cycle_number)
                 window['output_ve'].Update(np.round(VE_avg*100,3))
                 window['output_ce'].Update(np.round(CE_avg*100,3))
                 window['output_ee'].Update(np.round(EE_avg*100,3))
@@ -227,8 +237,6 @@ while True:
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
         case 'cycle_start' | 'cycle_end':
-            # window['cycle_end'].Update(disabled=False)
-            # window['cycle_start'].Update(disabled=False)
             cycle_start = int(values['cycle_start'])
             
             if cycle_start > cycle_end:
@@ -239,20 +247,7 @@ while True:
             if cycle_end < cycle_start:
                 cycle_start = cycle_end
                 window['cycle_start'].Update(cycle_start)
-            # cycle_end = cycle_start
-            
-            
-            # cycle_end = int(values['cycle_end'])
-            # ax2 = ax1.twinx() #This should not be here
-            # # Get value of cycle end
-            # cycle_end = int(values['cycle_end'])
-            # # Update start range equal to end
-            # window['cycle_start'].Update(range=(1,cycle_end))
-            # # Enable start slider
-            # window['cycle_start'].Update(disabled=False)
-            # cycle_start = int(values['cycle_start'])
-            
-            # window['cycle_end'].Update(range=(cycle_start,cycle_end))
+                
             ax_bat_volt.cla()
             ax_bat_volt.grid()
             # Start plotting
@@ -263,7 +258,7 @@ while True:
             CE_avg = np.average(CE_arr[cycle_start-1:cycle_end])
             EE_avg = VE_avg * CE_avg
             
-            ax_bat_volt.plot(time_df, volt_df, color='blue')
+            ax_bat_volt.plot(time_df, volt_df, '-', color='blue')
             left_bound = time_df[cycle_idx_start:cycle_idx_end][0]
             right_bound = time_df[cycle_idx_start:cycle_idx_end][-1]
             ax_bat_volt.set_xlim(left=left_bound,right=right_bound)
