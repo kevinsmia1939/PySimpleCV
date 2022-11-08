@@ -10,5 +10,7 @@ Support copy-paste battery efficiency.
 Modules used.
 Numpy, Matplotlib, PySimpleGUI, and Pandas
 
+License: GPLv3
+
 ![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/cv_screenshot.png?raw=true)
 ![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/battery_screenshot.png?raw=true)
