@@ -193,13 +193,13 @@ while True:
         case 'cycle_start' | 'cycle_end':
             cycle_start = int(values['cycle_start'])
             
-            if cycle_start > cycle_end:
-                cycle_end = cycle_start
+            if cycle_start > cycle_end - 1:
+                cycle_end = cycle_start + 1
                 window['cycle_end'].Update(cycle_end)
                 
             cycle_end = int(values['cycle_end'])
-            if cycle_end < cycle_start:
-                cycle_start = cycle_end
+            if cycle_end < cycle_start + 1:
+                cycle_start = cycle_end -1
                 window['cycle_start'].Update(cycle_start)
                 
             ax_bat_volt.cla()
