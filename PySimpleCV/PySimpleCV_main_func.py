@@ -1,6 +1,7 @@
 import numpy as np 
 import pandas as pd
 import re
+
 def search_string_in_file(file_name, string_to_search):
     line_number = 0
     list_of_results = []
@@ -13,81 +14,87 @@ def search_string_in_file(file_name, string_to_search):
 
 def CV_file2df(CV_file):
     if CV_file.endswith(".csv"):
-        df = pd.read_csv(CV_file,usecols=[0,1])
-        df = np.array(df)
+        df_CV = pd.read_csv(CV_file,usecols=[0,1])
+        df_CV = np.array(df_CV)
     elif CV_file.endswith(".txt"):
-        df = pd.read_table(CV_file, sep='\t', header=None, usecols=[0,1])
-        df = np.array(df)
+        df_CV = pd.read_table(CV_file, sep='\t', header=None, usecols=[0,1])
+        df_CV = np.array(df_CV)
     elif CV_file.endswith(".par"):
         # Search for line match beginning and end of CV data and give ln number
-        start_segment = search_string_in_file('example_CV.par', 'Definition=Segment')[0][0]
-        end_segment = search_string_in_file('example_CV.par', '</Segment')[0][0]
+        start_segment = search_string_in_file(CV_file, 'Definition=Segment')[0][0]
+        end_segment = search_string_in_file(CV_file, '</Segment')[0][0]
         # Count file total line number
         with open(CV_file) as f:
             ln_count = sum(1 for _ in f)
         footer = ln_count-end_segment
-        df = pd.read_csv(CV_file,skiprows=start_segment, skipfooter=footer,usecols=[2,3],engine='python')
-        df = np.array(df)
+        df_CV = pd.read_csv(CV_file,skiprows=start_segment, skipfooter=footer,usecols=[2,3],engine='python')
+        df_CV = np.array(df_CV)
     else:
         raise Exception("Unknown file type, please choose .csv, .par")
-    return df
+    return df_CV
 
 def battery_xls2df(bat_file):
     if bat_file.endswith(".xls"):
-        df = pd.read_excel(bat_file,header=None)
+        df_bat = pd.read_excel(bat_file,header=None)
         # Drop Index column, create our own
-        df = df.drop([0],axis=1)
+        df_bat = df_bat.drop([0],axis=1)
         # Delete all row that does not contain C_CC D_CC R
-        row_size_raw_df = len(df)
-        for i in range(0,row_size_raw_df):
-            if pd.Series(df[5])[i] != 'C_CC':
-                if pd.Series(df[5])[i] != 'D_CC':
-                    if pd.Series(df[5])[i] != 'R':
-                            df = df.drop([i])
+        row_size_raw_df_bat = len(df_bat)
+        for i in range(0,row_size_raw_df_bat):
+            if pd.Series(df_bat[5])[i] != 'C_CC':
+                if pd.Series(df_bat[5])[i] != 'D_CC':
+                    if pd.Series(df_bat[5])[i] != 'R':
+                            df_bat = df_bat.drop([i])
         # Reset index                    
-        df = df.reset_index().drop(['index'], axis=1)
-        df.columns = ['time', 'volt', 'current', 'capacity', 'state']
+        df_bat = df_bat.reset_index().drop(['index'], axis=1)
+        df_bat.columns = ['time', 'volt', 'current', 'capacity', 'state']
         # convert '2-02:18:04' to seconds
         # Pandas datetime does not support changing format.
-        row_size = len(df)
+        row_size = len(df_bat)
         for i in range(0,row_size):
-            df['time'][i] = time2sec(df['time'][i],'[:,-]')
+            df_bat['time'][i] = time2sec(df_bat['time'][i],'[:,-]')
             
-        time_df = np.array(pd.Series(df['time'])) #Get "time" column
-        volt_df = np.array(pd.Series(df['volt'])) #Get "volt" column
-        current_df = pd.Series(df['current']) #Get "Current" column
-        capacity_df = pd.Series(df['capacity']) #Get "capacity" column
-        state_df = pd.Series(df['state']) #Get "state" column
+        time_df = np.array(pd.Series(df_bat['time'])) #Get "time" column
+        volt_df = np.array(pd.Series(df_bat['volt'])) #Get "volt" column
+        current_df = pd.Series(df_bat['current']) #Get "Current" column
+        capacity_df = pd.Series(df_bat['capacity']) #Get "capacity" column
+        state_df = pd.Series(df_bat['state']) #Get "state" column
     else:
         raise Exception("Unknown file type, please choose .xls")
-    return df,row_size, time_df, volt_df, current_df, capacity_df, state_df
+    return df_bat,row_size, time_df, volt_df, current_df, capacity_df, state_df
 
-def find_seg_start_end(state_idx,search_seg):
-    start_end_C_CC = []
-    row_size = len(state_idx)
-    if state_idx[0] == search_seg:
-       start_C_CC = 0
-       start_end_C_CC.append(start_C_CC)
+def find_seg_start_end(state_df,search_key):
+    list_start_end_key_idx = []
+    row_size = len(state_df)
+    # if at the very beginning of state_df match our keyword,
+    # then it start there.
+    if state_df[0] == search_key:
+       key_start = 0
+       list_start_end_key_idx.append(key_start)
     for i in range(1,row_size):
-        if state_idx[i] == search_seg:
-            if state_idx[i-1] != search_seg:
-                start_C_CC = i
-                start_end_C_CC.append(start_C_CC)
-        if state_idx[i] != search_seg:
-            if state_idx[i-1] == search_seg:
-                end_C_CC = i-1
-                start_end_C_CC.append(end_C_CC)
-    if state_idx[row_size-1] == search_seg:
-       end_C_CC = row_size-1
-       start_end_C_CC.append(end_C_CC)         
-    start_end_segment = np.array(start_end_C_CC)
+        if state_df[i] == search_key:
+            if state_df[i-1] != search_key:
+                key_start = i
+                list_start_end_key_idx.append(key_start)
+        if state_df[i] != search_key:
+            if state_df[i-1] == search_key:
+                key_end = i-1
+                list_start_end_key_idx.append(key_end)
+    if state_df[row_size-1] == search_key:
+       key_end = row_size-1
+       list_start_end_key_idx.append(key_end)         
+    start_end_segment = np.array(list_start_end_key_idx)
     start_end_segment = np.split(start_end_segment, len(start_end_segment)/2)
     start_end_segment = np.stack(start_end_segment)
     return start_end_segment
 
-def get_CV(CV_file,cut_val,jpa_lns,jpa_lne,jpc_lns,jpc_lne):
-    df = CV_file2df(CV_file)
-    
+def get_CV_init(df_CV):
+    cv_size = df_CV.shape[0]
+    volt = df_CV[:,0]
+    current = df_CV[:,1]
+    return cv_size, volt, current
+
+def get_CV(df_CV,cut_val,jpa_lns,jpa_lne,jpc_lns,jpc_lne):
     if jpa_lns == jpa_lne:
         jpa_lne = jpa_lns+1
     if jpa_lns > jpa_lne:
@@ -100,9 +107,9 @@ def get_CV(CV_file,cut_val,jpa_lns,jpa_lne,jpc_lns,jpc_lne):
         save_val_jpc = jpc_lns
         jpc_lns = jpc_lne
         jpc_lne = save_val_jpc
-
-    volt = df[cut_val:,0] # exclude some index to remove artifacts
-    current = df[cut_val:,1]
+        # 
+    volt = df_CV[cut_val:,0] # exclude some index to remove artifacts
+    current = df_CV[cut_val:,1]
     
     jpa_lnfit = np.polyfit(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne], 1)
     idx_jpa_max = np.argmax(current)
@@ -124,6 +131,7 @@ def get_CV(CV_file,cut_val,jpa_lns,jpa_lne,jpc_lns,jpc_lne):
     return volt, current, jpa_ref_ln, jpa_ref, idx_jpa_max, jpa_abs, jpa_base, jpc_ref_ln, jpc_ref, idx_jpc_min, jpc_abs, jpc_base, jpa_lns, jpa_lne, jpc_lns, jpc_lne, jpa, jpc
 
 def time2sec(time_raw,delim):
+    # Take time format such as 1-12:05:24 and convert to seconds
     time_raw = str(time_raw)
     time_sp = re.split(delim, time_raw)
     time_sp = list(map(int, time_sp))
@@ -132,3 +140,44 @@ def time2sec(time_raw,delim):
     elif len(time_sp) == 3:
         time_sec = time_sp[0]*3600 + time_sp[1]*60 + time_sp[2]
     return int(time_sec)
+
+def find_state_seq(state_df):
+    charge_seq = find_seg_start_end(state_df,'C_CC')
+    discharge_seq = find_seg_start_end(state_df,'D_CC')
+    rest_seq = find_seg_start_end(state_df,'R')
+    return charge_seq, discharge_seq, rest_seq
+
+def get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_df, cycle_start, cycle_end, charge_seq, discharge_seq):
+    # Calculate the area of charge and discharge cycle and find VE,CE,EE for each cycle
+    VE_lst = []
+    CE_lst = []
+    for i in range(cycle_start-1,cycle_end):
+        time_seq_C_CC = time_df[charge_seq[i][0]:charge_seq[i][1]+1]
+        volt_seq_C_CC = volt_df[charge_seq[i][0]:charge_seq[i][1]+1]
+        current_seq_C_CC = current_df[charge_seq[i][0]:charge_seq[i][1]+1]
+        time_seq_D_CC = time_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
+        volt_seq_D_CC = volt_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
+        current_seq_D_CC = current_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
+        int_vt_C = np.trapz(volt_seq_C_CC,time_seq_C_CC)
+        int_vt_D = np.trapz(volt_seq_D_CC,time_seq_D_CC)
+        int_ct_C = np.trapz(current_seq_C_CC,time_seq_C_CC)
+        # During discharge, current is negative, must make to positive
+        int_ct_D = -(np.trapz(current_seq_D_CC,time_seq_D_CC))
+        VE = int_vt_D/int_vt_C
+        CE = int_ct_D/int_ct_C
+        VE_lst.append(VE)
+        CE_lst.append(CE)
+    VE_arr = np.array(VE_lst) * 100 # convert to %
+    CE_arr = np.array(CE_lst) * 100
+    EE_arr = (VE_arr/100 * CE_arr/100)*100
+    return VE_arr, CE_arr, EE_arr
+
+def cy_idx_state_range(state_df, cycle_start, cycle_end, charge_seq, discharge_seq):
+    # Get index for beginning and end of specify cycle
+    # Take all start and end of the cycle chosen, select the first and last.
+    # For plotting purpose
+    cycle_index = np.stack((charge_seq[cycle_start:cycle_end], discharge_seq[cycle_start:cycle_end])) #no need to include rest
+    cycle_idx_start = np.amin(cycle_index)
+    cycle_idx_end = np.amax(cycle_index)
+    cycle_idx_range = [cycle_idx_start, cycle_idx_end]
+    return cycle_idx_range
