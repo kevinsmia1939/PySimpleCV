@@ -38,7 +38,8 @@ cv_layout = [
 
 bat_layout = [
     [sg.Canvas(key='-CANVAS_bat-')],
-    [sg.Button("Open Battery File"),sg.Text('.xls files')],
+    [sg.Button("Open Battery File"),sg.Text('.xls files'),sg.Checkbox('Voltage', default=True, k='cb_volt', enable_events=True),
+     sg.Checkbox('Current', default=True, k='cb_current', enable_events=True),sg.Checkbox('Efficiency', default=True, k='cb_eff', enable_events=True)],
     [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
     [sg.Text('Average voltage efficiency='), sg.Text('', key = 'output_ve'),sg.Text('%'), sg.Text('Total number of cycles='),sg.Text('', key= 'tot_cycle')],
     [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%'), sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
@@ -56,13 +57,14 @@ layout =[[sg.TabGroup([[  sg.Tab('Cyclic Voltammetry', cv_layout),
 ]]
           
 window = sg.Window('PySimpleCV', layout, finalize=True, element_justification='center')
+# window.maximize()
 
 
 canvas_cv = window['-CANVAS_cv-'].tk_canvas
 canvas_bat = window['-CANVAS_bat-'].tk_canvas
 
-fig_cv = Figure()
-fig_bat = Figure()
+fig_cv = Figure(figsize=(10,5))
+fig_bat = Figure(figsize=(10,5))
 ax_cv = fig_cv.add_subplot(111)
 ax_bat_volt = fig_bat.add_subplot(111)
 ax_cv.set_xlabel("Voltage")
@@ -70,10 +72,24 @@ ax_cv.set_ylabel("Current")
 ax_cv.grid()
 
 ax_bat_current = ax_bat_volt.twinx()
-ax_bat_current.set_ylabel("Current")
-ax_bat_volt.set_xlabel("Time")
+ax_bat_eff_volt = ax_bat_volt.twinx()
+ax_bat_cycle = ax_bat_volt.twiny()
+
+ax_bat_eff_volt.spines.right.set_position(("axes", 1.1))
+# ax_bat_eff_volt.spines.right.set_position(("axes", 1.1))
+
 ax_bat_volt.set_ylabel("Voltage")
+ax_bat_current.set_ylabel("Current")
+ax_bat_eff_volt.set_ylabel("Voltage Efficiency")
+ax_bat_cycle.set_xlabel("Cycle")
+
+ax_bat_volt.set_xlabel("Time")
+
 ax_bat_volt.grid()
+
+fig_cv.tight_layout()
+fig_bat.tight_layout()
+
 fig_agg_cv = draw_figure(canvas_cv, fig_cv)
 fig_agg_bat = draw_figure(canvas_bat, fig_bat)
 
@@ -146,6 +162,9 @@ while True:
             window['output_jpc'].Update(np.round(jpc,3))
             window['output_rev'].Update(np.round(jpa/jpc,3))
             fig_agg_cv.draw()
+        case 'cb_volt':
+            print(values['cb_volt'])
+            sg.popup(values['cb_volt'], keep_on_top=True)
         case 'bat_clear':
             ax_bat_current.cla()
             ax_bat_volt.cla()
@@ -165,27 +184,43 @@ while True:
                 charge_seq, discharge_seq, rest_seq = find_state_seq(state_df)
                 tot_cycle_number = np.shape(charge_seq)[0]
                 VE_arr, CE_arr, EE_arr = get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_df, 1, tot_cycle_number, charge_seq, discharge_seq)
-                window['cycle_end'].Update(disabled=False)
-                window['cycle_start'].Update(disabled=False)
-                window['cycle_start'].Update(range=(0,tot_cycle_number-1))
-                window['cycle_end'].Update(range=(1,tot_cycle_number))
-                window['bat_file_use'].Update(bat_file)
-                df_display=pd.DataFrame([VE_arr,CE_arr,EE_arr]) # Create dataframe to display in multiline output
-                df_display=df_display.T
-                df_display.columns = ['Volt', 'Current', 'Energy']
-                df_display.index = df_display.index + 1 # Start index at 1 for nice looking
-                window['output_arr'].Update(df_display.to_string()) # Make sure to print all lines
-                window['tot_cycle'].Update(tot_cycle_number)
                 
                 VE_avg = np.average(VE_arr[0:cycle_end])
                 CE_avg = np.average(CE_arr[0:cycle_end])
                 EE_avg = np.average(EE_arr[0:cycle_end])
                 
+                #For display table
+                df_display=pd.DataFrame([VE_arr,CE_arr,EE_arr]) # Create dataframe to display in multiline output
+                df_display=df_display.T
+                df_display.columns = ['Volt', 'Current', 'Energy']
+                df_display.index = df_display.index + 1 # Start index at 1 for nice looking
+
+                
+                
+                window['cycle_end'].Update(disabled=False)
+                window['cycle_start'].Update(disabled=False)
+                window['cycle_start'].Update(range=(0,tot_cycle_number-1))
+                window['cycle_end'].Update(range=(1,tot_cycle_number))
+                window['bat_file_use'].Update(bat_file)
+                window['output_arr'].Update(df_display.to_string()) # Make sure to print all lines
+                window['tot_cycle'].Update(tot_cycle_number)
                 window['output_ve'].Update(np.round(VE_avg,3))
                 window['output_ce'].Update(np.round(CE_avg,3))
                 window['output_ee'].Update(np.round(EE_avg,3))
+                
                 ax_bat_volt.plot(time_df, volt_df, '-',color='blue')
                 ax_bat_current.plot(time_df, current_df, '--',color='red')
+                
+                # Match cycle scale to time scale and plot efficiency.
+                cycle_plot = np.linspace(1,tot_cycle_number, num=tot_cycle_number)
+                cycle_idx = (charge_seq)[:,1]
+                time_cycle = time_df[cycle_idx]
+                ax_bat_eff_volt.plot(time_df[cycle_idx], VE_arr, '*',color='green')
+                # Set limit and ticks of bat_cycle
+                ax_bat_cycle.set_xticks(cycle_plot)
+                ax_bat_cycle.set_xlim(left=0,right=tot_cycle_number)
+                
+                ax_bat_volt.set_xlim(left=0,right=max(time_df))
                 ax_bat_volt.grid()
                 fig_agg_bat.draw()
             except Exception as file_error:
@@ -205,8 +240,7 @@ while True:
             ax_bat_volt.cla()
             ax_bat_volt.grid()
             # Start plotting
-            df_bat, row_size, time_df, volt_df, current_df, capacity_df, state_df = battery_xls2df(bat_file)
-            charge_seq, discharge_seq, rest_seq = find_state_seq(state_df)
+
             cycle_idx_range = cy_idx_state_range(state_df, cycle_start, cycle_end, charge_seq, discharge_seq)
             
             VE_avg = np.average(VE_arr[cycle_start:cycle_end])
@@ -217,6 +251,10 @@ while True:
             left_bound = time_df[cycle_idx_range][0]
             right_bound = time_df[cycle_idx_range][1]
             ax_bat_volt.set_xlim(left=left_bound,right=right_bound)
+            
+            ax_bat_cycle.set_xticks(cycle_plot)
+            ax_bat_cycle.set_xlim(left=cycle_start,right=cycle_end)
+            
             ax_bat_volt.set_xlabel("Time")
             ax_bat_volt.set_ylabel("Voltage")
     
