@@ -38,8 +38,9 @@ cv_layout = [
 
 bat_layout = [
     [sg.Canvas(key='-CANVAS_bat-')],
-    [sg.Button("Open Battery File"),sg.Text('.xls files'),sg.Checkbox('Voltage', default=True, k='cb_volt', enable_events=True),
-     sg.Checkbox('Current', default=True, k='cb_current', enable_events=True),sg.Checkbox('Efficiency', default=True, k='cb_eff', enable_events=True)],
+    [sg.Button("Open Battery File"),sg.Text('.xls files'),
+     sg.Checkbox('Voltage', default=True, k='cb_volt', enable_events=True), sg.Checkbox('Current', default=True, k='cb_current', enable_events=True),
+     sg.Checkbox('Efficiencies', default=True, k='cb_eff', enable_events=True),sg.Checkbox('Legend', default=True, k='legend', enable_events=True)],
     [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
     [sg.Text('Average voltage efficiency='), sg.Text('', key = 'output_ve'),sg.Text('%'), sg.Text('Total number of cycles='),sg.Text('', key= 'tot_cycle')],
     [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%'), sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
@@ -72,15 +73,14 @@ ax_cv.set_ylabel("Current")
 ax_cv.grid()
 
 ax_bat_current = ax_bat_volt.twinx()
-ax_bat_eff_volt = ax_bat_volt.twinx()
+ax_bat_eff = ax_bat_volt.twinx()
 ax_bat_cycle = ax_bat_volt.twiny()
 
-ax_bat_eff_volt.spines.right.set_position(("axes", 1.1))
-# ax_bat_eff_volt.spines.right.set_position(("axes", 1.1))
+ax_bat_eff.spines.right.set_position(("axes", 1.1))
 
 ax_bat_volt.set_ylabel("Voltage")
 ax_bat_current.set_ylabel("Current")
-ax_bat_eff_volt.set_ylabel("Voltage Efficiency")
+ax_bat_eff.set_ylabel("Voltage/Current/Energy Efficiencies")
 ax_bat_cycle.set_xlabel("Cycle")
 
 ax_bat_volt.set_xlabel("Time")
@@ -113,27 +113,27 @@ while True:
                 continue
             elif CV_file_new == '':
                 continue
-            # try:
-            CV_file = CV_file_new
-            df_CV = CV_file2df(CV_file)
-            cv_size, volt, current = get_CV_init(df_CV) # Only need the cv_size so set to [0]
-            window['sl_cut_val'].Update(range=(0,cv_size))
-            window['sl_jpa_lns'].Update(range=(0,cv_size))
-            window['sl_jpa_lne'].Update(range=(0,cv_size))
-            window['sl_jpc_lns'].Update(range=(0,cv_size))
-            window['sl_jpc_lne'].Update(range=(0,cv_size))
-            window['sl_cut_val'].Update(disabled=False)
-            window['sl_jpa_lns'].Update(disabled=False)
-            window['sl_jpa_lne'].Update(disabled=False)
-            window['sl_jpc_lns'].Update(disabled=False)
-            window['sl_jpc_lne'].Update(disabled=False)
-            window['CV_file_use'].Update(CV_file)
-            ax_cv.grid()
-            ax_cv.plot(volt, current, '-')
-            ax_cv.grid()
-            fig_agg_cv.draw()
-            # except Exception as file_error:
-            #     sg.popup(file_error, keep_on_top=True)
+            try:
+                CV_file = CV_file_new
+                df_CV = CV_file2df(CV_file)
+                cv_size, volt, current = get_CV_init(df_CV) # Only need the cv_size so set to [0]
+                window['sl_cut_val'].Update(range=(0,cv_size))
+                window['sl_jpa_lns'].Update(range=(0,cv_size))
+                window['sl_jpa_lne'].Update(range=(0,cv_size))
+                window['sl_jpc_lns'].Update(range=(0,cv_size))
+                window['sl_jpc_lne'].Update(range=(0,cv_size))
+                window['sl_cut_val'].Update(disabled=False)
+                window['sl_jpa_lns'].Update(disabled=False)
+                window['sl_jpa_lne'].Update(disabled=False)
+                window['sl_jpc_lns'].Update(disabled=False)
+                window['sl_jpc_lne'].Update(disabled=False)
+                window['CV_file_use'].Update(CV_file)
+                ax_cv.grid()
+                ax_cv.plot(volt, current, '-')
+                ax_cv.grid()
+                fig_agg_cv.draw()
+            except Exception as file_error:
+                sg.popup(file_error, keep_on_top=True)
         case 'sl_cut_val' | 'sl_jpa_lns' | 'sl_jpa_lne' | 'sl_jpc_lns' | 'sl_jpc_lne' :
             cut_val = int(values['sl_cut_val'])  # Getting the k value from the slider element.
             jpa_lns = int(values['sl_jpa_lns'])
@@ -162,9 +162,6 @@ while True:
             window['output_jpc'].Update(np.round(jpc,3))
             window['output_rev'].Update(np.round(jpa/jpc,3))
             fig_agg_cv.draw()
-        case 'cb_volt':
-            print(values['cb_volt'])
-            sg.popup(values['cb_volt'], keep_on_top=True)
         case 'bat_clear':
             ax_bat_current.cla()
             ax_bat_volt.cla()
@@ -195,8 +192,6 @@ while True:
                 df_display.columns = ['Volt', 'Current', 'Energy']
                 df_display.index = df_display.index + 1 # Start index at 1 for nice looking
 
-                
-                
                 window['cycle_end'].Update(disabled=False)
                 window['cycle_start'].Update(disabled=False)
                 window['cycle_start'].Update(range=(0,tot_cycle_number-1))
@@ -208,23 +203,69 @@ while True:
                 window['output_ce'].Update(np.round(CE_avg,3))
                 window['output_ee'].Update(np.round(EE_avg,3))
                 
-                ax_bat_volt.plot(time_df, volt_df, '-',color='blue')
-                ax_bat_current.plot(time_df, current_df, '--',color='red')
+                volt_line, = ax_bat_volt.plot(time_df, volt_df, '-', label='Voltage', color='blue')
+                current_line, = ax_bat_current.plot(time_df, current_df, '--', label='Current', color='red')
                 
                 # Match cycle scale to time scale and plot efficiency.
                 cycle_plot = np.linspace(1,tot_cycle_number, num=tot_cycle_number)
                 cycle_idx = (charge_seq)[:,1]
                 time_cycle = time_df[cycle_idx]
-                ax_bat_eff_volt.plot(time_df[cycle_idx], VE_arr, '*',color='green')
+                VE_marker, = ax_bat_eff.plot(time_df[cycle_idx], VE_arr, '*',color='blue',label='VE', markersize=8)
+                CE_marker, = ax_bat_eff.plot(time_df[cycle_idx], CE_arr, '.',color='red',label='CE', markersize=8)
+                EE_marker, = ax_bat_eff.plot(time_df[cycle_idx], EE_arr, '^',color='green',label='EE', markersize=4)
+
                 # Set limit and ticks of bat_cycle
                 ax_bat_cycle.set_xticks(cycle_plot)
                 ax_bat_cycle.set_xlim(left=0,right=tot_cycle_number)
                 
+                # Set limit for efficiencies
+                ax_bat_eff.set_ylim(0,100)
+                
                 ax_bat_volt.set_xlim(left=0,right=max(time_df))
+                
+                ax_bat_eff.legend(loc=4)
+                ax_bat_volt.legend(bbox_to_anchor=(1,0))
+                ax_bat_current.legend(bbox_to_anchor=(1,0))
                 ax_bat_volt.grid()
                 fig_agg_bat.draw()
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
+        case 'legend':
+            if values['legend'] == False:
+                if values['cb_eff'] == True:
+                    ax_bat_eff.get_legend().remove()
+                if values['cb_volt'] == True:
+                    ax_bat_volt.get_legend().remove()
+                if values['cb_current'] == True:
+                    ax_bat_current.get_legend().remove()
+            else:
+                ax_bat_eff.legend(loc=4)
+                ax_bat_volt.legend(bbox_to_anchor=(1,0))
+                ax_bat_current.legend(bbox_to_anchor=(1,0))
+            fig_agg_bat.draw()
+        case 'cb_eff':
+            if values['cb_eff'] == False:
+                VE_marker.remove()
+                CE_marker.remove()
+                EE_marker.remove()
+            else:
+                VE_marker, = ax_bat_eff.plot(time_df[cycle_idx], VE_arr, '*',color='blue',label='VE', markersize=8)
+                CE_marker, = ax_bat_eff.plot(time_df[cycle_idx], CE_arr, '.',color='red',label='CE', markersize=8)
+                EE_marker, = ax_bat_eff.plot(time_df[cycle_idx], EE_arr, '^',color='green',label='EE', markersize=4)
+            fig_agg_bat.draw()
+        case 'cb_volt':
+            aaa = values['cb_volt']
+            if values['cb_volt'] == False:
+                volt_line.remove()
+            else:
+                volt_line, = ax_bat_volt.plot(time_df, volt_df, '-', label='Voltage', color='blue')
+            fig_agg_bat.draw()
+        case 'cb_current':
+            if values['cb_current'] == False:
+                current_line.remove()
+            else:
+                current_line, = ax_bat_current.plot(time_df, current_df, '--', label='Current', color='red')
+            fig_agg_bat.draw()
         case 'cycle_start' | 'cycle_end':
             cycle_start = int(values['cycle_start'])
             
@@ -237,31 +278,18 @@ while True:
                 cycle_start = cycle_end -1
                 window['cycle_start'].Update(cycle_start)
                 
-            ax_bat_volt.cla()
-            ax_bat_volt.grid()
-            # Start plotting
-
+            # Do not replot, since we only change xlim.
             cycle_idx_range = cy_idx_state_range(state_df, cycle_start, cycle_end, charge_seq, discharge_seq)
+            left_bound = time_df[cycle_idx_range][0]
+            right_bound = time_df[cycle_idx_range][1]
+            ax_bat_volt.set_xlim(left=left_bound,right=right_bound)
+            ax_bat_cycle.set_xlim(left=cycle_start,right=cycle_end)
+            ax_bat_cycle.set_xticks(cycle_plot)
+            ax_bat_volt.grid()
             
             VE_avg = np.average(VE_arr[cycle_start:cycle_end])
             CE_avg = np.average(CE_arr[cycle_start:cycle_end])
             EE_avg = np.average(EE_arr[cycle_start:cycle_end])
-            
-            ax_bat_volt.plot(time_df, volt_df, '-', color='blue')
-            left_bound = time_df[cycle_idx_range][0]
-            right_bound = time_df[cycle_idx_range][1]
-            ax_bat_volt.set_xlim(left=left_bound,right=right_bound)
-            
-            ax_bat_cycle.set_xticks(cycle_plot)
-            ax_bat_cycle.set_xlim(left=cycle_start,right=cycle_end)
-            
-            ax_bat_volt.set_xlabel("Time")
-            ax_bat_volt.set_ylabel("Voltage")
-    
-            ax_bat_current.cla()
-            ax_bat_current.plot(time_df, current_df,'--',color='red')
-            ax_bat_current.set_ylabel("Current")
-            
             window['output_ve'].Update(np.round(VE_avg,3))
             window['output_ce'].Update(np.round(CE_avg,3))
             window['output_ee'].Update(np.round(EE_avg,3))
