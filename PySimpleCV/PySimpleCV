@@ -49,7 +49,7 @@ bat_layout = [
     [sg.Text('Voltage, current, energy efficiency for each row of cycle(%), press ctrl+c to copy')],
     [sg.Text('To copy to spreadsheet, select space as delimiter and merge delimters.')],
     [sg.Multiline('',size=(50,5), disabled=True, key = 'output_arr')],
-    [sg.Text('Cycle start'), sg.Slider(range=(0, 1), size=(60, 10), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
+    [sg.Text('Cycle start'), sg.Slider(range=(0, 0), size=(60, 10), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
     [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
     [sg.Button('Clear plot',key='bat_clear'),sg.Button('Exit', key='exit_2')]
     ]
@@ -61,31 +61,28 @@ layout =[[sg.TabGroup([[  sg.Tab('Cyclic Voltammetry', cv_layout),
           
 window = sg.Window('PySimpleCV', layout, finalize=True, element_justification='center')
 # window.maximize()
-
-
 canvas_cv = window['-CANVAS_cv-'].tk_canvas
 canvas_bat = window['-CANVAS_bat-'].tk_canvas
 
 fig_cv = Figure(figsize=(10,5))
-fig_bat = Figure(figsize=(10,5))
 ax_cv = fig_cv.add_subplot(111)
-ax_bat_volt = fig_bat.add_subplot(111)
 ax_cv.set_xlabel("Voltage")
 ax_cv.set_ylabel("Current")
 ax_cv.grid()
+fig_cv.tight_layout()
+fig_agg_cv = draw_figure(canvas_cv, fig_cv)
 
+fig_bat = Figure(figsize=(10,5))
+ax_bat_volt = fig_bat.add_subplot(111)
 ax_bat_current = ax_bat_volt.twinx()
 ax_bat_eff = ax_bat_volt.twinx()
 ax_bat_cycle = ax_bat_volt.twiny()
-
 ax_bat_eff.spines.right.set_position(("axes", 1.1))
-
 ax_bat_volt.set_ylabel("Voltage")
 ax_bat_current.set_ylabel("Current")
 ax_bat_eff.set_ylabel("Voltage/Current/Energy Efficiencies")
 ax_bat_cycle.set_xlabel("Cycle")
 ax_bat_volt.set_xlabel("Time")
-
 # Create manual legend so we can put them in the same box
 volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
 current_leg = Line2D([0], [0], label='Current', color='red', linestyle='--')
@@ -93,14 +90,11 @@ VE_leg = Line2D([0], [0], label='VE', color='blue', marker='*', linestyle='None'
 CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
 EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
 ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg],ncol=5, bbox_to_anchor=(0.5,-0.25),loc='lower center')
-
 ax_bat_volt.grid()
-
-fig_cv.tight_layout()
 fig_bat.tight_layout()
-
-fig_agg_cv = draw_figure(canvas_cv, fig_cv)
 fig_agg_bat = draw_figure(canvas_bat, fig_bat)
+
+# plot_bat()
 
 cycle_start = 1
 cycle_end = 1
@@ -170,11 +164,9 @@ while True:
             window['output_jpa'].Update(np.round(jpa,3))
             window['output_jpc'].Update(np.round(jpc,3))
             window['output_rev'].Update(np.round(jpa/jpc,3))
+
             fig_agg_cv.draw()
-        case 'bat_clear':
-            ax_bat_current.cla()
-            ax_bat_volt.cla()
-            fig_agg_bat.draw()
+
         case "Open Battery File":
             bat_file_new = sg.popup_get_file('Choose battery cycle file (.xls)')
             # If cancel, close the window, go back to beginning
@@ -206,6 +198,9 @@ while True:
                 window['cb_volt'].Update(disabled=False)
                 window['cb_current'].Update(disabled=False)
                 window['cb_eff'].Update(disabled=False)
+                window['cb_volt'].Update(True)
+                window['cb_current'].Update(True)
+                window['cb_eff'].Update(True)
                 window['cycle_start'].Update(range=(0,tot_cycle_number-1))
                 window['cycle_end'].Update(range=(1,tot_cycle_number))
                 window['bat_file_use'].Update(bat_file)
@@ -225,7 +220,10 @@ while True:
                 VE_marker, = ax_bat_eff.plot(time_df[cycle_idx], VE_arr, '*',color='blue',label='VE', markersize=8)
                 CE_marker, = ax_bat_eff.plot(time_df[cycle_idx], CE_arr, '.',color='red',label='CE', markersize=8)
                 EE_marker, = ax_bat_eff.plot(time_df[cycle_idx], EE_arr, '^',color='green',label='EE', markersize=4)
-
+                
+                ax_bat_volt.autoscale()
+                ax_bat_current.autoscale()
+                ax_bat_eff.autoscale()
                 # Set limit and ticks of bat_cycle
                 ax_bat_cycle.set_xticks(cycle_plot)
                 ax_bat_cycle.set_xlim(left=0,right=tot_cycle_number)
@@ -234,21 +232,9 @@ while True:
                 ax_bat_eff.set_ylim(0,100)
                 
                 ax_bat_volt.set_xlim(left=0,right=max(time_df))
-                
-                # ax_bat_eff.legend(handles ='test' ,loc=4)
-                # ax_bat_eff.legend(loc=4)
-                # ax_bat_volt.legend(bbox_to_anchor=(1,0))
-                # ax_bat_current.legend(bbox_to_anchor=(1,0))
-   
-                # Create manual legend so we can put them in the same box
-                # volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
-                # current_leg = Line2D([0], [0], label='Current', color='red', linestyle='--')
-                # VE_leg = Line2D([0], [0], label='VE', color='blue', marker='*', linestyle='None')
-                # CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
-                # EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
-                # ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg],ncol=5, bbox_to_anchor=(0.5,0),loc='lower center')
 
                 ax_bat_volt.grid()
+
                 fig_agg_bat.draw()
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
@@ -283,7 +269,7 @@ while True:
                 
             cycle_end = int(values['cycle_end'])
             if cycle_end < cycle_start + 1:
-                cycle_start = cycle_end -1
+                cycle_start = cycle_end - 1
                 window['cycle_start'].Update(cycle_start)
                 
             # Do not replot, since we only change xlim.
@@ -292,7 +278,6 @@ while True:
             right_bound = time_df[cycle_idx_range][1]
             ax_bat_volt.set_xlim(left=left_bound,right=right_bound)
             ax_bat_cycle.set_xlim(left=cycle_start,right=cycle_end)
-            ax_bat_cycle.set_xticks(cycle_plot)
             ax_bat_volt.grid()
             
             VE_avg = np.average(VE_arr[cycle_start:cycle_end])
@@ -301,5 +286,41 @@ while True:
             window['output_ve'].Update(np.round(VE_avg,3))
             window['output_ce'].Update(np.round(CE_avg,3))
             window['output_ee'].Update(np.round(EE_avg,3))
+            fig_agg_bat.draw()
+        case 'bat_clear':
+            # Reset scrolls and checkboxes
+            window['cb_volt'].Update(False)
+            window['cb_current'].Update(False)
+            window['cb_eff'].Update(False)
+            window['cb_volt'].Update(disabled=True)
+            window['cb_current'].Update(disabled=True)
+            window['cb_eff'].Update(disabled=True)
+            window['cycle_start'].Update(range=(0,0))
+            window['cycle_end'].Update(range=(1,1))
+            window['cycle_start'].Update(disabled=True)
+            window['cycle_end'].Update(disabled=True)
+            
+            # Remove existing plot.
+            ax_bat_current.cla()
+            ax_bat_volt.cla()
+            ax_bat_eff.cla()
+            ax_bat_cycle.cla()
+            
+            #Redraw Efficiency axis and labels.
+            ax_bat_eff.spines.right.set_position(("axes", 1.1))
+            ax_bat_volt.set_ylabel("Voltage")
+            ax_bat_current.set_ylabel("Current")
+            ax_bat_eff.set_ylabel("Voltage/Current/Energy Efficiencies")
+            ax_bat_cycle.set_xlabel("Cycle")
+            ax_bat_volt.set_xlabel("Time")
+            # Create manual legend so we can put them in the same box
+            volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
+            current_leg = Line2D([0], [0], label='Current', color='red', linestyle='--')
+            VE_leg = Line2D([0], [0], label='VE', color='blue', marker='*', linestyle='None')
+            CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
+            EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
+            ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg],ncol=5, bbox_to_anchor=(0.5,-0.25),loc='lower center')
+            ax_bat_volt.grid()
+            
             fig_agg_bat.draw()
 window.close()
