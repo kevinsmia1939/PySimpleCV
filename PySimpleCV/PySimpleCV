@@ -29,11 +29,11 @@ cv_layout = [
     [sg.Button("Open CV File"),sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Text('CV file:'), sg.Text('No CV file selected', key = 'CV_file_use')],
     [sg.Text('jpa='), sg.Text('', key = 'output_jpa'), sg.Text('jpc='), sg.Text('', key = 'output_jpc'), sg.Text('Reversibility (jpa/jpc)='), sg.Text('', key = 'output_rev')],
-    [sg.Text('Trim CV data'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_cut_val', enable_events=True, disabled=True)],
-    [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
-    [sg.Text('End 1'),sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
-    [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
-    [sg.Text('End 2'),sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
+    [sg.Text('Trim CV data'), sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_cut_val', enable_events=True, disabled=True)],
+    [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
+    [sg.Text('End 1'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
+    [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
+    [sg.Text('End 2'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
     [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('About PySimpleCV')]
 ]
 
@@ -49,8 +49,8 @@ bat_layout = [
     [sg.Text('Voltage, current, energy efficiency for each row of cycle(%), press ctrl+c to copy')],
     [sg.Text('To copy to spreadsheet, select space as delimiter and merge delimters.')],
     [sg.Multiline('',size=(50,5), disabled=True, key = 'output_arr')],
-    [sg.Text('Cycle start'), sg.Slider(range=(0, 0), size=(60, 10), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
-    [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(60, 10), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
+    [sg.Text('Cycle start'), sg.Slider(range=(0, 0), size=(95, 10), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
+    [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
     [sg.Button('Clear plot',key='bat_clear'),sg.Button('Exit', key='exit_2')]
     ]
 
