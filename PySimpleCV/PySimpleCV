@@ -4,6 +4,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import PySimpleGUI as sg
 import matplotlib 
+from matplotlib.lines import Line2D
 import pandas as pd
 
 matplotlib.use('TkAgg')
@@ -39,8 +40,9 @@ cv_layout = [
 bat_layout = [
     [sg.Canvas(key='-CANVAS_bat-')],
     [sg.Button("Open Battery File"),sg.Text('.xls files'),
-     sg.Checkbox('Voltage', default=True, k='cb_volt', enable_events=True), sg.Checkbox('Current', default=True, k='cb_current', enable_events=True),
-     sg.Checkbox('Efficiencies', default=True, k='cb_eff', enable_events=True),sg.Checkbox('Legend', default=True, k='legend', enable_events=True)],
+     sg.Checkbox('Voltage', default=True, k='cb_volt', disabled=True, enable_events=True), 
+     sg.Checkbox('Current', default=True, k='cb_current', disabled=True, enable_events=True),
+     sg.Checkbox('Efficiencies', default=True, k='cb_eff', disabled=True, enable_events=True)],
     [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
     [sg.Text('Average voltage efficiency='), sg.Text('', key = 'output_ve'),sg.Text('%'), sg.Text('Total number of cycles='),sg.Text('', key= 'tot_cycle')],
     [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%'), sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
@@ -82,8 +84,15 @@ ax_bat_volt.set_ylabel("Voltage")
 ax_bat_current.set_ylabel("Current")
 ax_bat_eff.set_ylabel("Voltage/Current/Energy Efficiencies")
 ax_bat_cycle.set_xlabel("Cycle")
-
 ax_bat_volt.set_xlabel("Time")
+
+# Create manual legend so we can put them in the same box
+volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
+current_leg = Line2D([0], [0], label='Current', color='red', linestyle='--')
+VE_leg = Line2D([0], [0], label='VE', color='blue', marker='*', linestyle='None')
+CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
+EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
+ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg],ncol=5, bbox_to_anchor=(0.5,-0.25),loc='lower center')
 
 ax_bat_volt.grid()
 
@@ -194,6 +203,9 @@ while True:
 
                 window['cycle_end'].Update(disabled=False)
                 window['cycle_start'].Update(disabled=False)
+                window['cb_volt'].Update(disabled=False)
+                window['cb_current'].Update(disabled=False)
+                window['cb_eff'].Update(disabled=False)
                 window['cycle_start'].Update(range=(0,tot_cycle_number-1))
                 window['cycle_end'].Update(range=(1,tot_cycle_number))
                 window['bat_file_use'].Update(bat_file)
@@ -223,26 +235,23 @@ while True:
                 
                 ax_bat_volt.set_xlim(left=0,right=max(time_df))
                 
-                ax_bat_eff.legend(loc=4)
-                ax_bat_volt.legend(bbox_to_anchor=(1,0))
-                ax_bat_current.legend(bbox_to_anchor=(1,0))
+                # ax_bat_eff.legend(handles ='test' ,loc=4)
+                # ax_bat_eff.legend(loc=4)
+                # ax_bat_volt.legend(bbox_to_anchor=(1,0))
+                # ax_bat_current.legend(bbox_to_anchor=(1,0))
+   
+                # Create manual legend so we can put them in the same box
+                # volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
+                # current_leg = Line2D([0], [0], label='Current', color='red', linestyle='--')
+                # VE_leg = Line2D([0], [0], label='VE', color='blue', marker='*', linestyle='None')
+                # CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
+                # EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
+                # ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg],ncol=5, bbox_to_anchor=(0.5,0),loc='lower center')
+
                 ax_bat_volt.grid()
                 fig_agg_bat.draw()
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
-        case 'legend':
-            if values['legend'] == False:
-                if values['cb_eff'] == True:
-                    ax_bat_eff.get_legend().remove()
-                if values['cb_volt'] == True:
-                    ax_bat_volt.get_legend().remove()
-                if values['cb_current'] == True:
-                    ax_bat_current.get_legend().remove()
-            else:
-                ax_bat_eff.legend(loc=4)
-                ax_bat_volt.legend(bbox_to_anchor=(1,0))
-                ax_bat_current.legend(bbox_to_anchor=(1,0))
-            fig_agg_bat.draw()
         case 'cb_eff':
             if values['cb_eff'] == False:
                 VE_marker.remove()
@@ -254,7 +263,6 @@ while True:
                 EE_marker, = ax_bat_eff.plot(time_df[cycle_idx], EE_arr, '^',color='green',label='EE', markersize=4)
             fig_agg_bat.draw()
         case 'cb_volt':
-            aaa = values['cb_volt']
             if values['cb_volt'] == False:
                 volt_line.remove()
             else:
