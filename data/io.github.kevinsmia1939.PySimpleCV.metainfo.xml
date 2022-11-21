@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop">
  <id>io.github.kevinsmia1939.PySimpleCV</id>
- <launchable type="desktop-id">com.github.kevinsmia1939.PySimpleCV.desktop</launchable>
+ <launchable type="desktop-id">io.github.kevinsmia1939.PySimpleCV.desktop</launchable>
  <metadata_license>CC0-1.0</metadata_license>
  <project_license>GPL-3.0-only</project_license>
  <name>PySimpleCV</name>
