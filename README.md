@@ -16,5 +16,5 @@ Future plan
 * More flexible state recognition (C_CC, D_CC, R, etc).
 * Export plot.
 
-![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/cv_screenshot.png?raw=true)
-![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/battery_screenshot.png?raw=true)
+![PySimpleCV](https://codeberg.org/Andy_Great/PySimpleCV/raw/branch/main/data/screenshot/cv_screenshot.png?raw=true)
+![PySimpleCV](https://codeberg.org/Andy_Great/PySimpleCV/raw/branch/main/data/screenshot/battery_screenshot.png?raw=true)
