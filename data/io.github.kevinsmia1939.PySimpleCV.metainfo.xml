@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+ <id>com.github.kevinsmia1939.PySimpleCV</id>
+ <launchable type="desktop-id">com.github.kevinsmia1939.PySimpleCV.desktop</launchable>
+ <metadata_license>CC0-1.0</metadata_license>
+ <project_license>GPL-3.0-only</project_license>
+ <name>PySimpleCV</name>
+ <summary>Plot Cyclic voltammogram and battery cycling</summary>
+ <description>
+   <p>
+     Graphical user interface for plotting the cyclic voltammogram and calculating jpa, jpc, and reversibility.
+     PySimpleCV also plots battery cycles and calculates efficiencies. Written in pure Python.
+     Currently supports VersaStudio (.par),.csv, and .txt.
+     For.csv and.txt, the first column must be voltage and the second column is current.
+     Battery cycling support .xls files with state (C_CC, D_CC, R) columns.
+     Support copy-paste battery efficiency.
+     Modules used: Numpy, Matplotlib, PySimpleGUI, and pandas
+     License: GPLv3
+   </p>
+ </description>
+ <screenshots>
+   <screenshot type="default">
+     <image>https://raw.githubusercontent.com/kevinsmia1939/PySimpleCV/main/data/screenshot/cv_screenshot.png</image>
+  </screenshot>
+  <screenshot>
+    <image>https://raw.githubusercontent.com/kevinsmia1939/PySimpleCV/main/data/screenshot/battery_screenshot.png</image>
+  </screenshot>
+ </screenshots>
+ <url type="homepage">https://github.com/kevinsmia1939/PySimpleCV</url>
+ <developer_name>Kavin Teenakul</developer_name>
+ <url type="help">https://github.com/kevinsmia1939/PySimpleCV/issues</url>
+ <url type="bugtracker">https://github.com/kevinsmia1939/PySimpleCV/issues</url>
+ <content_rating type="oars-1.1"/>
+ <releases>
+     <release version="v0.5.1" date="2022-11-21">
+     <release version="v0.5" date="2022-11-16">
+     </release>    
+ </releases>
+</component>
