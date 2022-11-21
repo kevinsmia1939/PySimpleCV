@@ -25,8 +25,8 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="0.27433372"
-     inkscape:cx="612.39281"
-     inkscape:cy="787.36219"
+     inkscape:cx="174.96938"
+     inkscape:cy="787.3622"
      inkscape:window-width="1920"
      inkscape:window-height="1051"
      inkscape:window-x="0"
@@ -34,51 +34,29 @@
      inkscape:window-maximized="1"
      inkscape:current-layer="layer1" />
   <defs
-     id="defs2">
-    <clipPath
-       clipPathUnits="userSpaceOnUse"
-       id="clipPath818">
-      <ellipse
-         style="fill:#ff6600;stroke-width:0.609412;stroke-linejoin:round"
-         id="ellipse820"
-         cx="130.16245"
-         cy="117.25121"
-         rx="15.759496"
-         ry="24.178646" />
-    </clipPath>
-  </defs>
+     id="defs2" />
   <g
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1">
-    <rect
-       style="fill:#ffffff;fill-opacity:0;stroke-width:2.04379;stroke-linejoin:round"
+    <path
        id="rect477"
-       width="489.76929"
-       height="489.43896"
-       x="12.188529"
-       y="6.7329469"
-       inkscape:export-filename="logo.png"
-       inkscape:export-xdpi="96.268906"
-       inkscape:export-ydpi="96.268906" />
+       style="fill:#ffffff;fill-opacity:0;stroke-width:2.04379;stroke-linejoin:round"
+       d="M 12.188529,6.7329469 H 501.95782 V 496.17191 H 12.188529 Z" />
     <path
        style="fill:#ffcc00;stroke-width:2.02438;stroke-linejoin:round"
        d="m 17.217681,249.38614 c 0,0 26.765826,-1.92252 125.831329,-2.06159 C 242.1145,247.18542 217.92778,39.669521 306.68805,35.171343 395.44826,30.673158 389.22628,161.65667 495.71905,197.05538 388.28289,236.16883 325.0732,478.60954 224.51513,481.46434 123.95709,484.31912 137.21451,324.61131 85.479613,324.77965 33.744728,324.94777 22.542728,286.33845 22.542728,286.33845"
        id="path283"
        sodipodi:nodetypes="czzczzc" />
-    <ellipse
-       style="fill:#000000;stroke-width:0.619449;stroke-linejoin:round"
-       id="path743"
-       cx="362.9205"
-       cy="134.33084"
-       rx="14.715629"
-       ry="14.907345" />
     <path
-       style="fill:#ff6600;stroke-width:0.492001;stroke-linejoin:round"
-       d="m 13.113486,128.02948 c 0,0 6.547342,-0.46423 30.780323,-0.49781 24.232982,-0.0336 18.316522,-50.14243 40.028677,-51.228605 21.712144,-1.086176 20.190154,30.542395 46.239954,39.090115 -26.28057,9.44472 -41.742657,67.98684 -66.340737,68.67619 -24.598083,0.68935 -21.355108,-37.87527 -34.010275,-37.83463 -12.655166,0.0406 -15.395352,-9.28239 -15.395352,-9.28239"
+       id="path743"
+       style="stroke-width:0.619449;stroke-linejoin:round"
+       d="m 377.63613,134.33084 a 14.715629,14.907345 0 0 1 -14.71563,14.90735 14.715629,14.907345 0 0 1 -14.71563,-14.90735 14.715629,14.907345 0 0 1 14.71563,-14.90734 14.715629,14.907345 0 0 1 14.71563,14.90734 z" />
+    <path
        id="path809"
-       sodipodi:nodetypes="czzczzc"
-       clip-path="url(#clipPath818)"
+       clip-path="none"
+       style="fill:#ff6600;stroke-width:0.492001;stroke-linejoin:round"
+       d="M 116.02604 106.59131 A 15.759496 24.178647 0 0 0 114.40295 117.25127 A 15.759496 24.178647 0 0 0 115.51143 126.12072 C 120.068 121.14828 124.89806 117.28505 130.16245 115.39313 C 124.21413 113.44131 119.70401 110.28574 116.02604 106.59131 z "
        transform="matrix(4.088045,0,0,4.1413037,-36.390837,-280.82283)" />
   </g>
 </svg>
