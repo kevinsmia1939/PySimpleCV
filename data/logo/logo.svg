@@ -9,9 +9,9 @@
    id="svg5"
    inkscape:version="1.2.1 (9c6d41e410, 2022-07-14)"
    sodipodi:docname="logo.svg"
-   inkscape:export-filename="logo.svg"
-   inkscape:export-xdpi="96"
-   inkscape:export-ydpi="96"
+   inkscape:export-filename="logo_512.png"
+   inkscape:export-xdpi="25.4"
+   inkscape:export-ydpi="25.4"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -59,7 +59,7 @@
        id="path809"
        clip-path="none"
        style="fill:#ff6600;stroke-width:0.492001;stroke-linejoin:round"
-       d="M 116.02604 106.59131 A 15.759496 24.178647 0 0 0 114.40295 117.25127 A 15.759496 24.178647 0 0 0 115.51143 126.12072 C 120.068 121.14828 124.89806 117.28505 130.16245 115.39313 C 124.21413 113.44131 119.70401 110.28574 116.02604 106.59131 z "
+       d="m 116.02604,106.59131 a 15.759496,24.178647 0 0 0 -1.62309,10.65996 15.759496,24.178647 0 0 0 1.10848,8.86945 c 4.55657,-4.97244 9.38663,-8.83567 14.65102,-10.72759 -5.94832,-1.95182 -10.45844,-5.10739 -14.13641,-8.80182 z"
        transform="matrix(4.088045,0,0,4.1413037,-36.390837,-280.82283)" />
   </g>
 </svg>
