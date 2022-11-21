@@ -11,7 +11,7 @@ Modules used: Numpy, Matplotlib, PySimpleGUI, and pandas
 
 License: GPLv3
 
-Future plan
+Future plans.
 * More file format support
 * More flexible state recognition (C_CC, D_CC, R, etc).
 * Export plot.
