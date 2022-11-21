@@ -16,5 +16,8 @@ Future plan
 * More flexible state recognition (C_CC, D_CC, R, etc).
 * Export plot.
 
+The file PySimpleCV/PySimpleCV contain the main code responsible to produce GUI.
+PySimpleCV/PySimpleCV_main_func.py contain mathematical function for calculation.
+
 ![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/cv_screenshot.png?raw=true)
 ![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/battery_screenshot.png?raw=true)
