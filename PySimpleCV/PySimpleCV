@@ -29,12 +29,12 @@ cv_layout = [
     [sg.Button("Open CV File"),sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Text('CV file:'), sg.Text('No CV file selected', key = 'CV_file_use')],
     [sg.Text('jpa='), sg.Text('', key = 'output_jpa'), sg.Text('jpc='), sg.Text('', key = 'output_jpc'), sg.Text('Reversibility (jpa/jpc)='), sg.Text('', key = 'output_rev')],
-    [sg.Text('Trim CV data'), sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_cut_val', enable_events=True, disabled=True)],
-    [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
-    [sg.Text('End 1'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
-    [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
-    [sg.Text('End 2'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
-    [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('About PySimpleCV')]
+    [sg.Text('Trim CV data'), sg.Slider(range=(1, 1), size=(95, 20), orientation='h', key='sl_cut_val', enable_events=True, disabled=True)],
+    [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=(95, 20), orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
+    [sg.Text('End 1'),sg.Slider(range=(1, 1), size=(95, 20), orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
+    [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=(95, 20), orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
+    [sg.Text('End 2'),sg.Slider(range=(1, 1), size=(95, 20), orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
+    [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV')]
 ]
 
 bat_layout = [
@@ -44,14 +44,16 @@ bat_layout = [
      sg.Checkbox('Current', default=True, k='cb_current', disabled=True, enable_events=True),
      sg.Checkbox('Efficiencies', default=True, k='cb_eff', disabled=True, enable_events=True)],
     [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
-    [sg.Text('Average voltage efficiency='), sg.Text('', key = 'output_ve'),sg.Text('%'), sg.Text('Total number of cycles='),sg.Text('', key= 'tot_cycle')],
-    [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%'), sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
-    [sg.Text('Voltage, current, energy efficiency for each row of cycle(%), press ctrl+c to copy')],
-    [sg.Text('To copy to spreadsheet, select space as delimiter and merge delimters.')],
+    [sg.Text('Average voltage efficiency='),sg.Text('', key = 'output_ve'),sg.Text('%'),
+     sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%'),
+     sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%'),
+     sg.Text('Total number of cycles='), sg.Text('', key= 'tot_cycle')],
+    [sg.Text('Voltage, current, energy efficiency(%) for each row of cycle, press ctrl+c to copy')],
+    [sg.Text('To copy nicely to spreadsheet software, select space as delimiter and merge delimters.')],
     [sg.Multiline('',size=(50,5), disabled=True, key = 'output_arr')],
-    [sg.Text('Cycle start'), sg.Slider(range=(0, 0), size=(95, 10), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
-    [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
-    [sg.Button('Clear plot',key='bat_clear'),sg.Button('Exit', key='exit_2')]
+    [sg.Text('Cycle start'), sg.Slider(range=(0, 0), size=(95, 20), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
+    [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(95, 20), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
+    [sg.Button('Clear plot',key='bat_clear'),sg.Button('Save plot', key='save_bat'), sg.Button('Exit', key='exit_2')]
     ]
 
 layout =[[sg.TabGroup([[  sg.Tab('Cyclic Voltammetry', cv_layout),
@@ -69,7 +71,8 @@ ax_cv = fig_cv.add_subplot(111)
 ax_cv.set_xlabel("Voltage")
 ax_cv.set_ylabel("Current")
 ax_cv.grid()
-fig_cv.tight_layout()
+# tight layout push away y label
+# fig_cv.tight_layout(pad=2)
 fig_agg_cv = draw_figure(canvas_cv, fig_cv)
 
 fig_bat = Figure(figsize=(10,5))
@@ -94,11 +97,10 @@ ax_bat_volt.grid()
 fig_bat.tight_layout()
 fig_agg_bat = draw_figure(canvas_bat, fig_bat)
 
-# plot_bat()
 
 cycle_start = 1
 cycle_end = 1
-marker_number = 40
+
 while True:
     event, values = window.read()
     match event:
@@ -148,25 +150,30 @@ while True:
             # Start plotting
             volt, current, jpa_ref_ln, jpa_ref, idx_jpa_max, jpa_abs, jpa_base, jpc_ref_ln, jpc_ref, idx_jpc_min, jpc_abs, jpc_base, jpa_lns, jpa_lne, jpc_lns, jpc_lne, jpa, jpc = get_CV(df_CV,cut_val,jpa_lns,jpa_lne,jpc_lns,jpc_lne)
             ax_cv.plot(volt, current)
-            ax_cv.set_xlabel("Voltage")
-            ax_cv.set_ylabel("Current")
+
             ax_cv.plot(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
             ax_cv.plot(jpa_ref_ln,jpa_ref,linewidth=2,linestyle='--')
             ax_cv.plot(volt[idx_jpa_max],jpa_abs,'bo')
             ax_cv.plot(volt[idx_jpa_max],jpa_base,'go')
             ax_cv.annotate(text='', xy=(volt[idx_jpa_max],jpa_base), xytext=(volt[idx_jpa_max],jpa_abs), arrowprops=dict(arrowstyle='<-'))
-            
+
             ax_cv.plot(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
             ax_cv.plot(jpc_ref_ln,jpc_ref,linewidth=2,linestyle='--')
             ax_cv.plot(volt[idx_jpc_min],jpc_abs,'bo')
             ax_cv.plot(volt[idx_jpc_min],jpc_base,'go')
             ax_cv.annotate(text='', xy=(volt[idx_jpc_min],jpc_abs), xytext=(volt[idx_jpc_min],jpc_base), arrowprops=dict(arrowstyle='<-'))
+            
             window['output_jpa'].Update(np.round(jpa,3))
             window['output_jpc'].Update(np.round(jpc,3))
             window['output_rev'].Update(np.round(jpa/jpc,3))
-
             fig_agg_cv.draw()
-
+        case "save_cv":
+            save_cv_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
+            if save_cv_loc is None:
+                continue
+            elif save_cv_loc == '':
+                continue
+            fig_cv.savefig(save_cv_loc)
         case "Open Battery File":
             bat_file_new = sg.popup_get_file('Choose battery cycle file (.xls)')
             # If cancel, close the window, go back to beginning
@@ -323,4 +330,11 @@ while True:
             ax_bat_volt.grid()
             
             fig_agg_bat.draw()
+        case "save_bat":
+            save_bat_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
+            if save_bat_loc is None:
+                continue
+            elif save_bat_loc == '':
+                continue
+            fig_cv.savefig(save_bat_loc)
 window.close()
