@@ -34,7 +34,7 @@ cv_layout = [
     [sg.Text('End 1'),sg.Slider(range=(1, 1), size=(95, 20), orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
     [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=(95, 20), orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
     [sg.Text('End 2'),sg.Slider(range=(1, 1), size=(95, 20), orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
-    [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV')]
+    [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV'),sg.Spin([i for i in range(1,11)], initial_value=10, k='-SPIN-')]
 ]
 
 bat_layout = [
@@ -109,7 +109,21 @@ while True:
         case "About PySimpleCV":
             About_PySimpleCV()
         case 'cv_clear':
+            # Reset scrolls and checkboxes
+            window['sl_cut_val'].Update(disabled=True)
+            window['sl_jpa_lns'].Update(disabled=True)
+            window['sl_jpa_lne'].Update(disabled=True)
+            window['sl_jpc_lns'].Update(disabled=True)
+            window['sl_jpc_lne'].Update(disabled=True)
+            window['sl_cut_val'].Update(range=(1, 1))
+            window['sl_jpa_lns'].Update(range=(1, 1))
+            window['sl_jpa_lne'].Update(range=(1, 1))
+            window['sl_jpc_lns'].Update(range=(1, 1))
+            window['sl_jpc_lne'].Update(range=(1, 1))
             ax_cv.cla()
+            ax_cv.grid()
+            ax_cv.set_xlabel("Voltage")
+            ax_cv.set_ylabel("Current")
             fig_agg_cv.draw()
         case "Open CV File":
             CV_file_new = sg.popup_get_file('Choose CV file')
