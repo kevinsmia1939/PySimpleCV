@@ -22,13 +22,17 @@ PySimpleCV/PySimpleCV_main_func.py contain mathematical function for calculation
 
 Installation
 Clone this repository.
+
 `git clone git@github.com:kevinsmia1939/PySimpleCV.git`
+
 Navigate to the PySimpleCV folder and run the PySimpleCV executable. The PySimpleCV file must be marked as executable.
 
 Use Flatpak for Linux.
+
 `flatpak install flathub io.github.kevinsmia1939.PySimpleCV`
 
 Uninstall
+
 `flatpak remove io.github.kevinsmia1939.PySimpleCV`
 
 ![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/cv_screenshot.png?raw=true)
