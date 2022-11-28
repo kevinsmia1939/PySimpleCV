@@ -13,9 +13,10 @@ Modules used: Numpy, Matplotlib, PySimpleGUI, and pandas
 License: GPLv3
 
 Future plans.
+* Better peak detection and selection
 * More file format support
-* More flexible state recognition (C_CC, D_CC, R, etc).
-* Export plot.
+* More flexible state recognition (C_CC, D_CC, R, etc)
+* Export plot with custom dpi
 
 The file PySimpleCV/PySimpleCV contain the main code responsible to produce GUI.
 PySimpleCV/PySimpleCV_main_func.py contain mathematical function for calculation.
