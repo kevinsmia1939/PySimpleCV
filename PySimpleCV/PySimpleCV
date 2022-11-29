@@ -158,7 +158,7 @@ while True:
                 fig_agg_cv.draw()
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
-        case 'sl_cut_val' | 'sl_jpa_lns' | 'sl_jpa_lne' | 'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_pos'| 'peak_bottom_pos'| 'peak_range' :
+        case 'sl_cut_val' | 'sl_jpa_lns' | 'sl_jpa_lne' | 'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_pos'| 'trough_pos'| 'peak_range' :
             cut_val = int(values['sl_cut_val'])  # Getting the k value from the slider element.
             jpa_lns = int(values['sl_jpa_lns'])
             jpa_lne = int(values['sl_jpa_lne'])
