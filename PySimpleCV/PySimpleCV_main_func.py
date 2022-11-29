@@ -94,7 +94,40 @@ def get_CV_init(df_CV):
     current = df_CV[:,1]
     return cv_size, volt, current
 
-def get_CV(df_CV,cut_val,jpa_lns,jpa_lne,jpc_lns,jpc_lne):
+def max_value(set_value,input_val):
+    # input_val would not be more than set_value
+    if input_val >= set_value:
+        max_output = set_value
+    else:
+        max_output = input_val
+    return max_output
+
+def min_value(set_value,input_val):
+    # input_val would not be less than set_value
+    if input_val <= set_value:
+        min_output = set_value
+    else:
+        min_output = input_val
+    return min_output
+
+def get_CV_peak(df_CV, peak_range, peak_pos, trough_pos):
+    cv_size, volt, current = get_CV_init(df_CV)  
+    high_range_peak = max_value(cv_size-1,peak_pos+peak_range)
+    low_range_peak = min_value(0,peak_pos-peak_range)
+    peak_curr_range = current[low_range_peak:high_range_peak]
+    peak_curr = max(peak_curr_range)
+    peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))
+    peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
+    
+    high_range_trough = max_value(cv_size-1,trough_pos+peak_range)
+    low_range_trough = min_value(0,trough_pos-peak_range)
+    trough_curr_range = current[low_range_trough:high_range_trough]
+    trough_curr = min(trough_curr_range)
+    trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
+    trough_volt = volt[low_range_trough:high_range_trough][trough_idx]  
+    return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr
+
+def get_CV(df_CV,jpa_lns,jpa_lne,jpc_lns,jpc_lne,peak_volt,trough_volt):
     if jpa_lns == jpa_lne:
         jpa_lne = jpa_lns+1
     if jpa_lns > jpa_lne:
@@ -107,28 +140,18 @@ def get_CV(df_CV,cut_val,jpa_lns,jpa_lne,jpc_lns,jpc_lne):
         save_val_jpc = jpc_lns
         jpc_lns = jpc_lne
         jpc_lne = save_val_jpc
-        # 
-    volt = df_CV[cut_val:,0] # exclude some index to remove artifacts
-    current = df_CV[cut_val:,1]
+        
+    cv_size, volt, current = get_CV_init(df_CV)    
     
     jpa_lnfit = np.polyfit(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne], 1)
-    idx_jpa_max = np.argmax(current)
-    jpa_base = volt[idx_jpa_max]*jpa_lnfit[0]+jpa_lnfit[1]
-    jpa_abs = current[idx_jpa_max]
-    jpa = jpa_abs - jpa_base
-
-    jpa_ref_ln = np.linspace(volt[jpa_lns],volt[idx_jpa_max],100)
-    jpa_ref = jpa_ref_ln*jpa_lnfit[0]+jpa_lnfit[1]
-
+    jpa_base = jpa_lnfit[0]*peak_volt + jpa_lnfit[1]
+    jpa = peak_volt - jpa_base
+    
     jpc_lnfit = np.polyfit(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne], 1)
-    idx_jpc_min = np.argmin(current) #Find index of jpc peak
-    jpc_base = volt[idx_jpc_min]*jpc_lnfit[0]+jpc_lnfit[1]
-    jpc_abs = current[idx_jpc_min]
-    jpc = jpc_base - jpc_abs
-
-    jpc_ref_ln = np.linspace(volt[jpc_lns],volt[idx_jpc_min],100)
-    jpc_ref = jpc_ref_ln*jpc_lnfit[0]+jpc_lnfit[1]
-    return volt, current, jpa_ref_ln, jpa_ref, idx_jpa_max, jpa_abs, jpa_base, jpc_ref_ln, jpc_ref, idx_jpc_min, jpc_abs, jpc_base, jpa_lns, jpa_lne, jpc_lns, jpc_lne, jpa, jpc
+    jpc_base = jpc_lnfit[0]*trough_volt + jpc_lnfit[1]
+    jpc = trough_volt - jpc_base
+    
+    return jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpa, jpc_base, jpc
 
 def time2sec(time_raw,delim):
     # Take time format such as 1-12:05:24 and convert to seconds
