@@ -39,7 +39,7 @@ cv_layout = [
     [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='peak_pos', enable_events=True, disabled=False)],
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='trough_pos', enable_events=True, disabled=False)],
     
-    [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV'),sg.Spin([i for i in range(1,11)], initial_value=10, k='-SPIN-')]
+    [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV')]
 ]
 
 bat_layout = [
@@ -176,7 +176,7 @@ while True:
             low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr = get_CV_peak(df_CV, peak_range, peak_pos, trough_pos)
 
             ax_cv.plot((volt[low_range_peak],volt[high_range_peak]),(current[low_range_peak],current[high_range_peak]),"|", markersize = 10)
-            ax_cv.plot(peak_volt,peak_curr,"*", markersize = 10)
+            ax_cv.plot(peak_volt,peak_curr,"x", markersize = 10)
             
             ax_cv.plot((volt[low_range_trough],volt[high_range_trough]),(current[low_range_trough],current[high_range_trough]),"|", markersize = 10)
             ax_cv.plot(trough_volt,trough_curr,"x", markersize = 10)
