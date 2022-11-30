@@ -32,6 +32,7 @@
  <url type="bugtracker">https://github.com/kevinsmia1939/PySimpleCV/issues</url>
  <content_rating type="oars-1.1"/>
  <releases>
+     <release version="v0.6.0" date="2022-11-30"/>
      <release version="v0.5.4" date="2022-11-22"/>
      <release version="v0.5.3" date="2022-11-21"/>
      <release version="v0.5.2" date="2022-11-21"/>
