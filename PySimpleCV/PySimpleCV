@@ -45,9 +45,9 @@ cv_layout = [
 bat_layout = [
     [sg.Canvas(key='-CANVAS_bat-')],
     [sg.Button("Open Battery File"),sg.Text('.xls files'),
-     sg.Checkbox('Voltage', default=True, k='cb_volt', disabled=True, enable_events=True), 
-     sg.Checkbox('Current', default=True, k='cb_current', disabled=True, enable_events=True),
-     sg.Checkbox('Efficiencies', default=True, k='cb_eff', disabled=True, enable_events=True)],
+     sg.Checkbox('Voltage', default=True, key='cb_volt', disabled=True, enable_events=True), 
+     sg.Checkbox('Current', default=True, key='cb_current', disabled=True, enable_events=True),
+     sg.Checkbox('Efficiencies', default=True, key='cb_eff', disabled=True, enable_events=True)],
     [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
     [sg.Text('Average voltage efficiency='),sg.Text('', key = 'output_ve'),sg.Text('%'),
      sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%'),
