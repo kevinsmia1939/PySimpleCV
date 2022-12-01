@@ -106,6 +106,59 @@ fig_agg_bat = draw_figure(canvas_bat, fig_bat)
 cycle_start = 1
 cycle_end = 1
 
+def clear_battery_plot():
+    # Reset scrolls and checkboxes
+    window['cb_volt'].Update(False)
+    window['cb_current'].Update(False)
+    window['cb_eff'].Update(False)
+    window['cb_volt'].Update(disabled=True)
+    window['cb_current'].Update(disabled=True)
+    window['cb_eff'].Update(disabled=True)
+    window['cycle_start'].Update(range=(0,0))
+    window['cycle_end'].Update(range=(1,1))
+    window['cycle_start'].Update(disabled=True)
+    window['cycle_end'].Update(disabled=True)    
+    # Remove existing plot.
+    ax_bat_current.cla()
+    ax_bat_volt.cla()
+    ax_bat_eff.cla()
+    ax_bat_cycle.cla()
+    
+    #Redraw Efficiency axis and labels.
+    ax_bat_eff.spines.right.set_position(("axes", 1.1))
+    ax_bat_volt.set_ylabel("Voltage")
+    ax_bat_current.set_ylabel("Current")
+    ax_bat_eff.set_ylabel("Voltage/Current/Energy Efficiencies")
+    ax_bat_cycle.set_xlabel("Cycle")
+    ax_bat_volt.set_xlabel("Time")
+    # Create manual legend so we can put them in the same box
+    volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
+    current_leg = Line2D([0], [0], label='Current', color='red', linestyle='--')
+    VE_leg = Line2D([0], [0], label='VE', color='blue', marker='*', linestyle='None')
+    CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
+    EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
+    ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg],ncol=5, bbox_to_anchor=(0.5,-0.25),loc='lower center')
+    ax_bat_volt.grid()
+    fig_agg_bat.draw()
+    
+def clear_cv_plot():
+    # Reset scrolls and checkboxes
+    window['sl_cut_val'].Update(disabled=True)
+    window['sl_jpa_lns'].Update(disabled=True)
+    window['sl_jpa_lne'].Update(disabled=True)
+    window['sl_jpc_lns'].Update(disabled=True)
+    window['sl_jpc_lne'].Update(disabled=True)
+    window['sl_cut_val'].Update(range=(1, 1))
+    window['sl_jpa_lns'].Update(range=(1, 1))
+    window['sl_jpa_lne'].Update(range=(1, 1))
+    window['sl_jpc_lns'].Update(range=(1, 1))
+    window['sl_jpc_lne'].Update(range=(1, 1))
+    ax_cv.cla()
+    ax_cv.grid()
+    ax_cv.set_xlabel("Voltage")
+    ax_cv.set_ylabel("Current")
+    fig_agg_cv.draw()
+
 while True:
     event, values = window.read()
     match event:
@@ -114,22 +167,7 @@ while True:
         case "About PySimpleCV":
             About_PySimpleCV()
         case 'cv_clear':
-            # Reset scrolls and checkboxes
-            window['sl_cut_val'].Update(disabled=True)
-            window['sl_jpa_lns'].Update(disabled=True)
-            window['sl_jpa_lne'].Update(disabled=True)
-            window['sl_jpc_lns'].Update(disabled=True)
-            window['sl_jpc_lne'].Update(disabled=True)
-            window['sl_cut_val'].Update(range=(1, 1))
-            window['sl_jpa_lns'].Update(range=(1, 1))
-            window['sl_jpa_lne'].Update(range=(1, 1))
-            window['sl_jpc_lns'].Update(range=(1, 1))
-            window['sl_jpc_lne'].Update(range=(1, 1))
-            ax_cv.cla()
-            ax_cv.grid()
-            ax_cv.set_xlabel("Voltage")
-            ax_cv.set_ylabel("Current")
-            fig_agg_cv.draw()
+            clear_cv_plot()
         case "Open CV File":
             CV_file_new = sg.popup_get_file('Choose CV file')
             # If cancel, close the window, go back to beginning
@@ -138,6 +176,8 @@ while True:
             elif CV_file_new == '':
                 continue
             try:
+                # Clear plot every time new plot open
+                clear_cv_plot()
                 CV_file = CV_file_new
                 df_CV = CV_file2df(CV_file)
                 cv_size, volt, current = get_CV_init(df_CV) # Only need the cv_size so set to [0]
@@ -219,6 +259,7 @@ while True:
             elif bat_file_new == '':
                 continue
             try:
+                clear_battery_plot()
                 bat_file = bat_file_new
                 df_bat, row_size, time_df, volt_df, current_df, capacity_df, state_df = battery_xls2df(bat_file)
                 # Sequence information
@@ -331,41 +372,7 @@ while True:
             window['output_ee'].Update(np.round(EE_avg,3))
             fig_agg_bat.draw()
         case 'bat_clear':
-            # Reset scrolls and checkboxes
-            window['cb_volt'].Update(False)
-            window['cb_current'].Update(False)
-            window['cb_eff'].Update(False)
-            window['cb_volt'].Update(disabled=True)
-            window['cb_current'].Update(disabled=True)
-            window['cb_eff'].Update(disabled=True)
-            window['cycle_start'].Update(range=(0,0))
-            window['cycle_end'].Update(range=(1,1))
-            window['cycle_start'].Update(disabled=True)
-            window['cycle_end'].Update(disabled=True)
-            
-            # Remove existing plot.
-            ax_bat_current.cla()
-            ax_bat_volt.cla()
-            ax_bat_eff.cla()
-            ax_bat_cycle.cla()
-            
-            #Redraw Efficiency axis and labels.
-            ax_bat_eff.spines.right.set_position(("axes", 1.1))
-            ax_bat_volt.set_ylabel("Voltage")
-            ax_bat_current.set_ylabel("Current")
-            ax_bat_eff.set_ylabel("Voltage/Current/Energy Efficiencies")
-            ax_bat_cycle.set_xlabel("Cycle")
-            ax_bat_volt.set_xlabel("Time")
-            # Create manual legend so we can put them in the same box
-            volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
-            current_leg = Line2D([0], [0], label='Current', color='red', linestyle='--')
-            VE_leg = Line2D([0], [0], label='VE', color='blue', marker='*', linestyle='None')
-            CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
-            EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
-            ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg],ncol=5, bbox_to_anchor=(0.5,-0.25),loc='lower center')
-            ax_bat_volt.grid()
-            
-            fig_agg_bat.draw()
+            clear_battery_plot()
         case "save_bat":
             save_bat_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
             if save_bat_loc is None:
