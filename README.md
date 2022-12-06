@@ -7,6 +7,10 @@ For.csv and .txt, the first column must be voltage and the second column is curr
 Battery cycling support .xls files with state (C_CC, D_CC, R) columns
 Support copy-paste battery efficiency.
 
+VE - Voltage Efficiency
+CE - Current Efficiency
+EE - Energy Efficiency
+
 Requires Python 3.10 and above.
 Modules used: Numpy, Matplotlib, PySimpleGUI, and pandas
 
@@ -14,7 +18,7 @@ License: GPLv3
 
 Future plans.
 * Better peak detection and selection
-* More file format support
+* More file format support, if you have example files of other format, create new issue to add support.
 * More flexible state recognition (C_CC, D_CC, R, etc)
 * Export plot with custom dpi
 
