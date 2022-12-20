@@ -41,13 +41,12 @@ def battery_xls2df(bat_file):
         # Delete all row that does not contain C_CC D_CC R
         row_size_raw_df_bat = len(df_bat)
         for i in range(0,row_size_raw_df_bat):
-            if pd.Series(df_bat[5])[i] != 'C_CC':
-                if pd.Series(df_bat[5])[i] != 'D_CC':
-                    if pd.Series(df_bat[5])[i] != 'R':
-                            df_bat = df_bat.drop([i])
-        # Reset index                    
-        df_bat = df_bat.reset_index().drop(['index'], axis=1)
+            bat_cell_state = pd.Series(df_bat[5])[i]
+            if bat_cell_state != 'C_CC' and bat_cell_state != 'D_CC' and bat_cell_state != 'R':
+                df_bat = df_bat.drop([i])
         df_bat.columns = ['time', 'volt', 'current', 'capacity', 'state']
+        # Reset index after dropping some rows
+        df_bat.reset_index(inplace=True)
         # convert '2-02:18:04' to seconds
         # Pandas datetime does not support changing format.
         row_size = len(df_bat)
