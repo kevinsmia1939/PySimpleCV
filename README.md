@@ -3,10 +3,12 @@ Graphical user interface for plotting the cyclic voltammogram and calculating jp
 PySimpleCV also plots battery cycles and calculates efficiencies. Written in pure Python.
 
 **Cyclic voltammetry**
+
 Currently supports VersaStudio (.par),.csv, and.txt.
 For.csv and .txt, the first column must be voltage and the second column is current.
 
 **Battery cycling**
+
 Battery cycling support .xls files with state (C_CC, D_CC, R) columns
 Support copy-paste battery efficiency.
 
