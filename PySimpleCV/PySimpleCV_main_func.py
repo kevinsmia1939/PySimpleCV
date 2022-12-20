@@ -94,22 +94,6 @@ def get_CV_init(df_CV):
     current = df_CV[:,1]
     return cv_size, volt, current
 
-def max_value(set_value,input_val):
-    # input_val would not be more than set_value
-    if input_val >= set_value:
-        max_output = set_value
-    else:
-        max_output = input_val
-    return max_output
-
-def min_value(set_value,input_val):
-    # input_val would not be less than set_value
-    if input_val <= set_value:
-        min_output = set_value
-    else:
-        min_output = input_val
-    return min_output
-
 def get_CV_peak(df_CV, peak_range, peak_pos, trough_pos):
     # Search for peak between peak_range.
     cv_size, volt, current = get_CV_init(df_CV)  

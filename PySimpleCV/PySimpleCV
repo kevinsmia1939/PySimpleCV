@@ -24,6 +24,7 @@ def About_PySimpleCV():
     
 sg.theme('DarkBlue')
 
+# Generate layout for CV tab
 cv_layout = [
     [sg.Canvas(key='-CANVAS_cv-')],
     [sg.Button("Open CV File"),sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
@@ -41,7 +42,7 @@ cv_layout = [
     
     [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV')]
 ]
-
+# Generate layout for battery cycling tab.
 bat_layout = [
     [sg.Canvas(key='-CANVAS_bat-')],
     [sg.Button("Open Battery File"),sg.Text('.xls files'),
@@ -71,6 +72,7 @@ window = sg.Window('PySimpleCV', layout, finalize=True, element_justification='c
 canvas_cv = window['-CANVAS_cv-'].tk_canvas
 canvas_bat = window['-CANVAS_bat-'].tk_canvas
 
+# Generate initial empty plot.
 fig_cv = Figure(figsize=(10,5))
 ax_cv = fig_cv.add_subplot(111)
 ax_cv.set_xlabel("Voltage")
@@ -107,6 +109,7 @@ cycle_start = 1
 cycle_end = 1
 
 def clear_battery_plot():
+    # function to clear the plot.
     # Reset scrolls and checkboxes
     window['cb_volt'].Update(False)
     window['cb_current'].Update(False)
@@ -142,6 +145,7 @@ def clear_battery_plot():
     fig_agg_bat.draw()
     
 def clear_cv_plot():
+    # function to clear the plot.
     # Reset scrolls and checkboxes
     window['sl_cut_val'].Update(disabled=True)
     window['sl_jpa_lns'].Update(disabled=True)
