@@ -1,6 +1,8 @@
 import numpy as np 
 import pandas as pd
 import re
+from impedance import preprocessing
+from impedance.models.circuits import Randles, CustomCircuit
 
 def search_string_in_file(file_name, string_to_search):
     line_number = 0
@@ -13,13 +15,13 @@ def search_string_in_file(file_name, string_to_search):
     return list_of_results
 
 def CV_file2df(CV_file):
-    if CV_file.endswith(".csv"):
+    if CV_file.lower().endswith(".csv"):
         df_CV = pd.read_csv(CV_file,usecols=[0,1])
         df_CV = np.array(df_CV)
-    elif CV_file.endswith(".txt"):
+    elif CV_file.lower().endswith(".txt"):
         df_CV = pd.read_table(CV_file, sep='\t', header=None, usecols=[0,1])
         df_CV = np.array(df_CV)
-    elif CV_file.endswith(".par"):
+    elif CV_file.lower().endswith(".par"):
         # Search for line match beginning and end of CV data and give ln number
         start_segment = search_string_in_file(CV_file, 'Definition=Segment')[0][0]
         end_segment = search_string_in_file(CV_file, '</Segment')[0][0]
@@ -34,7 +36,7 @@ def CV_file2df(CV_file):
     return df_CV
 
 def battery_xls2df(bat_file):
-    if bat_file.endswith(".xls"):
+    if bat_file.lower().endswith(".xls"):
         df_bat = pd.read_excel(bat_file,header=None)
         # Drop Index column, create our own
         df_bat = df_bat.drop([0],axis=1)
@@ -187,3 +189,44 @@ def cy_idx_state_range(state_df, cycle_start, cycle_end, charge_seq, discharge_s
     cycle_idx_end = np.amax(cycle_index)
     cycle_idx_range = [cycle_idx_start, cycle_idx_end]
     return cycle_idx_range
+
+def eis_read_file(eis_file,eis_choose_file_type):
+    if eis_choose_file_type == 'auto detect':
+        if eis_file.lower().endswith('.csv'):
+            frequencies, z = preprocessing.readFile(eis_file)
+        elif eis_file.lower().endswith('.dta'):
+            frequencies, z = preprocessing.readFile(eis_file,instrument='gamry')
+        elif eis_file.lower().endswith('.z'):
+            frequencies, z = preprocessing.readFile(eis_file,instrument='zplot')
+        elif eis_file.lower().endswith('.par'):
+            frequencies, z = preprocessing.readFile(eis_file,instrument='versastudio')
+        elif eis_file.lower().endswith('.mpt'):
+            frequencies, z = preprocessing.readFile(eis_file,instrument='biologic')
+    elif eis_file.lower().endswith('.txt'):    
+        if eis_choose_file_type == 'Autolab':
+            frequencies, z = preprocessing.readFile(eis_file,instrument='autolab')
+        elif eis_choose_file_type == 'Parstat':
+            frequencies, z = preprocessing.readFile(eis_file,instrument='parstat')
+        elif eis_choose_file_type == 'PowerSuite':
+            frequencies, z = preprocessing.readFile(eis_file,instrument='powersuite')
+        elif eis_choose_file_type == 'CHInstruments':
+            frequencies, z = preprocessing.readFile(eis_file,instrument='chinstruments')
+    else:
+        print("EIS file type not support")
+    return frequencies, z
+
+def eis_fit(eis_file,freqmin,freqmax,cir_scheme, rm_im_R, initial_guess, CPE_bool):
+    if eis_file.lower().endswith('.csv'):
+        frequencies, z = preprocessing.readFile(eis_file)
+    elif eis_file.lower().endswith('.par'):
+        frequencies, z = preprocessing.readFile(eis_file,instrument='versastudio')
+    else:
+        print("EIS file format not support")
+        
+    frequencies, z = preprocessing.cropFrequencies(frequencies, z, freqmin=freqmin, freqmax=freqmax)
+    if rm_im_R == True:
+        frequencies, z = preprocessing.ignoreBelowX(frequencies, z)
+    circuit = Randles(initial_guess=initial_guess, CPE=CPE_bool)
+    circuit.fit(frequencies, z)
+    z_fit = circuit.predict(frequencies)
+    return frequencies, z, z_fit, circuit

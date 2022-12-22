@@ -8,7 +8,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import get_CV, battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak
+from PySimpleCV_main_func import get_CV, battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file
 
 def draw_figure(canvas, figure): 
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas) 
@@ -62,8 +62,17 @@ bat_layout = [
     [sg.Button('Clear plot',key='bat_clear'),sg.Button('Save plot', key='save_bat'), sg.Button('Exit', key='exit_2')]
     ]
 
+eis_layout = [
+    [sg.Canvas(key='-CANVAS_eis-')],
+    [sg.Button("Open EIS File"),sg.Text('.csv or .par file')],
+    [sg.Text('EIS file:'), sg.Text('No EIS file selected', key = 'EIS_file_use'),sg.Combo(values=('auto detect', 'Autolab', 'Parstat', 'PowerSuite', 'CHInstruments'), default_value='auto detect', readonly=True, k='eis_file_type_select')],
+    [sg.Text('Initial Guesses'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='trough_pos', enable_events=True, disabled=False)],
+    [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_eis')]
+]
+
 layout =[[sg.TabGroup([[  sg.Tab('Cyclic Voltammetry', cv_layout),
-                           sg.Tab('Battery Cycling', bat_layout)
+                          sg.Tab('Battery Cycling', bat_layout),
+                          sg.Tab('EIS', eis_layout)
                            ]], key='-TAB GROUP-', expand_x=True, expand_y=True),
 ]]
           
@@ -71,6 +80,7 @@ window = sg.Window('PySimpleCV', layout, finalize=True, element_justification='c
 # window.maximize()
 canvas_cv = window['-CANVAS_cv-'].tk_canvas
 canvas_bat = window['-CANVAS_bat-'].tk_canvas
+canvas_eis = window['-CANVAS_eis-'].tk_canvas
 
 # Generate initial empty plot.
 fig_cv = Figure(figsize=(10,5))
@@ -103,6 +113,16 @@ ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg],ncol=5, b
 ax_bat_volt.grid()
 fig_bat.tight_layout()
 fig_agg_bat = draw_figure(canvas_bat, fig_bat)
+
+# Generate initial empty plot.
+fig_eis = Figure(figsize=(7,7))
+ax_eis = fig_eis.add_subplot(111)
+ax_eis.set_xlabel("Z'(w)[Ohms]")
+ax_eis.set_ylabel('-Z"(w)[Ohms]')
+ax_eis.set_aspect('equal', 'box')
+ax_eis.axis('equal')
+ax_eis.grid()
+fig_agg_eis = draw_figure(canvas_eis, fig_eis)
 
 
 cycle_start = 1
@@ -384,4 +404,18 @@ while True:
             elif save_bat_loc == '':
                 continue
             fig_cv.savefig(save_bat_loc)
+        case "Open EIS File":
+            eis_file_new = sg.popup_get_file('Choose EIS file')
+            # If cancel, close the window, go back to beginning
+            # If empty, use old file
+            if eis_file_new is None:
+                continue
+            elif eis_file_new == '':
+                continue
+            try:
+                # clear_battery_plot()
+                eis_file = eis_file_new
+                frequencies, z = eis_read_file(eis_file,choose_file_type)
+            except Exception as file_error:
+                sg.popup(file_error, keep_on_top=True)
 window.close()
