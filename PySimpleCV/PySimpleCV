@@ -186,6 +186,27 @@ def clear_cv_plot():
     ax_cv.set_xlabel("Voltage")
     ax_cv.set_ylabel("Current")
     fig_agg_cv.draw()
+    
+def clear_eis_plot():
+    # function to clear the plot.
+    # Reset scrolls and checkboxes
+    # window['sl_cut_val'].Update(disabled=True)
+    # window['sl_jpa_lns'].Update(disabled=True)
+    # window['sl_jpa_lne'].Update(disabled=True)
+    # window['sl_jpc_lns'].Update(disabled=True)
+    # window['sl_jpc_lne'].Update(disabled=True)
+    # window['sl_cut_val'].Update(range=(1, 1))
+    # window['sl_jpa_lns'].Update(range=(1, 1))
+    # window['sl_jpa_lne'].Update(range=(1, 1))
+    # window['sl_jpc_lns'].Update(range=(1, 1))
+    # window['sl_jpc_lne'].Update(range=(1, 1))
+    ax_eis.cla()
+    ax_eis.set_xlabel("Z'(w)[Ohms]")
+    ax_eis.set_ylabel('-Z"(w)[Ohms]')
+    ax_eis.set_aspect('equal', 'box')
+    ax_eis.axis('equal')
+    ax_eis.grid()
+    fig_agg_eis.draw()
 
 while True:
     event, values = window.read()
@@ -399,7 +420,7 @@ while True:
             window['output_ce'].Update(np.round(CE_avg,3))
             window['output_ee'].Update(np.round(EE_avg,3))
             fig_agg_bat.draw()
-        case 'bat_clear':
+        case "bat_clear":
             clear_battery_plot()
         case "save_bat":
             save_bat_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
@@ -426,10 +447,16 @@ while True:
                 continue
             if values['ign_neg_img'] == True:
                 frequencies, z = preprocessing.ignoreBelowX(frequencies, z)
-            circuit = Randles(initial_guess=[float(i) for i in values['initial_guess'].split(',')], CPE=values['randles_cpe'])
+            try:
+                circuit = Randles(initial_guess=[float(i) for i in values['initial_guess'].split(',')], CPE=values['randles_cpe'])
+            except:
+                sg.popup("Need initial guess", keep_on_top=True)
+                continue
             circuit.fit(frequencies, z)
             z_fit = circuit.predict(frequencies)
             circuit.plot(ax_eis, f_data=frequencies, Z_data=z_fit, kind='nyquist')
             fig_agg_eis.draw()
             window['circuit_output'].Update(circuit)
+        case "eis_clear":
+            clear_eis_plot()
 window.close()
