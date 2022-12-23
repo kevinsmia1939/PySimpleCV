@@ -6,7 +6,8 @@ import PySimpleGUI as sg
 import matplotlib 
 from matplotlib.lines import Line2D
 import pandas as pd
-
+from impedance import preprocessing
+from impedance.models.circuits import Randles, CustomCircuit
 matplotlib.use('TkAgg')
 from PySimpleCV_main_func import get_CV, battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file
 
@@ -64,10 +65,13 @@ bat_layout = [
 
 eis_layout = [
     [sg.Canvas(key='-CANVAS_eis-')],
-    [sg.Button("Open EIS File"),sg.Text('.csv or .par file')],
-    [sg.Text('EIS file:'), sg.Text('No EIS file selected', key = 'EIS_file_use'),sg.Combo(values=('auto detect', 'Autolab', 'Parstat', 'PowerSuite', 'CHInstruments'), default_value='auto detect', readonly=True, k='eis_file_type_select')],
-    [sg.Text('Initial Guesses'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='trough_pos', enable_events=True, disabled=False)],
-    [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_eis')]
+    [sg.Button("Open EIS File", key = 'open_eis_file'), sg.Button("Plot", key='plot_eis'), sg.Text('File type:'),sg.Combo(values=('CSV (.csv)', 'Gamry (.dta)','zplot (.z)','Versastudio (.par)','biologic (.mpt)', 'Autolab (.txt)', 'Parstat (.txt)', 'PowerSuite (.txt)', 'CHInstruments (.txt)'), default_value='CSV (.csv)', readonly=True, key='eis_file_type_select', enable_events=True, change_submits=True),sg.Checkbox('Ignore negative imaginary impedance', default=True, enable_events=True, k='ign_neg_img'), sg.Checkbox('Randles circuit with CPE', default=True, enable_events=True, k='randles_cpe')],
+    [sg.Text('EIS file:'), sg.Text('No EIS file selected', key = 'eis_file_use')],
+    [],
+    [sg.Text('Example initial guess: .01, .005, .001, 200, .1, .9')],
+    [sg.Text('Initial Guesses'),sg.Input(key='initial_guess')],
+    [sg.Multiline('',size=(50,5), disabled=True, key = 'circuit_output')],
+    [sg.Button('Clear plot', key='eis_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_eis')]
 ]
 
 layout =[[sg.TabGroup([[  sg.Tab('Cyclic Voltammetry', cv_layout),
@@ -115,7 +119,7 @@ fig_bat.tight_layout()
 fig_agg_bat = draw_figure(canvas_bat, fig_bat)
 
 # Generate initial empty plot.
-fig_eis = Figure(figsize=(7,7))
+fig_eis = Figure(figsize=(6,6))
 ax_eis = fig_eis.add_subplot(111)
 ax_eis.set_xlabel("Z'(w)[Ohms]")
 ax_eis.set_ylabel('-Z"(w)[Ohms]')
@@ -403,19 +407,29 @@ while True:
                 continue
             elif save_bat_loc == '':
                 continue
-            fig_cv.savefig(save_bat_loc)
-        case "Open EIS File":
+            fig_cv.savefig(save_bat_loc)            
+        case "open_eis_file":
             eis_file_new = sg.popup_get_file('Choose EIS file')
-            # If cancel, close the window, go back to beginning
-            # If empty, use old file
             if eis_file_new is None:
                 continue
             elif eis_file_new == '':
                 continue
+            eis_file = eis_file_new
+            window['eis_file_use'].Update(eis_file)
+        case "plot_eis": # case "plot_eis" | "eis_file_type_select" | "ign_neg_img" | "randles_cpe":
+            eis_choose_file_type = values['eis_file_type_select']
             try:
-                # clear_battery_plot()
-                eis_file = eis_file_new
-                frequencies, z = eis_read_file(eis_file,choose_file_type)
+                frequencies, z = eis_read_file(eis_file,eis_choose_file_type)
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
+                sg.popup("Probably wrong file type chosen, choose a new file type.")
+                continue
+            if values['ign_neg_img'] == True:
+                frequencies, z = preprocessing.ignoreBelowX(frequencies, z)
+            circuit = Randles(initial_guess=[float(i) for i in values['initial_guess'].split(',')], CPE=values['randles_cpe'])
+            circuit.fit(frequencies, z)
+            z_fit = circuit.predict(frequencies)
+            circuit.plot(ax_eis, f_data=frequencies, Z_data=z_fit, kind='nyquist')
+            fig_agg_eis.draw()
+            window['circuit_output'].Update(circuit)
 window.close()

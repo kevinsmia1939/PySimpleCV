@@ -191,28 +191,26 @@ def cy_idx_state_range(state_df, cycle_start, cycle_end, charge_seq, discharge_s
     return cycle_idx_range
 
 def eis_read_file(eis_file,eis_choose_file_type):
-    if eis_choose_file_type == 'auto detect':
-        if eis_file.lower().endswith('.csv'):
-            frequencies, z = preprocessing.readFile(eis_file)
-        elif eis_file.lower().endswith('.dta'):
-            frequencies, z = preprocessing.readFile(eis_file,instrument='gamry')
-        elif eis_file.lower().endswith('.z'):
-            frequencies, z = preprocessing.readFile(eis_file,instrument='zplot')
-        elif eis_file.lower().endswith('.par'):
-            frequencies, z = preprocessing.readFile(eis_file,instrument='versastudio')
-        elif eis_file.lower().endswith('.mpt'):
-            frequencies, z = preprocessing.readFile(eis_file,instrument='biologic')
-    elif eis_file.lower().endswith('.txt'):    
-        if eis_choose_file_type == 'Autolab':
-            frequencies, z = preprocessing.readFile(eis_file,instrument='autolab')
-        elif eis_choose_file_type == 'Parstat':
-            frequencies, z = preprocessing.readFile(eis_file,instrument='parstat')
-        elif eis_choose_file_type == 'PowerSuite':
-            frequencies, z = preprocessing.readFile(eis_file,instrument='powersuite')
-        elif eis_choose_file_type == 'CHInstruments':
-            frequencies, z = preprocessing.readFile(eis_file,instrument='chinstruments')
+    if eis_choose_file_type == 'CSV (.csv)':
+        frequencies, z = preprocessing.readFile(eis_file)
+    elif eis_choose_file_type == 'Gamry (.dta)':
+        frequencies, z = preprocessing.readFile(eis_file,instrument='gamry')
+    elif eis_choose_file_type == 'zplot (.z)':
+        frequencies, z = preprocessing.readFile(eis_file,instrument='zplot')
+    elif eis_choose_file_type == 'Versastudio (.par)':
+        frequencies, z = preprocessing.readFile(eis_file,instrument='versastudio')
+    elif eis_choose_file_type == 'biologic (.mpt)': #.mpt
+        frequencies, z = preprocessing.readFile(eis_file,instrument='biologic')
+    elif eis_choose_file_type == 'Autolab (.txt)':
+        frequencies, z = preprocessing.readFile(eis_file,instrument='autolab')
+    elif eis_choose_file_type == 'Parstat (.txt)':
+        frequencies, z = preprocessing.readFile(eis_file,instrument='parstat')
+    elif eis_choose_file_type == 'PowerSuite (.txt)':
+        frequencies, z = preprocessing.readFile(eis_file,instrument='powersuite')
+    elif eis_choose_file_type == 'CHInstruments':
+        frequencies, z = preprocessing.readFile(eis_file,instrument='chinstruments')
     else:
-        print("EIS file type not support")
+        raise Exception("EIS file type not support")
     return frequencies, z
 
 def eis_fit(eis_file,freqmin,freqmax,cir_scheme, rm_im_R, initial_guess, CPE_bool):
