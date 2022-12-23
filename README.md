@@ -9,7 +9,7 @@ For.csv and .txt, the first column must be voltage and the second column is curr
 
 **Battery cycling**
 
-Battery cycling support .xls files with state (C_CC, D_CC, R) columns
+Battery cycling support .xls files with state (C_CC, D_CC, R) columns from Versastudio.
 Support copy-paste battery efficiency.
 
 VE - Voltage Efficiency
@@ -17,7 +17,7 @@ CE - Current Efficiency
 EE - Energy Efficiency
 
 Requires Python 3.10 and above.
-Modules used: Numpy, Matplotlib, PySimpleGUI, and pandas
+Modules used: Numpy, Matplotlib, PySimpleGUI, pandas, and impedance.py.
 
 License: GPLv3
 
@@ -27,7 +27,7 @@ Future plans.
 * Export plot with custom dpi
 * Plot EIS data, calculate parameters, and display circuit.
 
-The file PySimpleCV/PySimpleCV contain the main code responsible to produce GUI.
+The file PySimpleCV/PySimpleCV contain the main code responsible to produce GUI and plotting.
 PySimpleCV/PySimpleCV_main_func.py contain mathematical function for calculation.
 
 Installation
