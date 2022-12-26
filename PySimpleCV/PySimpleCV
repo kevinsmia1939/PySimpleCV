@@ -8,6 +8,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
+from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
 from PySimpleCV_main_func import get_CV, battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file
 
@@ -63,20 +64,31 @@ bat_layout = [
     [sg.Button('Clear plot',key='bat_clear'),sg.Button('Save plot', key='save_bat'), sg.Button('Exit', key='exit_2')]
     ]
 
-eis_layout = [
-    [sg.Canvas(key='-CANVAS_eis-')],
-    [sg.Button("Open EIS File", key = 'open_eis_file'), sg.Button("Plot", key='plot_eis'), sg.Text('File type:'),sg.Combo(values=('CSV (.csv)', 'Gamry (.dta)','zplot (.z)','Versastudio (.par)','biologic (.mpt)', 'Autolab (.txt)', 'Parstat (.txt)', 'PowerSuite (.txt)', 'CHInstruments (.txt)'), default_value='CSV (.csv)', readonly=True, key='eis_file_type_select', enable_events=True, change_submits=True),sg.Checkbox('Ignore negative imaginary impedance', default=True, enable_events=True, k='ign_neg_img'), sg.Checkbox('Randles circuit with CPE', default=True, enable_events=True, k='randles_cpe')],
-    [sg.Text('EIS file:'), sg.Text('No EIS file selected', key = 'eis_file_use')],
-    [],
-    [sg.Text('Example initial guess: .01, .005, .001, 200, .1, .9')],
-    [sg.Text('Initial Guesses'),sg.Input(key='initial_guess')],
-    [sg.Multiline('',size=(50,5), disabled=True, key = 'circuit_output')],
-    [sg.Button('Clear plot', key='eis_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_eis')]
-]
+# eis_layout = [
+#     [sg.Canvas(key='-CANVAS_eis-')],
+#     [sg.Button("Open EIS File", key = 'open_eis_file'), sg.Button("Plot", key='plot_eis'), sg.Text('File type:'),sg.Combo(values=('CSV (.csv)', 'Gamry (.dta)','zplot (.z)','Versastudio (.par)','biologic (.mpt)', 'Autolab (.txt)', 'Parstat (.txt)', 'PowerSuite (.txt)', 'CHInstruments (.txt)'), default_value='CSV (.csv)', readonly=True, key='eis_file_type_select', enable_events=True, change_submits=True),sg.Checkbox('Ignore negative imaginary impedance', default=True, enable_events=True, k='ign_neg_img'), sg.Checkbox('Randles circuit with CPE', default=True, enable_events=True, k='randles_cpe')],
+#     [sg.Text('EIS file:'), sg.Text('No EIS file selected', key = 'eis_file_use')],
+#     [sg.Text('Initial Guesses'),sg.Input(default_text='.01, .01, .001, 1, .1, 1', key='initial_guess')],
+#     [sg.Multiline('',size=(60,7), disabled=True, key = 'circuit_output')],
+#     [sg.Button('Clear plot', key='eis_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_eis')]
+# ]
+
+sz=(10,20)
+eis_col1=[[sg.Canvas(key='-CANVAS_eis-')],
+      [sg.Text('EIS file:'), sg.Text('No EIS file selected', key = 'eis_file_use')],
+      [sg.Text('Initial Guesses'),sg.Input(default_text='.01, .01, .001, 1, .1, 1', key='initial_guess',size=(72,5))],
+      [sg.Multiline('',size=(85,15), disabled=True, key = 'circuit_output')]]
+eis_col2=[[sg.Button("Open EIS File", key = 'open_eis_file'), sg.Button("Plot", key='plot_eis')],
+      [sg.Text('File type:'),sg.Combo(values=('CSV (.csv)', 'Gamry (.dta)','zplot (.z)','Versastudio (.par)','biologic (.mpt)', 'Autolab (.txt)', 'Parstat (.txt)', 'PowerSuite (.txt)', 'CHInstruments (.txt)'), default_value='CSV (.csv)', readonly=True, key='eis_file_type_select', enable_events=True, change_submits=True)],
+      [sg.Checkbox('Ignore negative imaginary impedance', default=True, enable_events=True, k='ign_neg_img')],
+      [sg.Checkbox('Randles circuit with CPE', default=True, enable_events=True, k='randles_cpe')],
+      ]
+eis_layout = [[sg.Column(eis_col1),sg.Column(eis_col2)]]
 
 layout =[[sg.TabGroup([[  sg.Tab('Cyclic Voltammetry', cv_layout),
                           sg.Tab('Battery Cycling', bat_layout),
                           sg.Tab('EIS', eis_layout)
+                          # sg.Tab('test', test_lay)
                            ]], key='-TAB GROUP-', expand_x=True, expand_y=True),
 ]]
           
@@ -188,18 +200,6 @@ def clear_cv_plot():
     fig_agg_cv.draw()
     
 def clear_eis_plot():
-    # function to clear the plot.
-    # Reset scrolls and checkboxes
-    # window['sl_cut_val'].Update(disabled=True)
-    # window['sl_jpa_lns'].Update(disabled=True)
-    # window['sl_jpa_lne'].Update(disabled=True)
-    # window['sl_jpc_lns'].Update(disabled=True)
-    # window['sl_jpc_lne'].Update(disabled=True)
-    # window['sl_cut_val'].Update(range=(1, 1))
-    # window['sl_jpa_lns'].Update(range=(1, 1))
-    # window['sl_jpa_lne'].Update(range=(1, 1))
-    # window['sl_jpc_lns'].Update(range=(1, 1))
-    # window['sl_jpc_lne'].Update(range=(1, 1))
     ax_eis.cla()
     ax_eis.set_xlabel("Z'(w)[Ohms]")
     ax_eis.set_ylabel('-Z"(w)[Ohms]')
@@ -448,13 +448,21 @@ while True:
             if values['ign_neg_img'] == True:
                 frequencies, z = preprocessing.ignoreBelowX(frequencies, z)
             try:
+                aaa = values['randles_cpe']
                 circuit = Randles(initial_guess=[float(i) for i in values['initial_guess'].split(',')], CPE=values['randles_cpe'])
             except:
-                sg.popup("Need initial guess", keep_on_top=True)
+                sg.popup("Need initial guess or number of guesses do not match the circuit (could be CPE?)", keep_on_top=True)
                 continue
             circuit.fit(frequencies, z)
             z_fit = circuit.predict(frequencies)
-            circuit.plot(ax_eis, f_data=frequencies, Z_data=z_fit, kind='nyquist')
+            
+            # circuit.plot(ax_eis, f_data=frequencies, Z_data=z_fit, kind='nyquist')
+            # plot_nyquist(ax_eis, z_fit, fmt='-')
+            ax_eis.plot(np.real(z_fit), -np.imag(z_fit),'--')
+            ax_eis.plot(np.real(z), -np.imag(z),':')
+            # ax_eis.plot(frequencies,z_fit)
+            ax_eis.set_aspect('equal', 'box')
+            ax_eis.axis('equal')
             fig_agg_eis.draw()
             window['circuit_output'].Update(circuit)
         case "eis_clear":
