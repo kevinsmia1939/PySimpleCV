@@ -22,7 +22,13 @@ def About_PySimpleCV():
     [sg.popup('PySimpleCV written by Kavin Teenakul',
     'License: GPL v3',
     'https://github.com/kevinsmia1939/PySimpleCV',
-    'Libraries used: Numpy, Pandas, Matplotlib, PySimpleGUI')]
+    'Libraries used:',
+    'NumPy - https://numpy.org/',
+    'pandas - https://pandas.pydata.org/',
+    'Matplotlib - https://matplotlib.org/',
+    'PySimpleGUI - https://www.pysimplegui.org',
+    'impedance.py - https://impedancepy.readthedocs.io/en/latest/',
+    )]
     
 sg.theme('DarkBlue')
 
@@ -64,31 +70,26 @@ bat_layout = [
     [sg.Button('Clear plot',key='bat_clear'),sg.Button('Save plot', key='save_bat'), sg.Button('Exit', key='exit_2')]
     ]
 
-# eis_layout = [
-#     [sg.Canvas(key='-CANVAS_eis-')],
-#     [sg.Button("Open EIS File", key = 'open_eis_file'), sg.Button("Plot", key='plot_eis'), sg.Text('File type:'),sg.Combo(values=('CSV (.csv)', 'Gamry (.dta)','zplot (.z)','Versastudio (.par)','biologic (.mpt)', 'Autolab (.txt)', 'Parstat (.txt)', 'PowerSuite (.txt)', 'CHInstruments (.txt)'), default_value='CSV (.csv)', readonly=True, key='eis_file_type_select', enable_events=True, change_submits=True),sg.Checkbox('Ignore negative imaginary impedance', default=True, enable_events=True, k='ign_neg_img'), sg.Checkbox('Randles circuit with CPE', default=True, enable_events=True, k='randles_cpe')],
-#     [sg.Text('EIS file:'), sg.Text('No EIS file selected', key = 'eis_file_use')],
-#     [sg.Text('Initial Guesses'),sg.Input(default_text='.01, .01, .001, 1, .1, 1', key='initial_guess')],
-#     [sg.Multiline('',size=(60,7), disabled=True, key = 'circuit_output')],
-#     [sg.Button('Clear plot', key='eis_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_eis')]
-# ]
-
-sz=(10,20)
 eis_col1=[[sg.Canvas(key='-CANVAS_eis-')],
       [sg.Text('EIS file:'), sg.Text('No EIS file selected', key = 'eis_file_use')],
       [sg.Text('Initial Guesses'),sg.Input(default_text='.01, .01, .001, 1, .1, 1', key='initial_guess',size=(72,5))],
-      [sg.Multiline('',size=(85,15), disabled=True, key = 'circuit_output')]]
+      ]
 eis_col2=[[sg.Button("Open EIS File", key = 'open_eis_file'), sg.Button("Plot", key='plot_eis')],
       [sg.Text('File type:'),sg.Combo(values=('CSV (.csv)', 'Gamry (.dta)','zplot (.z)','Versastudio (.par)','biologic (.mpt)', 'Autolab (.txt)', 'Parstat (.txt)', 'PowerSuite (.txt)', 'CHInstruments (.txt)'), default_value='CSV (.csv)', readonly=True, key='eis_file_type_select', enable_events=True, change_submits=True)],
       [sg.Checkbox('Ignore negative imaginary impedance', default=True, enable_events=True, k='ign_neg_img')],
-      [sg.Checkbox('Randles circuit with CPE', default=True, enable_events=True, k='randles_cpe')],
+      [sg.Radio('Randles circuit', "rad_eis_circuit", default=True, enable_events=True, k='randles_select_circuit'),sg.Checkbox('with CPE', default=True, enable_events=True, k='randles_cpe')],
+      [sg.Radio('Custom circuit', "rad_eis_circuit", default=False, enable_events=True, k='custom_select_circuit')],
+      [sg.Text('Custom circuit scheme')],
+      [sg.Input(default_text=('R0-p(R1-Wo1,CPE1)'), key='custom_circuit',size=(50,5),disabled=True)],
+      [sg.Multiline('',size=(50,30), disabled=True, key = 'circuit_output')],
+      [sg.Button('Clear plot', key='eis_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_eis')],
+      [sg.Text('Visit https://impedancepy.readthedocs.io/en/latest/ for help')],
       ]
 eis_layout = [[sg.Column(eis_col1),sg.Column(eis_col2)]]
 
 layout =[[sg.TabGroup([[  sg.Tab('Cyclic Voltammetry', cv_layout),
                           sg.Tab('Battery Cycling', bat_layout),
                           sg.Tab('EIS', eis_layout)
-                          # sg.Tab('test', test_lay)
                            ]], key='-TAB GROUP-', expand_x=True, expand_y=True),
 ]]
           
@@ -207,6 +208,8 @@ def clear_eis_plot():
     ax_eis.axis('equal')
     ax_eis.grid()
     fig_agg_eis.draw()
+    
+randles_select = True
 
 while True:
     event, values = window.read()
@@ -438,6 +441,7 @@ while True:
             eis_file = eis_file_new
             window['eis_file_use'].Update(eis_file)
         case "plot_eis": # case "plot_eis" | "eis_file_type_select" | "ign_neg_img" | "randles_cpe":
+            print('CPE',values['randles_cpe'])
             eis_choose_file_type = values['eis_file_type_select']
             try:
                 frequencies, z = eis_read_file(eis_file,eis_choose_file_type)
@@ -445,26 +449,50 @@ while True:
                 sg.popup(file_error, keep_on_top=True)
                 sg.popup("Probably wrong file type chosen, choose a new file type.")
                 continue
-            if values['ign_neg_img'] == True:
-                frequencies, z = preprocessing.ignoreBelowX(frequencies, z)
-            try:
-                aaa = values['randles_cpe']
-                circuit = Randles(initial_guess=[float(i) for i in values['initial_guess'].split(',')], CPE=values['randles_cpe'])
-            except:
-                sg.popup("Need initial guess or number of guesses do not match the circuit (could be CPE?)", keep_on_top=True)
-                continue
-            circuit.fit(frequencies, z)
-            z_fit = circuit.predict(frequencies)
-            
-            # circuit.plot(ax_eis, f_data=frequencies, Z_data=z_fit, kind='nyquist')
-            # plot_nyquist(ax_eis, z_fit, fmt='-')
+            try:    
+                if values['ign_neg_img'] == True:
+                    frequencies, z = preprocessing.ignoreBelowX(frequencies, z)
+                    print("preprocessing")
+                    
+                initial_guess = [float(i) for i in values['initial_guess'].split(',')]    
+                # if randles selected
+                if values['randles_select_circuit'] == True:
+                    try:
+                        circuit = Randles(initial_guess=initial_guess, CPE=values['randles_cpe'])
+                    except:
+                        sg.popup("Need initial guess or number of guesses do not match the circuit (could be CPE?)", keep_on_top=True)
+                        continue
+                
+                # custom circuit enabled
+                if values['custom_select_circuit'] == True:
+                    circuit_scheme = values['custom_circuit']
+                    print(circuit_scheme)
+                    circuit = CustomCircuit(initial_guess=initial_guess, circuit=circuit_scheme)
+                    
+                circuit.fit(frequencies, z)
+                z_fit = circuit.predict(frequencies)
+            except Exception as file_error:
+                sg.popup(file_error, keep_on_top=True)  
+                
             ax_eis.plot(np.real(z_fit), -np.imag(z_fit),'--')
             ax_eis.plot(np.real(z), -np.imag(z),':')
-            # ax_eis.plot(frequencies,z_fit)
+
             ax_eis.set_aspect('equal', 'box')
             ax_eis.axis('equal')
             fig_agg_eis.draw()
             window['circuit_output'].Update(circuit)
+        case "randles_select_circuit":
+            # randles_select = True
+            # window['randles_cpe'].Update(value=True)
+            window['randles_cpe'].Update(disabled=False)
+            window['custom_circuit'].Update(disabled=True)
+        case "custom_select_circuit":
+            # randles_select = False
+            # window['randles_cpe'].Update(value=False)
+            window['randles_cpe'].Update(disabled=True)
+            window['custom_circuit'].Update(disabled=False)
+        # case "randles_cpe":
+            
         case "eis_clear":
             clear_eis_plot()
 window.close()
