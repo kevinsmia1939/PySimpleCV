@@ -37,7 +37,7 @@ cv_layout = [
     [sg.Canvas(key='-CANVAS_cv-')],
     [sg.Button("Open CV File"),sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Text('CV file:'), sg.Text('No CV file selected', key = 'CV_file_use')],
-    [sg.Text('jpa='), sg.Text('', key = 'output_jpa'), sg.Text('jpc='), sg.Text('', key = 'output_jpc'), sg.Text('Reversibility (jpa/jpc)='), sg.Text('', key = 'output_rev')],
+    [sg.Text('jpa='), sg.Text('', key = 'output_jpa'), sg.Text('jpc='), sg.Text('', key = 'output_jpc'), sg.Text('Reversibility (jpa/jpc)='), sg.Text('', key = 'output_rev'), sg.Text('E°='), sg.Text('', key = 'output_e0')],
     [sg.Text('Trim CV plot'), sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_cut_val', enable_events=True, disabled=True)],
     [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
     [sg.Text('End 1'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
@@ -272,7 +272,10 @@ while True:
             
             ax_cv.plot((volt[low_range_trough],volt[high_range_trough]),(current[low_range_trough],current[high_range_trough]),"|", markersize = 10)
             ax_cv.plot(trough_volt,trough_curr,"x", markersize = 10)
-
+            
+            # Find estimate stadard electrode potential (E0)
+            E0 = (trough_volt+peak_volt)/2
+            ax_cv.plot(E0,0,"D", markersize = 6)
             
             # Start plotting
             jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpc_base = get_CV(df_CV,jpa_lns,jpa_lne,jpc_lns,jpc_lne,peak_volt,trough_volt)
@@ -295,6 +298,7 @@ while True:
             window['output_jpa'].Update(np.round(jpa,3))
             window['output_jpc'].Update(np.round(jpc,3))
             window['output_rev'].Update(np.round((jpa/jpc),3))
+            window['output_e0'].Update(np.round(E0,3))
         case "save_cv":
             save_cv_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
             if save_cv_loc is None:
@@ -482,17 +486,11 @@ while True:
             fig_agg_eis.draw()
             window['circuit_output'].Update(circuit)
         case "randles_select_circuit":
-            # randles_select = True
-            # window['randles_cpe'].Update(value=True)
             window['randles_cpe'].Update(disabled=False)
             window['custom_circuit'].Update(disabled=True)
         case "custom_select_circuit":
-            # randles_select = False
-            # window['randles_cpe'].Update(value=False)
             window['randles_cpe'].Update(disabled=True)
             window['custom_circuit'].Update(disabled=False)
-        # case "randles_cpe":
-            
         case "eis_clear":
             clear_eis_plot()
 window.close()
