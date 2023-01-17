@@ -251,14 +251,17 @@ while True:
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
         case 'sl_cut_val' | 'sl_jpa_lns' | 'sl_jpa_lne' | 'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_pos'| 'trough_pos'| 'peak_range' :
+            ax_cv.cla()
+            ax_cv.grid()
+            ax_cv.set_xlabel("Voltage")
+            ax_cv.set_ylabel("Current")
+            
             cut_val = int(values['sl_cut_val'])  # Getting the k value from the slider element.
             jpa_lns = int(values['sl_jpa_lns'])
             jpa_lne = int(values['sl_jpa_lne'])
             jpc_lns = int(values['sl_jpc_lns'])
             jpc_lne = int(values['sl_jpc_lne'])
-            ax_cv.cla()
-            ax_cv.grid()
-            
+
             #Find custom peak
             window['peak_pos'].Update(range=(0,cv_size))
             window['trough_pos'].Update(range=(0,cv_size))
@@ -268,10 +271,10 @@ while True:
             low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr = get_CV_peak(df_CV, peak_range, peak_pos, trough_pos)
 
             ax_cv.plot((volt[low_range_peak],volt[high_range_peak]),(current[low_range_peak],current[high_range_peak]),"|", markersize = 10)
-            ax_cv.plot(peak_volt,peak_curr,"x", markersize = 10)
+            # ax_cv.plot(peak_volt,peak_curr,"x", markersize = 10)
             
             ax_cv.plot((volt[low_range_trough],volt[high_range_trough]),(current[low_range_trough],current[high_range_trough]),"|", markersize = 10)
-            ax_cv.plot(trough_volt,trough_curr,"x", markersize = 10)
+            # ax_cv.plot(trough_volt,trough_curr,"x", markersize = 10)
             
             vpa = peak_volt
             vpc = trough_volt
@@ -287,14 +290,14 @@ while True:
             jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpc_base = get_CV(df_CV,jpa_lns,jpa_lne,jpc_lns,jpc_lne,peak_volt,trough_volt)
             ax_cv.plot(volt[cut_val:], current[cut_val:], '-', color='black')
             
-            ax_cv.plot(peak_volt,jpa_base,marker='s')
+            # ax_cv.plot(peak_volt,jpa_base,marker='s')
             ax_cv.plot(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
             ax_cv.annotate(text='', xy=(peak_volt,jpa_base), xytext=(peak_volt,peak_curr), arrowprops=dict(arrowstyle='<-'))
             ax_cv.plot((volt[jpa_lns],peak_volt),(current[jpa_lns],jpa_base),'--')
             
 
             ax_cv.plot(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
-            ax_cv.plot(trough_volt,jpc_base,marker='s')
+            # ax_cv.plot(trough_volt,jpc_base,marker='s')
             ax_cv.annotate(text='', xy=(trough_volt,jpc_base), xytext=(trough_volt,trough_curr), arrowprops=dict(arrowstyle='<-'))
             ax_cv.plot((volt[jpc_lns],trough_volt),(current[jpc_lns],jpc_base),'--')
 
