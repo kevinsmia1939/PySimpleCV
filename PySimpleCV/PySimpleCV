@@ -33,46 +33,51 @@ def About_PySimpleCV():
 sg.theme('DarkBlue')
 
 # Generate layout for CV tab
-cv_layout = [
-    [sg.Canvas(key='-CANVAS_cv-')],
-    [sg.Button("Open CV File"),sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
+cv_slider_size = (50,8)
+cv_col1=[[sg.Canvas(key='-CANVAS_cv-')]]
+cv_col2 = [
+    [sg.Button("Open CV File")],
+    [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Text('CV file:'), sg.Text('No CV file selected', key = 'CV_file_use')],
     [sg.Text('jpa='), sg.Text('', key = 'output_jpa'), sg.Text('jpc='), sg.Text('', key = 'output_jpc'), sg.Text('vpa='), sg.Text('', key = 'output_vpa'), sg.Text('vpc='), sg.Text('', key = 'output_vpc'), sg.Text('Reversibility (jpa/jpc)='), sg.Text('', key = 'output_rev'), sg.Text('E\u00bd='), sg.Text('', key = 'output_e1_2'), sg.Text('E\u209a='), sg.Text('', key = 'output_delta_e')],
-    [sg.Text('Trim CV plot'), sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_cut_val', enable_events=True, disabled=True)],
-    [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
-    [sg.Text('End 1'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
-    [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
-    [sg.Text('End 2'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
+    [sg.Text('Trim CV plot'), sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_cut_val', enable_events=True, disabled=True)],
+    [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
+    [sg.Text('End 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
+    [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
+    [sg.Text('End 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
     
-    [sg.Text('Peak search range'),sg.Slider(range=(1, 100), size=(95, 10), orientation='h', key='peak_range', enable_events=True, disabled=False)],
-    [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='peak_pos', enable_events=True, disabled=False)],
-    [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=(95, 10), orientation='h', key='trough_pos', enable_events=True, disabled=False)],
+    [sg.Text('Peak search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=False)],
+    [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False)],
+    [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos', enable_events=True, disabled=False)],
     
     [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV')]
 ]
+cv_layout = [[sg.Column(cv_col1),sg.Column(cv_col2)]]
+
 # Generate layout for battery cycling tab.
-bat_layout = [
-    [sg.Canvas(key='-CANVAS_bat-')],
+bat_col1=[[sg.Canvas(key='-CANVAS_bat-')]]
+bat_col2 = [
     [sg.Button("Open Battery File"),sg.Text('.xls files'),
      sg.Checkbox('Voltage', default=True, key='cb_volt', disabled=True, enable_events=True), 
      sg.Checkbox('Current', default=True, key='cb_current', disabled=True, enable_events=True),
      sg.Checkbox('Efficiencies', default=True, key='cb_eff', disabled=True, enable_events=True)],
     [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
-    [sg.Text('Average voltage efficiency='),sg.Text('', key = 'output_ve'),sg.Text('%'),
-     sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%'),
-     sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%'),
-     sg.Text('Total number of cycles='), sg.Text('', key= 'tot_cycle')],
+    [sg.Text('Average voltage efficiency='),sg.Text('', key = 'output_ve'),sg.Text('%')],
+    [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%')],
+    [sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
+    [sg.Text('Total number of cycles='), sg.Text('', key= 'tot_cycle')],
     [sg.Text('Voltage, current, energy efficiency(%) for each row of cycle, press ctrl+c to copy')],
     [sg.Text('To copy nicely to spreadsheet software, select space as delimiter and merge delimters.')],
     [sg.Multiline('',size=(50,5), disabled=True, key = 'output_arr')],
-    [sg.Text('Cycle start'), sg.Slider(range=(0, 0), size=(95, 20), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
-    [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(95, 20), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
+    [sg.Text('Cycle start'), sg.Slider(range=(0, 0), size=(50, 8), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
+    [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(50, 8), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
     [sg.Button('Clear plot',key='bat_clear'),sg.Button('Save plot', key='save_bat'), sg.Button('Exit', key='exit_2')]
-    ]
+    ]          
+bat_layout = [[sg.Column(bat_col1),sg.Column(bat_col2)]]
 
 eis_col1=[[sg.Canvas(key='-CANVAS_eis-')],
       [sg.Text('EIS file:'), sg.Text('No EIS file selected', key = 'eis_file_use')],
-      [sg.Text('Initial Guesses'),sg.Input(default_text='.01, .01, .001, 1, .1, 1', key='initial_guess',size=(72,5))],
+      [sg.Text('Initial Guesses'),sg.Input(default_text='.01, .01, .001, 1, .1, 1', key='initial_guess',size=(72,5))]
       ]
 eis_col2=[[sg.Button("Open EIS File", key = 'open_eis_file'), sg.Button("Plot", key='plot_eis')],
       [sg.Text('File type:'),sg.Combo(values=('CSV (.csv)', 'Gamry (.dta)','zplot (.z)','Versastudio (.par)','biologic (.mpt)', 'Autolab (.txt)', 'Parstat (.txt)', 'PowerSuite (.txt)', 'CHInstruments (.txt)'), default_value='CSV (.csv)', readonly=True, key='eis_file_type_select', enable_events=True, change_submits=True)],
@@ -81,7 +86,7 @@ eis_col2=[[sg.Button("Open EIS File", key = 'open_eis_file'), sg.Button("Plot", 
       [sg.Radio('Custom circuit', "rad_eis_circuit", default=False, enable_events=True, k='custom_select_circuit')],
       [sg.Text('Custom circuit scheme')],
       [sg.Input(default_text=('R0-p(R1-Wo1,CPE1)'), key='custom_circuit',size=(50,5),disabled=True)],
-      [sg.Multiline('',size=(50,30), disabled=True, key = 'circuit_output')],
+      [sg.Multiline('',size=(50,20), disabled=True, key = 'circuit_output')],
       [sg.Button('Clear plot', key='eis_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_eis')],
       [sg.Text('Visit https://impedancepy.readthedocs.io/en/latest/ for help')],
       ]
@@ -100,7 +105,7 @@ canvas_bat = window['-CANVAS_bat-'].tk_canvas
 canvas_eis = window['-CANVAS_eis-'].tk_canvas
 
 # Generate initial empty plot.
-fig_cv = Figure(figsize=(10,5))
+fig_cv = Figure(figsize=(10,10))
 ax_cv = fig_cv.add_subplot(111)
 ax_cv.set_xlabel("Voltage")
 ax_cv.set_ylabel("Current")
@@ -109,7 +114,7 @@ ax_cv.grid()
 # fig_cv.tight_layout(pad=2)
 fig_agg_cv = draw_figure(canvas_cv, fig_cv)
 
-fig_bat = Figure(figsize=(10,5))
+fig_bat = Figure(figsize=(10,10))
 ax_bat_volt = fig_bat.add_subplot(111)
 ax_bat_current = ax_bat_volt.twinx()
 ax_bat_eff = ax_bat_volt.twinx()
@@ -132,7 +137,7 @@ fig_bat.tight_layout()
 fig_agg_bat = draw_figure(canvas_bat, fig_bat)
 
 # Generate initial empty plot.
-fig_eis = Figure(figsize=(6,6))
+fig_eis = Figure(figsize=(10,10))
 ax_eis = fig_eis.add_subplot(111)
 ax_eis.set_xlabel("Z'(w)[Ohms]")
 ax_eis.set_ylabel('-Z"(w)[Ohms]')
@@ -276,6 +281,7 @@ while True:
             ax_cv.plot((volt[low_range_trough],volt[high_range_trough]),(current[low_range_trough],current[high_range_trough]),"|", markersize = 10)
             # ax_cv.plot(trough_volt,trough_curr,"x", markersize = 10)
             
+            # Calculate volatges of the peaks
             vpa = peak_volt
             vpc = trough_volt
             
