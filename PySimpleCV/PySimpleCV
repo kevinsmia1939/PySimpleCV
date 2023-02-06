@@ -12,6 +12,9 @@ from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
 from PySimpleCV_main_func import get_CV, battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file
 
+# print(sg.main_get_debug_data())
+# print(sg.tclversion_detailed)
+
 def draw_figure(canvas, figure): 
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas) 
     figure_canvas_agg.draw() 
@@ -49,6 +52,9 @@ cv_col2 = [
     [sg.Text('Peak search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=False)],
     [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False)],
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos', enable_events=True, disabled=False)],
+    
+    # [sg.Text('Cycle start'), sg.Slider(range=(0, 0), size=(50, 8), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
+    # [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(50, 8), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
     
     [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV')]
 ]
