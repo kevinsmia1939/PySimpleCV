@@ -8,7 +8,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
-from impedance.visualization import plot_nyquist
+# from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
 from PySimpleCV_main_func import get_CV, battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file
 

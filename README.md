@@ -26,6 +26,7 @@ Future plans.
 * More flexible state recognition (C_CC, D_CC, R, etc)
 * Export plot with custom dpi
 * Plot EIS data, calculate parameters, and display circuit.
+* Generate Tafel plot
 
 The file PySimpleCV/PySimpleCV contain the main code responsible to produce GUI and plotting.
 PySimpleCV/PySimpleCV_main_func.py contain mathematical function for calculation.
