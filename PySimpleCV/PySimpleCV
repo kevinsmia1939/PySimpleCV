@@ -129,7 +129,7 @@ ax_bat_eff.spines.right.set_position(("axes", 1.1))
 ax_bat_volt.set_ylabel("Voltage")
 ax_bat_current.set_ylabel("Current")
 ax_bat_eff.set_ylabel("Voltage/Current/Energy Efficiencies")
-ax_bat_cycle.set_xlabel("Cycle")
+# ax_bat_cycle.set_xlabel("Cycle")
 ax_bat_volt.set_xlabel("Time")
 # Create manual legend so we can put them in the same box
 volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
@@ -398,7 +398,8 @@ while True:
                 ax_bat_volt.set_xlim(left=0,right=max(time_df))
 
                 ax_bat_volt.grid()
-
+                ax_bat_volt.tick_params(left = False, right = False , labelleft = False ,
+                                labelbottom = False, bottom = False)
                 fig_agg_bat.draw()
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
