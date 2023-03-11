@@ -42,7 +42,7 @@ cv_col2 = [
     [sg.Button("Open CV File")],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Text('CV file:'), sg.Text('No CV file selected', key = 'CV_file_use')],
-    [sg.Text('jpa='), sg.Text('', key = 'output_jpa'), sg.Text('jpc='), sg.Text('', key = 'output_jpc'), sg.Text('vpa='), sg.Text('', key = 'output_vpa'), sg.Text('vpc='), sg.Text('', key = 'output_vpc'), sg.Text('Reversibility (jpa/jpc)='), sg.Text('', key = 'output_rev'), sg.Text('E\u00bd='), sg.Text('', key = 'output_e1_2'), sg.Text('E\u209a='), sg.Text('', key = 'output_delta_e')],
+    [sg.Text('jpa='), sg.Text('', key = 'output_jpa'), sg.Text('jpc='), sg.Text('', key = 'output_jpc'), sg.Text('vpa='), sg.Text('', key = 'output_vpa'), sg.Text('vpc='), sg.Text('', key = 'output_vpc'), sg.Text('Reversibility (jpa/jpc)='), sg.Text('', key = 'output_rev'), sg.Text('E\u00bd='), sg.Text('', key = 'output_e1_2'), sg.Text('ΔE\u209a='), sg.Text('', key = 'output_delta_e')],
     [sg.Text('Trim CV plot'), sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_cut_val', enable_events=True, disabled=True)],
     [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
     [sg.Text('End 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
@@ -129,7 +129,7 @@ ax_bat_eff.spines.right.set_position(("axes", 1.1))
 ax_bat_volt.set_ylabel("Voltage")
 ax_bat_current.set_ylabel("Current")
 ax_bat_eff.set_ylabel("Voltage/Current/Energy Efficiencies")
-# ax_bat_cycle.set_xlabel("Cycle")
+ax_bat_cycle.set_xlabel("Cycle")
 ax_bat_volt.set_xlabel("Time")
 # Create manual legend so we can put them in the same box
 volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
@@ -200,11 +200,17 @@ def clear_cv_plot():
     window['sl_jpa_lne'].Update(disabled=True)
     window['sl_jpc_lns'].Update(disabled=True)
     window['sl_jpc_lne'].Update(disabled=True)
+    window['peak_range'].Update(disabled=True)
+    window['peak_pos'].Update(disabled=True)
+    window['trough_pos'].Update(disabled=True)
     window['sl_cut_val'].Update(range=(1, 1))
     window['sl_jpa_lns'].Update(range=(1, 1))
     window['sl_jpa_lne'].Update(range=(1, 1))
     window['sl_jpc_lns'].Update(range=(1, 1))
     window['sl_jpc_lne'].Update(range=(1, 1))
+    window['peak_range'].Update(range=(1, 100))
+    window['peak_pos'].Update(range=(1, 1))
+    window['trough_pos'].Update(range=(1, 1))
     ax_cv.cla()
     ax_cv.grid()
     ax_cv.set_xlabel("Voltage")
@@ -249,11 +255,17 @@ while True:
                 window['sl_jpa_lne'].Update(range=(0,cv_size))
                 window['sl_jpc_lns'].Update(range=(0,cv_size))
                 window['sl_jpc_lne'].Update(range=(0,cv_size))
+                window['peak_range'].Update(range=(1, 100))
+                window['peak_pos'].Update(range=(1, cv_size))
+                window['trough_pos'].Update(range=(1, cv_size))
                 window['sl_cut_val'].Update(disabled=False)
                 window['sl_jpa_lns'].Update(disabled=False)
                 window['sl_jpa_lne'].Update(disabled=False)
                 window['sl_jpc_lns'].Update(disabled=False)
                 window['sl_jpc_lne'].Update(disabled=False)
+                window['peak_range'].Update(disabled=False)
+                window['peak_pos'].Update(disabled=False)
+                window['trough_pos'].Update(disabled=False)
                 window['CV_file_use'].Update(CV_file)
                 ax_cv.grid()
                 ax_cv.plot(volt, current, '-', color='black')
@@ -398,8 +410,7 @@ while True:
                 ax_bat_volt.set_xlim(left=0,right=max(time_df))
 
                 ax_bat_volt.grid()
-                ax_bat_volt.tick_params(left = False, right = False , labelleft = False ,
-                                labelbottom = False, bottom = False)
+
                 fig_agg_bat.draw()
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
