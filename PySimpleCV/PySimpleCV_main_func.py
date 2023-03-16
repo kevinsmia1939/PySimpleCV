@@ -89,16 +89,20 @@ def find_seg_start_end(state_df,search_key):
     start_end_segment = np.stack(start_end_segment)
     return start_end_segment
 
-def get_CV_init(df_CV):
+def get_CV_init(df_CV, ir_compen):
     cv_size = df_CV.shape[0]
     volt = df_CV[:,0]
     current = df_CV[:,1]
+    # iR compensation
+    volt = volt - current*ir_compen
     return cv_size, volt, current
 
-def get_CV_peak(df_CV, peak_range, peak_pos, trough_pos):
+def get_CV_peak(df_CV, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen):
     # Search for peak between peak_range.
-    cv_size, volt, current = get_CV_init(df_CV)  
-
+    # float(ir_compen)
+    cv_size, volt, current = get_CV_init(df_CV, ir_compen)  
+    volt = volt[cut_val_s:cut_val_e]
+    current = current[cut_val_s:cut_val_e]
     high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
     low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
     peak_curr_range = current[low_range_peak:high_range_peak]
@@ -111,11 +115,10 @@ def get_CV_peak(df_CV, peak_range, peak_pos, trough_pos):
     trough_curr_range = current[low_range_trough:high_range_trough]
     trough_curr = min(trough_curr_range)
     trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
-    trough_volt = volt[low_range_trough:high_range_trough][trough_idx]  
-    return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr
-
-def get_CV(df_CV,jpa_lns,jpa_lne,jpc_lns,jpc_lne,peak_volt,trough_volt):
-    # Select the points to extrapolate.
+    trough_volt = volt[low_range_trough:high_range_trough][trough_idx] 
+    
+    
+    
     if jpa_lns == jpa_lne:
         jpa_lne = jpa_lns+1
     if jpa_lns > jpa_lne:
@@ -129,14 +132,41 @@ def get_CV(df_CV,jpa_lns,jpa_lne,jpc_lns,jpc_lne,peak_volt,trough_volt):
         jpc_lns = jpc_lne
         jpc_lne = save_val_jpc
         
-    cv_size, volt, current = get_CV_init(df_CV)    
+    # cv_size, volt, current = get_CV_init(df_CV)    
 
     jpa_lnfit = np.polyfit(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne], 1)
     jpa_base = jpa_lnfit[0]*peak_volt + jpa_lnfit[1]
 
     jpc_lnfit = np.polyfit(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne], 1)
     jpc_base = jpc_lnfit[0]*trough_volt + jpc_lnfit[1]
-    return jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpc_base
+    
+    
+    
+    return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpc_base
+
+# def get_CV(df_CV,jpa_lns,jpa_lne,jpc_lns,jpc_lne,peak_volt,trough_volt):
+#     # Select the points to extrapolate.
+#     if jpa_lns == jpa_lne:
+#         jpa_lne = jpa_lns+1
+#     if jpa_lns > jpa_lne:
+#         save_val_jpa = jpa_lns
+#         jpa_lns = jpa_lne
+#         jpa_lne = save_val_jpa
+#     if jpc_lns == jpc_lne:
+#         jpc_lne = jpc_lns+1
+#     if jpc_lns > jpc_lne:
+#         save_val_jpc = jpc_lns
+#         jpc_lns = jpc_lne
+#         jpc_lne = save_val_jpc
+        
+#     cv_size, volt, current = get_CV_init(df_CV)    
+
+#     jpa_lnfit = np.polyfit(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne], 1)
+#     jpa_base = jpa_lnfit[0]*peak_volt + jpa_lnfit[1]
+
+#     jpc_lnfit = np.polyfit(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne], 1)
+#     jpc_base = jpc_lnfit[0]*trough_volt + jpc_lnfit[1]
+#     return jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpc_base
 
 def time2sec(time_raw,delim):
     # Take time format such as 1-12:05:24 and convert to seconds
