@@ -99,10 +99,32 @@ def get_CV_init(df_CV, ir_compen):
 
 def get_CV_peak(df_CV, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen):
     # Search for peak between peak_range.
-    # float(ir_compen)
-    cv_size, volt, current = get_CV_init(df_CV, ir_compen)  
+        
+    if jpa_lns == jpa_lne:
+        jpa_lne = jpa_lns+1
+    if jpa_lns > jpa_lne:
+        save_val_jpa = jpa_lns
+        jpa_lns = jpa_lne
+        jpa_lne = save_val_jpa
+    if jpc_lns == jpc_lne:
+        jpc_lne = jpc_lns+1
+    if jpc_lns > jpc_lne:
+        save_val_jpc = jpc_lns
+        jpc_lns = jpc_lne
+        jpc_lne = save_val_jpc    
+
+    if cut_val_s == cut_val_e:
+        cut_val_e = cut_val_s+2
+    if cut_val_s > cut_val_e:
+        save_cut_val = cut_val_s
+        cut_val_s = cut_val_e
+        cut_val_e = save_cut_val    
+    
+    cv_size, volt, current = get_CV_init(df_CV, ir_compen)
+    # trim cv
     volt = volt[cut_val_s:cut_val_e]
     current = current[cut_val_s:cut_val_e]
+    cv_size = cut_val_e - cut_val_s
     high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
     low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
     peak_curr_range = current[low_range_peak:high_range_peak]
@@ -119,18 +141,7 @@ def get_CV_peak(df_CV, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, j
     
     
     
-    if jpa_lns == jpa_lne:
-        jpa_lne = jpa_lns+1
-    if jpa_lns > jpa_lne:
-        save_val_jpa = jpa_lns
-        jpa_lns = jpa_lne
-        jpa_lne = save_val_jpa
-    if jpc_lns == jpc_lne:
-        jpc_lne = jpc_lns+1
-    if jpc_lns > jpc_lne:
-        save_val_jpc = jpc_lns
-        jpc_lns = jpc_lne
-        jpc_lne = save_val_jpc
+
         
     # cv_size, volt, current = get_CV_init(df_CV)    
 
