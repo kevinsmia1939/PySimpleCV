@@ -1,5 +1,6 @@
 import numpy as np 
 import pandas as pd
+from scipy import linalg
 import re
 from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
@@ -40,6 +41,7 @@ def battery_xls2df(bat_file):
         df_bat = pd.read_excel(bat_file,header=None)
         # Drop Index column, create our own
         df_bat = df_bat.drop([0],axis=1)
+        
         # Delete all row that does not contain C_CC D_CC R
         row_size_raw_df_bat = len(df_bat)
         for i in range(0,row_size_raw_df_bat):
@@ -56,9 +58,9 @@ def battery_xls2df(bat_file):
             df_bat['time'][i] = time2sec(df_bat['time'][i],'[:,-]')
             
         time_df = np.array(pd.Series(df_bat['time'])) #Get "time" column
-        volt_df = np.array(pd.Series(df_bat['volt'])) #Get "volt" column
-        current_df = pd.Series(df_bat['current']) #Get "Current" column
-        capacity_df = pd.Series(df_bat['capacity']) #Get "capacity" column
+        volt_df = np.array(pd.Series(df_bat['volt'].astype(float))) #Get "volt" column, convert to float
+        current_df = np.array(pd.Series(df_bat['current'].astype(float))) #Get "Current" column, convert to float
+        capacity_df = np.array(pd.Series(df_bat['capacity'].astype(float))) #Get "capacity" column, convert to float
         state_df = pd.Series(df_bat['state']) #Get "state" column
     else:
         raise Exception("Unknown file type, please choose .xls")
@@ -124,6 +126,8 @@ def get_CV_peak(df_CV, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, j
     # trim cv
     volt = volt[cut_val_s:cut_val_e]
     current = current[cut_val_s:cut_val_e]
+    volt = volt[~np.isnan(volt)]
+    current = current[~np.isnan(current)]
     cv_size = cut_val_e - cut_val_s
     high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
     low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
@@ -138,46 +142,14 @@ def get_CV_peak(df_CV, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, j
     trough_curr = min(trough_curr_range)
     trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
     trough_volt = volt[low_range_trough:high_range_trough][trough_idx] 
-    
-    
-    
-
-        
-    # cv_size, volt, current = get_CV_init(df_CV)    
 
     jpa_lnfit = np.polyfit(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne], 1)
     jpa_base = jpa_lnfit[0]*peak_volt + jpa_lnfit[1]
 
     jpc_lnfit = np.polyfit(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne], 1)
     jpc_base = jpc_lnfit[0]*trough_volt + jpc_lnfit[1]
-    
-    
-    
+ 
     return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpc_base
-
-# def get_CV(df_CV,jpa_lns,jpa_lne,jpc_lns,jpc_lne,peak_volt,trough_volt):
-#     # Select the points to extrapolate.
-#     if jpa_lns == jpa_lne:
-#         jpa_lne = jpa_lns+1
-#     if jpa_lns > jpa_lne:
-#         save_val_jpa = jpa_lns
-#         jpa_lns = jpa_lne
-#         jpa_lne = save_val_jpa
-#     if jpc_lns == jpc_lne:
-#         jpc_lne = jpc_lns+1
-#     if jpc_lns > jpc_lne:
-#         save_val_jpc = jpc_lns
-#         jpc_lns = jpc_lne
-#         jpc_lne = save_val_jpc
-        
-#     cv_size, volt, current = get_CV_init(df_CV)    
-
-#     jpa_lnfit = np.polyfit(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne], 1)
-#     jpa_base = jpa_lnfit[0]*peak_volt + jpa_lnfit[1]
-
-#     jpc_lnfit = np.polyfit(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne], 1)
-#     jpc_base = jpc_lnfit[0]*trough_volt + jpc_lnfit[1]
-#     return jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpc_base
 
 def time2sec(time_raw,delim):
     # Take time format such as 1-12:05:24 and convert to seconds
@@ -196,17 +168,26 @@ def find_state_seq(state_df):
     rest_seq = find_seg_start_end(state_df,'R')
     return charge_seq, discharge_seq, rest_seq
 
-def get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_df, cycle_start, cycle_end, charge_seq, discharge_seq):
+def get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_df, charge_seq, discharge_seq):
     # Calculate the area of charge and discharge cycle and find VE,CE,EE for each cycle
     VE_lst = []
     CE_lst = []
-    for i in range(cycle_start-1,cycle_end):
+    charge_cap_lst = []
+    discharge_cap_lst = []
+    cycle_end = min(np.shape(charge_seq)[0],np.shape(discharge_seq)[0]) #take the min amount of cycle between the charge and dis
+    # cycle_start = 1
+    for i in range(0,cycle_end):
+        # Error if the cycle is not complete charge sequence more than discharge sequence
         time_seq_C_CC = time_df[charge_seq[i][0]:charge_seq[i][1]+1]
         volt_seq_C_CC = volt_df[charge_seq[i][0]:charge_seq[i][1]+1]
         current_seq_C_CC = current_df[charge_seq[i][0]:charge_seq[i][1]+1]
+        charge_cap_seq_C_CC = capacity_df[charge_seq[i][0]:charge_seq[i][1]+1] 
+        
         time_seq_D_CC = time_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
         volt_seq_D_CC = volt_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
         current_seq_D_CC = current_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
+        dis_cap_seq_C_CC = capacity_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
+        
         int_vt_C = np.trapz(volt_seq_C_CC,time_seq_C_CC)
         int_vt_D = np.trapz(volt_seq_D_CC,time_seq_D_CC)
         int_ct_C = np.trapz(current_seq_C_CC,time_seq_C_CC)
@@ -214,12 +195,22 @@ def get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_d
         int_ct_D = -(np.trapz(current_seq_D_CC,time_seq_D_CC))
         VE = int_vt_D/int_vt_C
         CE = int_ct_D/int_ct_C
+
+        charge_cap_seq_C_CC = np.array(charge_cap_seq_C_CC)[-1]
+        dis_cap_seq_C_CC = np.array(dis_cap_seq_C_CC)[-1]
+
+        charge_cap_lst.append(charge_cap_seq_C_CC)
+        discharge_cap_lst.append(dis_cap_seq_C_CC)
+        
         VE_lst.append(VE)
         CE_lst.append(CE)
     VE_arr = np.array(VE_lst) * 100 # convert to %
     CE_arr = np.array(CE_lst) * 100
     EE_arr = (VE_arr/100 * CE_arr/100)*100
-    return VE_arr, CE_arr, EE_arr
+    # print(charge_cap_lst)
+    charge_cap_arr = np.array(charge_cap_lst)
+    discharge_cap_arr = np.array(discharge_cap_lst)
+    return VE_arr, CE_arr, EE_arr, charge_cap_arr, discharge_cap_arr, cycle_end
 
 def cy_idx_state_range(state_df, cycle_start, cycle_end, charge_seq, discharge_seq):
     # Get index for beginning and end of specify cycle
