@@ -46,7 +46,7 @@ def battery_xls2df(bat_file):
         row_size_raw_df_bat = len(df_bat)
         for i in range(0,row_size_raw_df_bat):
             bat_cell_state = pd.Series(df_bat[5])[i]
-            if bat_cell_state != 'C_CC' and bat_cell_state != 'D_CC' and bat_cell_state != 'R':
+            if bat_cell_state != 'C_CC' and bat_cell_state != 'D_CC' and bat_cell_state != 'R' and bat_cell_state != 'C_CV' and bat_cell_state != 'D_CV':
                 df_bat = df_bat.drop([i])
         df_bat.columns = ['time', 'volt', 'current', 'capacity', 'state']
         # Reset index after dropping some rows
@@ -85,10 +85,14 @@ def find_seg_start_end(state_df,search_key):
                 list_start_end_key_idx.append(key_end)
     if state_df[row_size-1] == search_key:
        key_end = row_size-1
-       list_start_end_key_idx.append(key_end)         
-    start_end_segment = np.array(list_start_end_key_idx)
-    start_end_segment = np.split(start_end_segment, len(start_end_segment)/2)
-    start_end_segment = np.stack(start_end_segment)
+       list_start_end_key_idx.append(key_end)
+    if list_start_end_key_idx == []:
+        # If a certain state is not found, return None
+         start_end_segment = []
+    else:
+        start_end_segment = np.array(list_start_end_key_idx)
+        start_end_segment = np.split(start_end_segment, len(start_end_segment)/2)
+        start_end_segment = np.stack(start_end_segment)
     return start_end_segment
 
 def get_CV_init(df_CV, ir_compen):
@@ -163,10 +167,12 @@ def time2sec(time_raw,delim):
     return int(time_sec)
 
 def find_state_seq(state_df):
-    charge_seq = find_seg_start_end(state_df,'C_CC')
-    discharge_seq = find_seg_start_end(state_df,'D_CC')
+    charge_CC_seq = find_seg_start_end(state_df,'C_CC')
+    discharge_CC_seq = find_seg_start_end(state_df,'D_CC')
+    charge_CV_seq = find_seg_start_end(state_df,'C_CV')
+    discharge_CV_seq = find_seg_start_end(state_df,'D_CV')
     rest_seq = find_seg_start_end(state_df,'R')
-    return charge_seq, discharge_seq, rest_seq
+    return charge_CC_seq, discharge_CC_seq, rest_seq, charge_CV_seq, discharge_CV_seq
 
 def get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_df, charge_seq, discharge_seq):
     # Calculate the area of charge and discharge cycle and find VE,CE,EE for each cycle
@@ -178,30 +184,30 @@ def get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_d
     # cycle_start = 1
     for i in range(0,cycle_end):
         # Error if the cycle is not complete charge sequence more than discharge sequence
-        time_seq_C_CC = time_df[charge_seq[i][0]:charge_seq[i][1]+1]
-        volt_seq_C_CC = volt_df[charge_seq[i][0]:charge_seq[i][1]+1]
-        current_seq_C_CC = current_df[charge_seq[i][0]:charge_seq[i][1]+1]
-        charge_cap_seq_C_CC = capacity_df[charge_seq[i][0]:charge_seq[i][1]+1] 
+        time_seq_C = time_df[charge_seq[i][0]:charge_seq[i][1]+1]
+        volt_seq_C = volt_df[charge_seq[i][0]:charge_seq[i][1]+1]
+        current_seq_C = current_df[charge_seq[i][0]:charge_seq[i][1]+1]
+        charge_cap_seq_C = capacity_df[charge_seq[i][0]:charge_seq[i][1]+1] 
         
-        time_seq_D_CC = time_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
-        volt_seq_D_CC = volt_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
-        current_seq_D_CC = current_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
-        dis_cap_seq_C_CC = capacity_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
+        time_seq_D = time_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
+        volt_seq_D = volt_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
+        current_seq_D = current_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
+        dis_cap_seq_C = capacity_df[discharge_seq[i][0]:discharge_seq[i][1]+1]
         
-        int_vt_C = np.trapz(volt_seq_C_CC,time_seq_C_CC)
-        int_vt_D = np.trapz(volt_seq_D_CC,time_seq_D_CC)
-        int_ct_C = np.trapz(current_seq_C_CC,time_seq_C_CC)
+        int_vt_C = np.trapz(volt_seq_C,time_seq_C)
+        int_vt_D = np.trapz(volt_seq_D,time_seq_D)
+        int_ct_C = np.trapz(current_seq_C,time_seq_C)
         # During discharge, current is negative, must make to positive
-        int_ct_D = -(np.trapz(current_seq_D_CC,time_seq_D_CC))
+        int_ct_D = -(np.trapz(current_seq_D,time_seq_D))
         VE = int_vt_D/int_vt_C
         CE = int_ct_D/int_ct_C
 
-        charge_cap_seq_C_CC = np.array(charge_cap_seq_C_CC)[-1]
-        dis_cap_seq_C_CC = np.array(dis_cap_seq_C_CC)[-1]
+        charge_cap_seq = np.array(charge_cap_seq_C)[-1]
+        dis_cap_seq = np.array(dis_cap_seq_C)[-1]
 
-        charge_cap_lst.append(charge_cap_seq_C_CC)
-        discharge_cap_lst.append(dis_cap_seq_C_CC)
-        
+        charge_cap_lst.append(charge_cap_seq)
+        discharge_cap_lst.append(dis_cap_seq)
+      
         VE_lst.append(VE)
         CE_lst.append(CE)
     VE_arr = np.array(VE_lst) * 100 # convert to %

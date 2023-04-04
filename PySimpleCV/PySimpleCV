@@ -73,7 +73,8 @@ bat_col2 = [
     [sg.Button("Open Battery File"),sg.Text('.xls files'),
      sg.Checkbox('Voltage', default=True, key='cb_volt', disabled=True, enable_events=True), 
      sg.Checkbox('Current', default=True, key='cb_current', disabled=True, enable_events=True),
-     sg.Checkbox('Efficiencies', default=True, key='cb_eff', disabled=True, enable_events=True)],
+     sg.Checkbox('Efficiencies', default=True, key='cb_eff', disabled=True, enable_events=True),
+     sg.Checkbox('Capacities', default=True, key='cb_cap', disabled=True, enable_events=True)],
     [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
     [sg.Text('Average voltage efficiency='),sg.Text('', key = 'output_ve'),sg.Text('%')],
     [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%')],
@@ -149,7 +150,8 @@ CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
 EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
 cap_leg = Line2D([0], [0], label='Capacity', color='orange', marker='s', linestyle='None')
 ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg,cap_leg],ncol=6, bbox_to_anchor=(0.5,-0.25),loc='lower center')
-ax_bat_volt.grid()
+ax_bat_cycle.grid()
+ax_bat_volt.grid(axis='y')
 fig_bat.tight_layout()
 fig_agg_bat = draw_figure(canvas_bat, fig_bat)
 
@@ -184,13 +186,16 @@ def clear_battery_plot():
     ax_bat_current.cla()
     ax_bat_volt.cla()
     ax_bat_eff.cla()
+    ax_bat_cap.cla()
     ax_bat_cycle.cla()
     
     #Redraw Efficiency axis and labels.
-    ax_bat_eff.spines.right.set_position(("axes", 1.1))
+    ax_bat_eff.spines.right.set_position(("axes", 1.11))
+    ax_bat_cap.spines.right.set_position(("axes", 1.21))
     ax_bat_volt.set_ylabel("Voltage")
     ax_bat_current.set_ylabel("Current")
     ax_bat_eff.set_ylabel("Voltage/Current/Energy Efficiencies")
+    ax_bat_cap.set_ylabel("Capacity")
     ax_bat_cycle.set_xlabel("Cycle")
     ax_bat_volt.set_xlabel("Time")
     # Create manual legend so we can put them in the same box
@@ -200,7 +205,7 @@ def clear_battery_plot():
     CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
     EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
     ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg],ncol=5, bbox_to_anchor=(0.5,-0.25),loc='lower center')
-    ax_bat_volt.grid()
+    ax_bat_cycle.grid()
     fig_agg_bat.draw()
     
 def clear_cv_plot():
@@ -396,77 +401,80 @@ while True:
                 continue
             elif bat_file_new == '':
                 continue
-            try:
-                clear_battery_plot()
-                bat_file = bat_file_new
-                df_bat, row_size, time_df, volt_df, current_df, capacity_df, state_df = battery_xls2df(bat_file)
-                # Sequence information
-                charge_seq, discharge_seq, rest_seq = find_state_seq(state_df)
-                # tot_cycle_number = np.shape(charge_seq)[0]
-                VE_arr, CE_arr, EE_arr, charge_cap_arr, discharge_cap_arr, tot_cycle_number = get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_df, charge_seq, discharge_seq)
-                
-                VE_avg = np.average(VE_arr[0:cycle_end])
-                CE_avg = np.average(CE_arr[0:cycle_end])
-                EE_avg = np.average(EE_arr[0:cycle_end])
-                charge_cap_avg = np.average(charge_cap_arr[0:cycle_end])
-                discharge_cap_avg = np.average(discharge_cap_arr[0:cycle_end]) 
-                #For display table
-                df_display=pd.DataFrame([charge_cap_arr,discharge_cap_arr,VE_arr,CE_arr,EE_arr]) # Create dataframe to display in multiline output
-                df_display=df_display.T
-                df_display.columns = ['Charge-Capacity','Discharge-Capacity','Volt', 'Current', 'Energy']
-                df_display.index = df_display.index + 1 # Start index at 1 for nice looking
-                
-                window['cycle_end'].Update(disabled=False)
-                window['cycle_start'].Update(disabled=False)
-                window['cb_volt'].Update(disabled=False)
-                window['cb_current'].Update(disabled=False)
-                window['cb_eff'].Update(disabled=False)
-                window['cb_volt'].Update(True)
-                window['cb_current'].Update(True)
-                window['cb_eff'].Update(True)
-                window['cycle_start'].Update(range=(0,tot_cycle_number-1))
-                window['cycle_end'].Update(range=(1,tot_cycle_number))
-                window['bat_file_use'].Update(bat_file)
-                window['output_arr'].Update(df_display.to_string()) # Make sure to print all lines
-                window['tot_cycle'].Update(tot_cycle_number) 
-                window['output_ve'].Update(np.round(VE_avg,3))
-                window['output_ce'].Update(np.round(CE_avg,3))
-                window['output_ee'].Update(np.round(EE_avg,3))
-                
-                volt_line, = ax_bat_volt.plot(time_df, volt_df, '-', label='Voltage', color='blue')
-                current_line, = ax_bat_current.plot(time_df, current_df, '--', label='Current', color='red')
-                
-                # Match cycle scale to time scale and plot efficiency.
-                cycle_plot = np.linspace(1,tot_cycle_number, num=20)
-                cycle_idx = (charge_seq)[:,1]
-                
-    
-                cycle_idx = cycle_idx[0:min((charge_seq)[:,1].size,(discharge_seq)[:,1].size)]
-                # min((charge_seq)[:,1].size,(discharge_seq)[:,1].size)
-                time_cycle = time_df[cycle_idx]
-                VE_marker, = ax_bat_eff.plot(time_df[cycle_idx], VE_arr, '*',color='blue',label='VE', markersize=8)
-                CE_marker, = ax_bat_eff.plot(time_df[cycle_idx], CE_arr, '.',color='red',label='CE', markersize=8)
-                EE_marker, = ax_bat_eff.plot(time_df[cycle_idx], EE_arr, '^',color='green',label='EE', markersize=4)              
-                cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], charge_cap_arr, 's',color='orange',label='capacity', markersize=4)
-                
-                ax_bat_volt.autoscale()
-                ax_bat_current.autoscale()
-                ax_bat_eff.autoscale()
-                ax_bat_cap.autoscale()
-                # Set limit and ticks of bat_cycle
-                ax_bat_cycle.set_xticks(cycle_plot)
-                ax_bat_cycle.set_xlim(left=0,right=tot_cycle_number)
-                
-                # Set limit for efficiencies
-                ax_bat_eff.set_ylim(0,100)
-                
-                ax_bat_volt.set_xlim(left=0,right=max(time_df))
-    
-                ax_bat_volt.grid()
-    
-                fig_agg_bat.draw()
-            except Exception as file_error:
-                sg.popup(file_error, keep_on_top=True)
+            # try:
+            clear_battery_plot()
+            bat_file = bat_file_new
+            df_bat, row_size, time_df, volt_df, current_df, capacity_df, state_df = battery_xls2df(bat_file)
+            # Sequence information
+            charge_CC_seq, discharge_CC_seq, rest_seq, charge_CV_seq, discharge_CV_seq = find_state_seq(state_df)
+            # tot_cycle_number = np.shape(charge_seq)[0]
+            VE_arr, CE_arr, EE_arr, charge_cap_arr, discharge_cap_arr, tot_cycle_number = get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_df, charge_CC_seq, discharge_CC_seq)
+            
+            VE_avg = np.average(VE_arr[0:cycle_end])
+            CE_avg = np.average(CE_arr[0:cycle_end])
+            EE_avg = np.average(EE_arr[0:cycle_end])
+            charge_cap_avg = np.average(charge_cap_arr[0:cycle_end])
+            discharge_cap_avg = np.average(discharge_cap_arr[0:cycle_end]) 
+            #For display table
+            df_display=pd.DataFrame([charge_cap_arr,discharge_cap_arr,VE_arr,CE_arr,EE_arr]) # Create dataframe to display in multiline output
+            df_display=df_display.T
+            df_display.columns = ['Charge-Capacity','Discharge-Capacity','Volt', 'Current', 'Energy']
+            df_display.index = df_display.index + 1 # Start index at 1 for nice looking
+            
+            window['cycle_end'].Update(disabled=False)
+            window['cycle_start'].Update(disabled=False)
+            window['cb_volt'].Update(disabled=False)
+            window['cb_current'].Update(disabled=False)
+            window['cb_eff'].Update(disabled=False)
+            window['cb_cap'].Update(disabled=False)
+            window['cb_volt'].Update(True)
+            window['cb_current'].Update(True)
+            window['cb_eff'].Update(True)
+            window['cycle_start'].Update(range=(0,tot_cycle_number-1))
+            window['cycle_end'].Update(range=(1,tot_cycle_number))
+            window['bat_file_use'].Update(bat_file)
+            window['output_arr'].Update(df_display.to_string()) # Make sure to print all lines
+            window['tot_cycle'].Update(tot_cycle_number) 
+            window['output_ve'].Update(np.round(VE_avg,3))
+            window['output_ce'].Update(np.round(CE_avg,3))
+            window['output_ee'].Update(np.round(EE_avg,3))
+            
+            volt_line, = ax_bat_volt.plot(time_df, volt_df, '-', label='Voltage', color='blue')
+            current_line, = ax_bat_current.plot(time_df, current_df, '--', label='Current', color='red')
+            
+
+            cycle_idx = (charge_CC_seq)[:,1]
+            
+
+            cycle_idx = cycle_idx[0:min((charge_CC_seq)[:,1].size,(discharge_CC_seq)[:,1].size)]
+            # min((charge_seq)[:,1].size,(discharge_seq)[:,1].size)
+            time_cycle = time_df[cycle_idx]
+            VE_marker, = ax_bat_eff.plot(time_df[cycle_idx], VE_arr, '*',color='blue',label='VE', markersize=8)
+            CE_marker, = ax_bat_eff.plot(time_df[cycle_idx], CE_arr, '.',color='red',label='CE', markersize=8)
+            EE_marker, = ax_bat_eff.plot(time_df[cycle_idx], EE_arr, '^',color='green',label='EE', markersize=4)              
+            charge_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], charge_cap_arr, 's',color='orange',label='capacity', markersize=4)
+            dis_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], discharge_cap_arr, 'x',color='brown',label='capacity', markersize=4)
+            
+            ax_bat_volt.autoscale()
+            ax_bat_current.autoscale()
+            ax_bat_eff.autoscale()
+            ax_bat_cap.autoscale()
+            # Set limit and ticks of bat_cycle
+            # Match cycle scale to time scale and plot efficiency.
+            cycle_plot = np.arange(0,tot_cycle_number,10)
+            ax_bat_cycle.set_xticks(cycle_plot)
+            ax_bat_cycle.set_xlim(left=0,right=tot_cycle_number)
+            
+            # Set limit for efficiencies
+            ax_bat_eff.set_ylim(0,100)
+            
+            ax_bat_volt.set_xlim(left=0,right=max(time_df))
+
+            ax_bat_cycle.grid()
+            ax_bat_volt.grid(axis='y')
+            fig_agg_bat.draw()
+            # except Exception as file_error:
+            #     sg.popup(file_error, keep_on_top=True)
         case 'cb_eff':
             if values['cb_eff'] == False:
                 VE_marker.remove()
@@ -479,9 +487,11 @@ while True:
             fig_agg_bat.draw()
         case 'cb_cap':
             if values['cb_cap'] == False:
-                cap_marker.remove()
+                charge_cap_marker.remove()
+                dis_cap_marker.remove()
             else:            
-                cap_marker, = ax_bat_eff.plot(time_df[cycle_idx], charge_cap_arr, 's',color='orange',label='capacity', markersize=4)
+                charge_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], charge_cap_arr, 's',color='orange',label='capacity', markersize=4)
+                dis_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], discharge_cap_arr, 'x',color='brown',label='capacity', markersize=4)
             fig_agg_bat.draw()
         case 'cb_volt':
             if values['cb_volt'] == False:
@@ -508,12 +518,26 @@ while True:
                 window['cycle_start'].Update(cycle_start)
                 
             # Do not replot, since we only change xlim.
-            cycle_idx_range = cy_idx_state_range(state_df, cycle_start, cycle_end, charge_seq, discharge_seq)
+            cycle_idx_range = cy_idx_state_range(state_df, cycle_start, cycle_end, charge_CC_seq, discharge_CC_seq)
             left_bound = time_df[cycle_idx_range][0]
             right_bound = time_df[cycle_idx_range][1]
+            
+           # Change number of ticks with cycle range
+            if cycle_end-cycle_start <= 10:  
+                cycle_plot = np.arange(0,tot_cycle_number,1)
+            elif cycle_end-cycle_start >= 10 and cycle_end-cycle_start <= 200:  
+                cycle_plot = np.arange(0,tot_cycle_number,10)
+            elif cycle_end-cycle_start >= 201 and cycle_end-cycle_start <= 500:
+                cycle_plot = np.arange(0,tot_cycle_number,20)
+            elif cycle_end-cycle_start >= 501 and cycle_end-cycle_start <= 1000:
+                cycle_plot = np.arange(0,tot_cycle_number,50)          
+            elif cycle_end-cycle_start >= 1001:
+                cycle_plot = np.arange(0,tot_cycle_number,100)                    
+            ax_bat_cycle.set_xticks(cycle_plot)
+                
             ax_bat_volt.set_xlim(left=left_bound,right=right_bound)
             ax_bat_cycle.set_xlim(left=cycle_start,right=cycle_end)
-            ax_bat_volt.grid()
+            ax_bat_cycle.grid()
             
             VE_avg = np.average(VE_arr[cycle_start:cycle_end])
             CE_avg = np.average(CE_arr[cycle_start:cycle_end])
