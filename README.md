@@ -13,7 +13,7 @@ Battery cycling support .xls files with state (C_CC, D_CC, R) columns from Versa
 Support copy-paste battery efficiency.
 
 VE - Voltage Efficiency
-CE - Current Efficiency
+CE - Coulombic Efficiency
 EE - Energy Efficiency
 
 Requires Python 3.10 and above.

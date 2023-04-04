@@ -77,7 +77,7 @@ bat_col2 = [
      sg.Checkbox('Capacities', default=True, key='cb_cap', disabled=True, enable_events=True)],
     [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
     [sg.Text('Average voltage efficiency='),sg.Text('', key = 'output_ve'),sg.Text('%')],
-    [sg.Text('Average current efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%')],
+    [sg.Text('Average coulombic efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%')],
     [sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
     [sg.Text('Total number of cycles='), sg.Text('', key= 'tot_cycle')],
     [sg.Text('Voltage, current, energy efficiency(%) for each row of cycle, press ctrl+c to copy')],
@@ -418,7 +418,7 @@ while True:
             #For display table
             df_display=pd.DataFrame([charge_cap_arr,discharge_cap_arr,VE_arr,CE_arr,EE_arr]) # Create dataframe to display in multiline output
             df_display=df_display.T
-            df_display.columns = ['Charge-Capacity','Discharge-Capacity','Volt', 'Current', 'Energy']
+            df_display.columns = ['Charge-Capacity','Discharge-Capacity','VE', 'CE', 'EE']
             df_display.index = df_display.index + 1 # Start index at 1 for nice looking
             
             window['cycle_end'].Update(disabled=False)
