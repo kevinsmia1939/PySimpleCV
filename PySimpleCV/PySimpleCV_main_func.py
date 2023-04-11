@@ -95,6 +95,13 @@ def find_seg_start_end(state_df,search_key):
         start_end_segment = np.stack(start_end_segment)
     return start_end_segment
 
+def search_pattern(lst, pattern):
+    indices = []
+    for i in range(len(lst)):
+        if lst[i:i+len(pattern)] == pattern:
+            indices.append(i)
+    return indices
+
 def get_CV_init(df_CV, ir_compen):
     cv_size = df_CV.shape[0]
     volt = df_CV[:,0]

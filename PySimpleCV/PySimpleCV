@@ -10,7 +10,7 @@ from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
 # from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern
 
 
 import sys
@@ -405,9 +405,17 @@ while True:
             clear_battery_plot()
             bat_file = bat_file_new
             df_bat, row_size, time_df, volt_df, current_df, capacity_df, state_df = battery_xls2df(bat_file)
+
+            # Voltage difference with current interrupt method between C_CC and R
+            CIM_idx = search_pattern(list(state_df), ['C_CC','R'])
+            CIM_volt_drop_lst = []
+            for i in CIM_idx:
+                CIM_volt_drop = volt_df[i]-volt_df[i+1]
+                CIM_volt_drop_lst.append(CIM_volt_drop)
+            
+            
             # Sequence information
             charge_CC_seq, discharge_CC_seq, rest_seq, charge_CV_seq, discharge_CV_seq = find_state_seq(state_df)
-            # tot_cycle_number = np.shape(charge_seq)[0]
             VE_arr, CE_arr, EE_arr, charge_cap_arr, discharge_cap_arr, tot_cycle_number = get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_df, charge_CC_seq, discharge_CC_seq)
             
             VE_avg = np.average(VE_arr[0:cycle_end])
@@ -454,6 +462,7 @@ while True:
             EE_marker, = ax_bat_eff.plot(time_df[cycle_idx], EE_arr, '^',color='green',label='EE', markersize=4)              
             charge_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], charge_cap_arr, 's',color='orange',label='capacity', markersize=4)
             dis_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], discharge_cap_arr, 'x',color='brown',label='capacity', markersize=4)
+            CIM_marker, = ax_bat_volt.plot(time_df[cycle_idx], np.array(CIM_volt_drop_lst)/0.65, 'o',color='blue',label='CIM', markersize=4)
             
             ax_bat_volt.autoscale()
             ax_bat_current.autoscale()
@@ -497,7 +506,7 @@ while True:
             if values['cb_volt'] == False:
                 volt_line.remove()
             else:
-                volt_line, = ax_bat_volt.plot(time_df, volt_df, '-', label='Voltage', color='blue')
+                volt_line, = ax_bat_volt.plot(time_df, volt_df, '-.', label='Voltage', color='blue')
             fig_agg_bat.draw()
         case 'cb_current':
             if values['cb_current'] == False:
