@@ -48,7 +48,7 @@ sg.theme('DarkBlue')
 cv_slider_size = (50,8)
 cv_col1=[[sg.Canvas(key='-CANVAS_cv-')]]
 cv_col2 = [
-    [sg.Button("Open CV File"),sg.Combo(values=(), default_value='', readonly=False, k='cv_combo',size=(30,15))],
+    [sg.Button("Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15))],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Text('CV file:'), sg.Text('No CV file selected', key = 'cv_file_use')],
     [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True)],
@@ -258,11 +258,11 @@ while True:
     match event:
         case sg.WIN_CLOSED | 'exit' | 'exit_2':
             break
-        case "About PySimpleCV":
+        case 'About PySimpleCV':
             About_PySimpleCV()
         case 'cv_clear':
             clear_cv_plot()
-        case "Open CV File":
+        case 'Open CV File':
             cv_file_new = sg.popup_get_file('Choose CV file')
             # If cancel, close the window, go back to beginning
             if cv_file_new is None:
@@ -274,22 +274,19 @@ while True:
             # clear_cv_plot()
             
             cv_file = cv_file_new
-            cv_name = os.path.basename(cv_file)
+            cv_name = os.path.basename(cv_file) #Get file name
             df_CV = CV_file2df(cv_file)
             ir_compen = 0 #initially is 0
             cv_size, volt, current = get_CV_init(df_CV,ir_compen) # Only need the cv_size so set to [0]
             
-            cv_path_array.append(cv_file)
+            cv_path_array.append(cv_file) #Create 2D array of CVs so we can select, plot, and analyze data based on index
             cv_name_array.append(cv_name)
             volt_array.append(volt)
             current_array.append(current)
             cv_size_array.append(cv_size)
             
-            cv_selected = values['cv_combo']
-            window['cv_combo'].Update(values=cv_name_array)
-            window['cv_combo'].Update(cv_name)
-
-            
+            window['cv_combo'].Update(values=cv_name_array) # Update combo list of CVs
+            window['cv_combo'].Update(cv_name) # Update default combo display
             
             window['sl_cut_val_s'].Update(range=(0,cv_size))
             window['sl_cut_val_e'].Update(range=(0,cv_size))
@@ -363,8 +360,14 @@ while True:
             fig_agg_cv.draw()
             # except Exception as file_error:
                 # sg.popup(file_error, keep_on_top=True)
+            cv_select = cv_name    
+            window['cv_name_dis'].Update(cv_select)
         case 'cv_combo':
-        
+            # cv_select = cv_name
+            cv_select = values['cv_combo']
+            window['cv_name_dis'].Update(cv_select)
+            # cv_name_array.index(cv_select)
+            # window['cv_name_dis'].Update(cv_name)
         case 'sl_cut_val_s' | 'sl_cut_val_e' | 'sl_jpa_lns' | 'sl_jpa_lne' | 'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_pos'| 'trough_pos'| 'peak_range' | 'inv_jpa_jpc' | 'ir_compen' :
             ax_cv.cla()
             # print(cv_init)
@@ -402,8 +405,9 @@ while True:
             except ValueError:
                 ir_compen = float(0)
                 # window['ir_compen_warning'].Update('Must be a number, use . for decimal')
-
-            low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns, jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpc_base = get_CV_peak(df_CV,cut_val_s,cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen)
+                
+            # cv_size, volt, current = get_CV_init(df_CV, ir_compen)
+            low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns, jpa_lne,jpc_lns,jpc_lne, volt_trim, current_trim, jpa_base, jpc_base = get_CV_peak(cv_size, volt, current, cut_val_s,cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen)
          
             # Calculate voltages of the peaks
             vpa = peak_volt
@@ -431,7 +435,7 @@ while True:
                 # window['rev_ratio'].Update('Reversibility (jpc/jpa)=')
                 
             # Start plotting
-            ax_cv.plot(volt, current, '-', color='black')
+            ax_cv.plot(volt_trim, current_trim, '-', color='black')
             
             
                             
@@ -494,21 +498,21 @@ while True:
             
             # ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2)    
             
-            ax_cv.plot((volt[low_range_peak],volt[high_range_peak]),(current[low_range_peak],current[high_range_peak]),"|", markersize = 10)
+            ax_cv.plot((volt_trim[low_range_peak],volt_trim[high_range_peak]),(current_trim[low_range_peak],current_trim[high_range_peak]),"|", markersize = 10)
             # ax_cv.plot(peak_volt,peak_curr,"x", markersize = 10)  
-            ax_cv.plot((volt[low_range_trough],volt[high_range_trough]),(current[low_range_trough],current[high_range_trough]),"|", markersize = 10)
+            ax_cv.plot((volt_trim[low_range_trough],volt_trim[high_range_trough]),(current_trim[low_range_trough],current_trim[high_range_trough]),"|", markersize = 10)
             # ax_cv.plot(trough_volt,trough_curr,"x", markersize = 10)   
             
             # ax_cv.plot(peak_volt,jpa_base,marker='s')
-            ax_cv.plot(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
+            ax_cv.plot(volt_trim[jpa_lns:jpa_lne],current_trim[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
             ax_cv.annotate(text='',ha="center",va="center", xy=(peak_volt,jpa_base), xytext=(peak_volt,peak_curr), arrowprops=dict(arrowstyle='<-'))
-            ax_cv.plot((volt[jpa_lns],peak_volt),(current[jpa_lns],jpa_base),'--')
+            ax_cv.plot((volt_trim[jpa_lns],peak_volt),(current_trim[jpa_lns],jpa_base),'--')
             
 
-            ax_cv.plot(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
+            ax_cv.plot(volt_trim[jpc_lns:jpc_lne],current_trim[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
             # ax_cv.plot(trough_volt,jpc_base,marker='s')
             ax_cv.annotate(text='', ha="center",va="center", xy=(trough_volt,jpc_base), xytext=(trough_volt,trough_curr), arrowprops=dict(arrowstyle='<-'))
-            ax_cv.plot((volt[jpc_lns],trough_volt),(current[jpc_lns],jpc_base),'--')
+            ax_cv.plot((volt_trim[jpc_lns],trough_volt),(current_trim[jpc_lns],jpc_base),'--')
 
             fig_agg_cv.draw()
          
@@ -519,14 +523,14 @@ while True:
             window['output_rev'].Update(np.round((jpa_show/jpc_show),3))
             window['output_e1_2'].Update(np.round(E1_2,3))
             window['output_delta_e'].Update(np.round(delta_e,3))
-        case "save_cv":
+        case 'save_cv':
             save_cv_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
             if save_cv_loc is None:
                 continue
             elif save_cv_loc == '':
                 continue
             fig_cv.savefig(save_cv_loc)
-        case "Open Battery File":
+        case 'Open Battery File':
             bat_file_new = sg.popup_get_file('Choose battery cycle file (.xls)')
             # If cancel, close the window, go back to beginning
             # If empty, use old file

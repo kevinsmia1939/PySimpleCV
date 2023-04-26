@@ -112,7 +112,7 @@ def get_CV_init(df_CV, ir_compen):
     volt = volt - current*ir_compen   
     return cv_size, volt, current
 
-def get_CV_peak(df_CV, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen):
+def get_CV_peak(cv_size, volt, current, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen):
     # Search for peak between peak_range.
         
     if jpa_lns == jpa_lne:
@@ -135,34 +135,34 @@ def get_CV_peak(df_CV, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, j
         cut_val_s = cut_val_e
         cut_val_e = save_cut_val    
     
-    cv_size, volt, current = get_CV_init(df_CV, ir_compen)
+    # cv_size, volt, current = get_CV_init(df_CV, ir_compen)
     # trim cv
-    volt = volt[cut_val_s:cut_val_e]
-    current = current[cut_val_s:cut_val_e]
-    volt = volt[~np.isnan(volt)]
-    current = current[~np.isnan(current)]
+    volt_trim = volt[cut_val_s:cut_val_e]
+    current_trim = current[cut_val_s:cut_val_e]
+    volt_trim = volt_trim[~np.isnan(volt_trim)]
+    current_trim = current_trim[~np.isnan(current_trim)]
     cv_size = cut_val_e - cut_val_s
     high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
     low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
-    peak_curr_range = current[low_range_peak:high_range_peak]
+    peak_curr_range = current_trim[low_range_peak:high_range_peak]
     peak_curr = max(peak_curr_range)
     peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))
-    peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
+    peak_volt = volt_trim[low_range_peak:high_range_peak][peak_idx]
 
     high_range_trough = np.where((trough_pos+peak_range)>=(cv_size-1),(cv_size-1),trough_pos+peak_range)
     low_range_trough = np.where((trough_pos-peak_range)>=0,trough_pos-peak_range,0)
-    trough_curr_range = current[low_range_trough:high_range_trough]
+    trough_curr_range = current_trim[low_range_trough:high_range_trough]
     trough_curr = min(trough_curr_range)
     trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
-    trough_volt = volt[low_range_trough:high_range_trough][trough_idx] 
+    trough_volt = volt_trim[low_range_trough:high_range_trough][trough_idx] 
 
-    jpa_lnfit = np.polyfit(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne], 1)
+    jpa_lnfit = np.polyfit(volt_trim[jpa_lns:jpa_lne],current_trim[jpa_lns:jpa_lne], 1)
     jpa_base = jpa_lnfit[0]*peak_volt + jpa_lnfit[1]
 
-    jpc_lnfit = np.polyfit(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne], 1)
+    jpc_lnfit = np.polyfit(volt_trim[jpc_lns:jpc_lne],current_trim[jpc_lns:jpc_lne], 1)
     jpc_base = jpc_lnfit[0]*trough_volt + jpc_lnfit[1]
  
-    return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpc_base
+    return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt_trim, current_trim, jpa_base, jpc_base
 
 
 def cv_inflection(df_CV, ir_compen):
