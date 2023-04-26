@@ -4,6 +4,8 @@ from scipy import linalg
 import re
 from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
+import statsmodels.api as sm
+
 
 def search_string_in_file(file_name, string_to_search):
     line_number = 0
@@ -107,7 +109,7 @@ def get_CV_init(df_CV, ir_compen):
     volt = df_CV[:,0]
     current = df_CV[:,1]
     # iR compensation
-    volt = volt - current*ir_compen
+    volt = volt - current*ir_compen   
     return cv_size, volt, current
 
 def get_CV_peak(df_CV, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen):
@@ -161,6 +163,12 @@ def get_CV_peak(df_CV, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, j
     jpc_base = jpc_lnfit[0]*trough_volt + jpc_lnfit[1]
  
     return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt, current, jpa_base, jpc_base
+
+
+def cv_inflection(df_CV, ir_compen):
+    #Separate CV into top part and bottom
+    cv_size, volt, current = get_CV_init(df_CV, ir_compen)
+    
 
 def time2sec(time_raw,delim):
     # Take time format such as 1-12:05:24 and convert to seconds
@@ -273,3 +281,17 @@ def eis_fit(eis_file,freqmin,freqmax,cir_scheme, rm_im_R, initial_guess, CPE_boo
     circuit.fit(frequencies, z)
     z_fit = circuit.predict(frequencies)
     return frequencies, z, z_fit, circuit
+
+def lowess(x,y,frac):
+    lowess = sm.nonparametric.lowess(y, x, frac=frac)
+    smh_x = lowess[:, 0]
+    smh_y = lowess[:, 1]
+    return smh_x, smh_y
+
+def diff(x,y):
+    # diff = np.gradient(current,volt)
+    # lowess = sm.nonparametric.lowess(diff, volt, frac=frac)
+    # smh_diff_volt = lowess[:, 0]
+    # smh_diff_curr = lowess[:, 1]
+    diff = np.gradient(y,x)
+    return x, diff
