@@ -108,6 +108,10 @@ def get_CV_init(df_CV, ir_compen):
     cv_size = df_CV.shape[0]
     volt = df_CV[:,0]
     current = df_CV[:,1]
+    
+    volt = volt[~np.isnan(volt)]
+    current = current[~np.isnan(current)]
+    
     # iR compensation
     volt = volt - current*ir_compen   
     return cv_size, volt, current
@@ -139,8 +143,8 @@ def get_CV_peak(cv_size, volt, current, cut_val_s, cut_val_e, peak_range, peak_p
     # trim cv
     volt_trim = volt[cut_val_s:cut_val_e]
     current_trim = current[cut_val_s:cut_val_e]
-    volt_trim = volt_trim[~np.isnan(volt_trim)]
-    current_trim = current_trim[~np.isnan(current_trim)]
+    # volt_trim = volt_trim[~np.isnan(volt_trim)]
+    # current_trim = current_trim[~np.isnan(current_trim)]
     cv_size = cut_val_e - cut_val_s
     high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
     low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)

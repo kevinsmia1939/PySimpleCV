@@ -50,7 +50,6 @@ cv_col1=[[sg.Canvas(key='-CANVAS_cv-')]]
 cv_col2 = [
     [sg.Button("Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15))],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
-    [sg.Text('CV file:'), sg.Text('No CV file selected', key = 'cv_file_use')],
     [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True)],
     [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(10,5),disabled=False, enable_events=True),sg.Text('Ω'),sg.Text('', key = 'ir_compen_warning')],
     [sg.Text('jpa='), sg.Text('', key = 'output_jpa'), sg.Text('jpc='), sg.Text('', key = 'output_jpc'), sg.Text('vpa='), sg.Text('', key = 'output_vpa'), sg.Text('vpc='), sg.Text('', key = 'output_vpc'), sg.Text('jpa/jpc=',key = 'rev_ratio'), sg.Text('', key = 'output_rev'), sg.Text('E\u00bd='), sg.Text('', key = 'output_e1_2'), sg.Text('ΔE\u209a='), sg.Text('', key = 'output_delta_e')],
@@ -60,11 +59,9 @@ cv_col2 = [
     [sg.Text('End 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
     [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
     [sg.Text('End 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
-    
     [sg.Text('Peak search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=False)],
     [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False)],
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos', enable_events=True, disabled=False)],
-    # [sg.Combo(values=(), default_value='', readonly=False, k='cv_combo',size=(30,15))],
     [sg.Multiline('',size=(90,5), disabled=True, key = 'cv_name_dis')],
     
     [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV')]
@@ -246,6 +243,30 @@ def clear_eis_plot():
     ax_eis.axis('equal')
     ax_eis.grid()
     fig_agg_eis.draw()
+    
+def update_slider(cv_size):
+    window['sl_cut_val_s'].Update(range=(0,cv_size))
+    window['sl_cut_val_e'].Update(range=(0,cv_size))
+    window['sl_cut_val_e'].Update(cv_size)
+    window['sl_jpa_lns'].Update(range=(0,cv_size))
+    window['sl_jpa_lne'].Update(range=(0,cv_size))
+    window['sl_jpc_lns'].Update(range=(0,cv_size))
+    window['sl_jpc_lne'].Update(range=(0,cv_size))
+    window['peak_range'].Update(range=(1, 100))
+    window['peak_pos'].Update(range=(1, cv_size))
+    window['trough_pos'].Update(range=(1, cv_size))
+    
+def enable_slider(bool):
+    window['sl_cut_val_s'].Update(disabled=bool)
+    window['sl_cut_val_e'].Update(disabled=bool)
+    window['sl_jpa_lns'].Update(disabled=bool)
+    window['sl_jpa_lne'].Update(disabled=bool)
+    window['sl_jpc_lns'].Update(disabled=bool)
+    window['sl_jpc_lne'].Update(disabled=bool)
+    window['peak_range'].Update(disabled=bool)
+    window['peak_pos'].Update(disabled=bool)
+    window['trough_pos'].Update(disabled=bool)
+    window['inv_jpa_jpc'].Update(disabled=bool)
 
 randles_select = True
 volt_array = []
@@ -253,6 +274,7 @@ current_array = []
 cv_path_array = []
 cv_name_array = []
 cv_size_array = []
+fitting_save_array = np.zeros((1,10))
 while True:
     event, values = window.read()
     match event:
@@ -284,94 +306,37 @@ while True:
             volt_array.append(volt)
             current_array.append(current)
             cv_size_array.append(cv_size)
+
+            fitting_save_array = np.append(fitting_save_array,np.zeros((1,10)),axis=0)
             
             window['cv_combo'].Update(values=cv_name_array) # Update combo list of CVs
             window['cv_combo'].Update(cv_name) # Update default combo display
-            
-            window['sl_cut_val_s'].Update(range=(0,cv_size))
-            window['sl_cut_val_e'].Update(range=(0,cv_size))
-            window['sl_cut_val_e'].Update(cv_size)
-            window['sl_jpa_lns'].Update(range=(0,cv_size))
-            window['sl_jpa_lne'].Update(range=(0,cv_size))
-            window['sl_jpc_lns'].Update(range=(0,cv_size))
-            window['sl_jpc_lne'].Update(range=(0,cv_size))
-            window['peak_range'].Update(range=(1, 100))
-            window['peak_pos'].Update(range=(1, cv_size))
-            window['trough_pos'].Update(range=(1, cv_size))
-            window['sl_cut_val_s'].Update(disabled=False)
-            window['sl_cut_val_e'].Update(disabled=False)
-            window['sl_jpa_lns'].Update(disabled=False)
-            window['sl_jpa_lne'].Update(disabled=False)
-            window['sl_jpc_lns'].Update(disabled=False)
-            window['sl_jpc_lne'].Update(disabled=False)
-            window['peak_range'].Update(disabled=False)
-            window['peak_pos'].Update(disabled=False)
-            window['trough_pos'].Update(disabled=False)
-            window['inv_jpa_jpc'].Update(disabled=False)
-            window['cv_file_use'].Update(cv_file)
 
-            cv_init, = ax_cv.plot(volt, current, '-', color='black')
-            # Clear plot every time new plot open
-            
-            # frac = 0.01
-            # cv_idx = np.arange(0,cv_size)  
-            # cv_init, = ax_cv.plot(cv_idx, current, '-', color='black')
-            
-            #Smooth CV
-            # smh_volt, smh_curr = lowess(cv_idx,current,frac)
-            # ax_cv.plot(smh_volt, smh_curr)
-            
-            # #Diff CV
-            # diff_volt, diff_curr = diff(smh_volt, smh_curr)
-            # sdiff_volt, sdiff_curr = lowess(diff_volt, diff_curr,frac)
-            # ax_cv.plot(sdiff_volt, sdiff_curr*180)
-            
-            # #Diff2
-            # diff2_volt, diff2_curr = diff(sdiff_volt, sdiff_curr)
-            # sdiff2_volt, sdiff2_curr = lowess(diff2_volt, diff2_curr,frac)
-            # # ax_cv.plot(sdiff2_volt, sdiff2_curr*10000)           
-            
-            # #Diff3
-            # diff3_volt, diff3_curr = diff(sdiff2_volt, sdiff2_curr)
-            # sdiff3_volt, sdiff3_curr = lowess(diff3_volt, diff3_curr,frac)
-            # ax_cv.plot(sdiff3_volt, sdiff3_curr*1000000)            
-            
-            # print(idx.size)
-            # print(current.size)
-            # print(cv_idx.size)
-            # ax_cv.plot(cv_idx,current)
-            
-            # diff_cv_idx, diff_curr, diff = diff_smh(cv_idx,current,frac)
-            # print(diff_curr.size)
-            # print(diff_volt.size)
-            # ax_cv.plot(cv_idx,diff*170)
-            # ax_cv.plot(diff_cv_idx,diff_curr*170)
-            
-            # diff2_curr = np.gradient(diff_curr,cv_idx)
-            
-            # diff2_cv_idx, diff2_curr, diff = diff_smh(diff_cv_idx,diff_curr,frac)
-            # ax_cv.plot(diff2_cv_idx, diff2_curr*20000)
-            
-            
-            
+            enable_slider(False)
+
             ax_cv.grid()
-            # ax_cv.set_ylim(-0.1,0.1)
-            # ax_cv.set_xlim(0,1000)
-            fig_agg_cv.draw()
+            # fig_agg_cv.draw()
             # except Exception as file_error:
                 # sg.popup(file_error, keep_on_top=True)
             cv_select = cv_name    
-            window['cv_name_dis'].Update(cv_select)
-        case 'cv_combo':
-            # cv_select = cv_name
-            cv_select = values['cv_combo']
-            window['cv_name_dis'].Update(cv_select)
-            # cv_name_array.index(cv_select)
-            # window['cv_name_dis'].Update(cv_name)
-        case 'sl_cut_val_s' | 'sl_cut_val_e' | 'sl_jpa_lns' | 'sl_jpa_lne' | 'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_pos'| 'trough_pos'| 'peak_range' | 'inv_jpa_jpc' | 'ir_compen' :
+            cv_name_idx = cv_name_array.index(cv_select)
+            window['cv_name_dis'].Update(cv_name_idx)
+            # window['cv_name_dis'].Update(cv_select)
+        case 'sl_cut_val_s' | 'sl_cut_val_e' | 'sl_jpa_lns' | 'sl_jpa_lne' | 'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_pos'| 'trough_pos'| 'peak_range' | 'inv_jpa_jpc' | 'ir_compen' | 'cv_combo':
+
             ax_cv.cla()
             # print(cv_init)
             # cv_init.remove()
+            
+            cv_select = values['cv_combo']
+            cv_name_idx = cv_name_array.index(cv_select)
+            window['cv_name_dis'].Update(cv_name_idx)
+
+            volt = volt_array[cv_name_idx]
+            current = current_array[cv_name_idx]
+            cv_size = cv_size_array[cv_name_idx]
+            
+            update_slider(cv_size)
             
             ax_cv.grid()
             ax_cv.set_xlabel("Voltage")
@@ -392,22 +357,35 @@ while True:
             jpc_lne = int(values['sl_jpc_lne'])
 
             #Find custom peak
-            # window['peak_pos'].Update(range=(0,cv_size))
-            # window['trough_pos'].Update(range=(0,cv_size))
             peak_pos = int(values['peak_pos'])
             trough_pos = int(values['trough_pos'])
             peak_range = int(values['peak_range'])
-
+            
             #set default at 0
             ir_compen = 0
             try:
                 ir_compen = float(values['ir_compen'])
             except ValueError:
                 ir_compen = float(0)
-                # window['ir_compen_warning'].Update('Must be a number, use . for decimal')
-                
-            # cv_size, volt, current = get_CV_init(df_CV, ir_compen)
+
             low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns, jpa_lne,jpc_lns,jpc_lne, volt_trim, current_trim, jpa_base, jpc_base = get_CV_peak(cv_size, volt, current, cut_val_s,cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen)
+         
+            # Save curve fitting settings
+            # Put all parameters into an array to save them for later use when changing between CVs
+            fitting_save = np.array([cut_val_s, cut_val_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen]) 
+            fitting_save_array[cv_name_idx+1,:] = fitting_save #cv_name_idx[0] is not use, index 0 is create to append np array
+            
+            # fit_a = np.squeeze(fitting_save_array)
+            # fit_b = np.arange(0,10)
+            # fit_c = np.array(fitting_save)
+            
+            # a = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,])
+            # b = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9,])
+            # c = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
+            # a[0] = c
+            
+            # np.put(fitting_save_array),np.arange(0,10),fitting_save)
+            # fitting_save_array.append(fitting_save)
          
             # Calculate voltages of the peaks
             vpa = peak_volt
@@ -426,97 +404,30 @@ while True:
                 jpc_show = jpc
                 jpa_text = 'jpa'
                 jpc_text = 'jpc'
-                # window['rev_ratio'].Update('Reversibility (jpa/jpc)=')
             else:
                 jpa_show = jpc
                 jpc_show = jpa    
                 jpa_text = 'jpc'
                 jpc_text = 'jpa'
-                # window['rev_ratio'].Update('Reversibility (jpc/jpa)=')
                 
+
             # Start plotting
             ax_cv.plot(volt_trim, current_trim, '-', color='black')
-            
-            
-                            
-                
-            ########################################################################
 
-            # max_v_idx = np.argmax(volt)
-            # min_v_idx = np.argmin(volt)
-            
-            
-            # print(max_v_idx,min_v_idx)
-            # print(volt.size)
-            # cv_size = volt.size-1
-            # if max_v_idx == 0 or min_v_idx == 0 or max_v_idx == cv_size or min_v_idx == cv_size:
-            #     if max_v_idx == 0 or max_v_idx == cv_size:
-            #         #negative
-            #         seg1 = (0,min_v_idx)
-            #         seg2 = (min_v_idx,cv_size)
-            #     elif min_v_idx == 0 or min_v_idx == cv_size:
-            #         #positive
-            #         seg1 = (0,max_v_idx)
-            #         seg2 = (max_v_idx,cv_size)
-            #     smh_volt1, smh_curr1 = diff_smh(volt[seg1[0]:seg1[1]],current[seg1[0]:seg1[1]],frac)
-            #     smh_volt2, smh_curr2 = diff_smh(volt[seg2[0]:seg2[1]],current[seg2[0]:seg2[1]],frac)
-            #     print('test')
-            #     ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2)      
-                
-            # else:
-            #     print(max_v_idx,min_v_idx)
-            #     if max_v_idx <= min_v_idx:
-            #         seg1 = (0,max_v_idx)
-            #         seg2 = (max_v_idx,min_v_idx)
-            #         seg3 = (min_v_idx,volt.size)
-            #         print(seg3)
-            #         print(volt.size)
-            #     else: 
-            #         seg1 = (0,min_v_idx)
-            #         seg2 = (min_v_idx,max_v_idx)
-            #         seg3 = (max_v_idx,volt.size)
-            #         print(volt.size)
-            #         print(seg3)
-            #     smh_volt1, smh_curr1 = diff_smh(volt[seg1[0]:seg1[1]],current[seg1[0]:seg1[1]],frac)
-            #     smh_volt2, smh_curr2 = diff_smh(volt[seg2[0]:seg2[1]],current[seg2[0]:seg2[1]],frac)
-            #     smh_volt3, smh_curr3 = diff_smh(volt[seg3[0]:seg3[1]],current[seg3[0]:seg3[1]],frac)
-            #     ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2, smh_volt3, smh_curr3)
-            # idx = np.arange(0,volt.size)  
-            # print(idx.size)
-            # print(current.size)
-            # ax_cv.plot(idx,current)
-            # frac = 0.09
-            # diff_volt, diff_curr = diff_smh(idx,current,frac)
-            # ax_cv.plot(idx,diff_curr*170)
-            
-            # diff2_curr = np.gradient(diff_curr,idx)
-            
-            # # diff2_volt, diff2_curr = diff_smh(idx,diff_curr,frac)
-            # ax_cv.plot(idx, diff2_curr*20000)
-            ########################################################################
-            
-            
-            # ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2)    
-            
             ax_cv.plot((volt_trim[low_range_peak],volt_trim[high_range_peak]),(current_trim[low_range_peak],current_trim[high_range_peak]),"|", markersize = 10)
-            # ax_cv.plot(peak_volt,peak_curr,"x", markersize = 10)  
             ax_cv.plot((volt_trim[low_range_trough],volt_trim[high_range_trough]),(current_trim[low_range_trough],current_trim[high_range_trough]),"|", markersize = 10)
-            # ax_cv.plot(trough_volt,trough_curr,"x", markersize = 10)   
-            
-            # ax_cv.plot(peak_volt,jpa_base,marker='s')
+
             ax_cv.plot(volt_trim[jpa_lns:jpa_lne],current_trim[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
             ax_cv.annotate(text='',ha="center",va="center", xy=(peak_volt,jpa_base), xytext=(peak_volt,peak_curr), arrowprops=dict(arrowstyle='<-'))
             ax_cv.plot((volt_trim[jpa_lns],peak_volt),(current_trim[jpa_lns],jpa_base),'--')
             
-
             ax_cv.plot(volt_trim[jpc_lns:jpc_lne],current_trim[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
-            # ax_cv.plot(trough_volt,jpc_base,marker='s')
             ax_cv.annotate(text='', ha="center",va="center", xy=(trough_volt,jpc_base), xytext=(trough_volt,trough_curr), arrowprops=dict(arrowstyle='<-'))
             ax_cv.plot((volt_trim[jpc_lns],trough_volt),(current_trim[jpc_lns],jpc_base),'--')
 
             fig_agg_cv.draw()
          
-            window['output_jpa'].Update(np.round(jpa_show*1000/5,3))
+            window['output_jpa'].Update(np.round(jpa_show*1000/5,3)) #convert to mA in 5 cm2 area
             window['output_jpc'].Update(np.round(jpc_show*1000/5,3))
             window['output_vpa'].Update(np.round(vpa,3))
             window['output_vpc'].Update(np.round(vpc,3))
@@ -767,3 +678,110 @@ while True:
         case "eis_clear":
             clear_eis_plot()
 window.close()
+
+            # Clear plot every time new plot open
+            
+            # frac = 0.01
+            # cv_idx = np.arange(0,cv_size)  
+            # cv_init, = ax_cv.plot(cv_idx, current, '-', color='black')
+            
+            #Smooth CV
+            # smh_volt, smh_curr = lowess(cv_idx,current,frac)
+            # ax_cv.plot(smh_volt, smh_curr)
+            
+            # #Diff CV
+            # diff_volt, diff_curr = diff(smh_volt, smh_curr)
+            # sdiff_volt, sdiff_curr = lowess(diff_volt, diff_curr,frac)
+            # ax_cv.plot(sdiff_volt, sdiff_curr*180)
+            
+            # #Diff2
+            # diff2_volt, diff2_curr = diff(sdiff_volt, sdiff_curr)
+            # sdiff2_volt, sdiff2_curr = lowess(diff2_volt, diff2_curr,frac)
+            # # ax_cv.plot(sdiff2_volt, sdiff2_curr*10000)           
+            
+            # #Diff3
+            # diff3_volt, diff3_curr = diff(sdiff2_volt, sdiff2_curr)
+            # sdiff3_volt, sdiff3_curr = lowess(diff3_volt, diff3_curr,frac)
+            # ax_cv.plot(sdiff3_volt, sdiff3_curr*1000000)            
+            
+            # print(idx.size)
+            # print(current.size)
+            # print(cv_idx.size)
+            # ax_cv.plot(cv_idx,current)
+            
+            # diff_cv_idx, diff_curr, diff = diff_smh(cv_idx,current,frac)
+            # print(diff_curr.size)
+            # print(diff_volt.size)
+            # ax_cv.plot(cv_idx,diff*170)
+            # ax_cv.plot(diff_cv_idx,diff_curr*170)
+            
+            # diff2_curr = np.gradient(diff_curr,cv_idx)
+            
+            # diff2_cv_idx, diff2_curr, diff = diff_smh(diff_cv_idx,diff_curr,frac)
+            # ax_cv.plot(diff2_cv_idx, diff2_curr*20000)
+
+            # ax_cv.set_ylim(-0.1,0.1)
+            # ax_cv.set_xlim(0,1000)
+            
+                        
+            
+                            
+                
+            ########################################################################
+
+            # max_v_idx = np.argmax(volt)
+            # min_v_idx = np.argmin(volt)
+            
+            
+            # print(max_v_idx,min_v_idx)
+            # print(volt.size)
+            # cv_size = volt.size-1
+            # if max_v_idx == 0 or min_v_idx == 0 or max_v_idx == cv_size or min_v_idx == cv_size:
+            #     if max_v_idx == 0 or max_v_idx == cv_size:
+            #         #negative
+            #         seg1 = (0,min_v_idx)
+            #         seg2 = (min_v_idx,cv_size)
+            #     elif min_v_idx == 0 or min_v_idx == cv_size:
+            #         #positive
+            #         seg1 = (0,max_v_idx)
+            #         seg2 = (max_v_idx,cv_size)
+            #     smh_volt1, smh_curr1 = diff_smh(volt[seg1[0]:seg1[1]],current[seg1[0]:seg1[1]],frac)
+            #     smh_volt2, smh_curr2 = diff_smh(volt[seg2[0]:seg2[1]],current[seg2[0]:seg2[1]],frac)
+            #     print('test')
+            #     ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2)      
+                
+            # else:
+            #     print(max_v_idx,min_v_idx)
+            #     if max_v_idx <= min_v_idx:
+            #         seg1 = (0,max_v_idx)
+            #         seg2 = (max_v_idx,min_v_idx)
+            #         seg3 = (min_v_idx,volt.size)
+            #         print(seg3)
+            #         print(volt.size)
+            #     else: 
+            #         seg1 = (0,min_v_idx)
+            #         seg2 = (min_v_idx,max_v_idx)
+            #         seg3 = (max_v_idx,volt.size)
+            #         print(volt.size)
+            #         print(seg3)
+            #     smh_volt1, smh_curr1 = diff_smh(volt[seg1[0]:seg1[1]],current[seg1[0]:seg1[1]],frac)
+            #     smh_volt2, smh_curr2 = diff_smh(volt[seg2[0]:seg2[1]],current[seg2[0]:seg2[1]],frac)
+            #     smh_volt3, smh_curr3 = diff_smh(volt[seg3[0]:seg3[1]],current[seg3[0]:seg3[1]],frac)
+            #     ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2, smh_volt3, smh_curr3)
+            # idx = np.arange(0,volt.size)  
+            # print(idx.size)
+            # print(current.size)
+            # ax_cv.plot(idx,current)
+            # frac = 0.09
+            # diff_volt, diff_curr = diff_smh(idx,current,frac)
+            # ax_cv.plot(idx,diff_curr*170)
+            
+            # diff2_curr = np.gradient(diff_curr,idx)
+            
+            # # diff2_volt, diff2_curr = diff_smh(idx,diff_curr,frac)
+            # ax_cv.plot(idx, diff2_curr*20000)
+            ########################################################################
+            
+            
+            # ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2)    
+            
