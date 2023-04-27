@@ -301,6 +301,17 @@ while True:
             ir_compen = 0 #initially is 0
             cv_size, volt, current = get_CV_init(df_CV,ir_compen) # Only need the cv_size so set to [0]
             
+            window['sl_cut_val_s'].Update(range=(0,cv_size))
+            window['sl_cut_val_e'].Update(range=(0,cv_size))
+            window['sl_cut_val_e'].Update(cv_size)
+            window['sl_jpa_lns'].Update(range=(0,cv_size))
+            window['sl_jpa_lne'].Update(range=(0,cv_size))
+            window['sl_jpc_lns'].Update(range=(0,cv_size))
+            window['sl_jpc_lne'].Update(range=(0,cv_size))
+            window['peak_range'].Update(range=(1, 100))
+            window['peak_pos'].Update(range=(1, cv_size))
+            window['trough_pos'].Update(range=(1, cv_size))
+            
             cv_path_array.append(cv_file) #Create 2D array of CVs so we can select, plot, and analyze data based on index
             cv_name_array.append(cv_name)
             volt_array.append(volt)
@@ -336,7 +347,15 @@ while True:
             current = current_array[cv_name_idx]
             cv_size = cv_size_array[cv_name_idx]
             
-            update_slider(cv_size)
+            window['sl_cut_val_s'].Update(range=(0,cv_size))
+            window['sl_cut_val_e'].Update(range=(0,cv_size))
+            window['sl_jpa_lns'].Update(range=(0,cv_size))
+            window['sl_jpa_lne'].Update(range=(0,cv_size))
+            window['sl_jpc_lns'].Update(range=(0,cv_size))
+            window['sl_jpc_lne'].Update(range=(0,cv_size))
+            window['peak_range'].Update(range=(1, 100))
+            window['peak_pos'].Update(range=(1, cv_size))
+            window['trough_pos'].Update(range=(1, cv_size))
             
             ax_cv.grid()
             ax_cv.set_xlabel("Voltage")
@@ -407,11 +426,11 @@ while True:
             # Start plotting
             # cv_main = 'cv_main'+str(cv_name_idx)
             # cv_main, = ax_cv.plot(volt_trim, current_trim, '-', color='black')
-            for j in np.arange(0,cv_name_idx+1):
-                
-                # [int(fitting_save_array[j,0]):int(fitting_save_array[j,1])]
-                k = j - 1 
-                ax_cv.plot(np.array(volt_array[k]).T, np.array(current_array[k]).T, '-', color='black')
+            ccc = len(volt_array)
+            for j in np.arange(0,ccc):
+                aaa = int(fitting_save_array[j+1,0])
+                bbb = int(fitting_save_array[j+1,1])
+                ax_cv.plot(np.array(volt_array[j][aaa:bbb]).T, np.array(current_array[j][aaa:bbb]).T, '-', color='black')
                 # fitting_save_array
                 
             # ax_cv.plot((volt_trim[low_range_peak],volt_trim[high_range_peak]),(current_trim[low_range_peak],current_trim[high_range_peak]),"|", markersize = 10)
@@ -784,4 +803,3 @@ window.close()
             
             
             # ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2)    
-            
