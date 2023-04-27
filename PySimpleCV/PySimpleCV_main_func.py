@@ -116,7 +116,18 @@ def get_CV_init(df_CV, ir_compen):
     volt = volt - current*ir_compen   
     return cv_size, volt, current
 
-def get_CV_peak(cv_size, volt, current, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen):
+def trim_cv(volt, current, cut_val_s, cut_val_e):
+    if cut_val_s == cut_val_e:
+        cut_val_e = cut_val_s+2
+    if cut_val_s > cut_val_e:
+        save_cut_val = cut_val_s
+        cut_val_s = cut_val_e
+        cut_val_e = save_cut_val    
+    volt_trim = volt[cut_val_s:cut_val_e]
+    current_trim = current[cut_val_s:cut_val_e]
+    return volt_trim, current_trim, cut_val_s, cut_val_e
+
+def get_CV_peak(volt_trim, current_trim, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen):
     # Search for peak between peak_range.
         
     if jpa_lns == jpa_lne:
@@ -132,28 +143,27 @@ def get_CV_peak(cv_size, volt, current, cut_val_s, cut_val_e, peak_range, peak_p
         jpc_lns = jpc_lne
         jpc_lne = save_val_jpc    
 
-    if cut_val_s == cut_val_e:
-        cut_val_e = cut_val_s+2
-    if cut_val_s > cut_val_e:
-        save_cut_val = cut_val_s
-        cut_val_s = cut_val_e
-        cut_val_e = save_cut_val    
+    # if cut_val_s == cut_val_e:
+    #     cut_val_e = cut_val_s+2
+    # if cut_val_s > cut_val_e:
+    #     save_cut_val = cut_val_s
+    #     cut_val_s = cut_val_e
+    #     cut_val_e = save_cut_val    
     
     # cv_size, volt, current = get_CV_init(df_CV, ir_compen)
-    # trim cv
-    volt_trim = volt[cut_val_s:cut_val_e]
-    current_trim = current[cut_val_s:cut_val_e]
-    # volt_trim = volt_trim[~np.isnan(volt_trim)]
-    # current_trim = current_trim[~np.isnan(current_trim)]
-    cv_size = cut_val_e - cut_val_s
-    high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
+
+    # volt_trim = volt[cut_val_s:cut_val_e]
+    # current_trim = current[cut_val_s:cut_val_e]
+
+    cv_size_trim = cut_val_e - cut_val_s
+    high_range_peak = np.where((peak_pos+peak_range)>=(cv_size_trim-1),(cv_size_trim-1),peak_pos+peak_range)
     low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
     peak_curr_range = current_trim[low_range_peak:high_range_peak]
     peak_curr = max(peak_curr_range)
     peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))
     peak_volt = volt_trim[low_range_peak:high_range_peak][peak_idx]
 
-    high_range_trough = np.where((trough_pos+peak_range)>=(cv_size-1),(cv_size-1),trough_pos+peak_range)
+    high_range_trough = np.where((trough_pos+peak_range)>=(cv_size_trim-1),(cv_size_trim-1),trough_pos+peak_range)
     low_range_trough = np.where((trough_pos-peak_range)>=0,trough_pos-peak_range,0)
     trough_curr_range = current_trim[low_range_trough:high_range_trough]
     trough_curr = min(trough_curr_range)

@@ -10,7 +10,7 @@ from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
 # from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, lowess, diff
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, lowess, diff, trim_cv
 import statsmodels.api as sm
 
 
@@ -368,25 +368,18 @@ while True:
             except ValueError:
                 ir_compen = float(0)
 
-            low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns, jpa_lne,jpc_lns,jpc_lne, volt_trim, current_trim, jpa_base, jpc_base = get_CV_peak(cv_size, volt, current, cut_val_s,cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen)
+            # np.array(volt_array)
+            # current_array
+            # cv_size = cv_size_array
+            
+            volt_trim, current_trim, cut_val_s, cut_val_e = trim_cv(volt, current, cut_val_s, cut_val_e) #trim cv to what we are interest
+            low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns, jpa_lne,jpc_lns,jpc_lne, volt_trim, current_trim, jpa_base, jpc_base = get_CV_peak(volt_trim, current_trim, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen)
          
             # Save curve fitting settings
             # Put all parameters into an array to save them for later use when changing between CVs
             fitting_save = np.array([cut_val_s, cut_val_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen]) 
             fitting_save_array[cv_name_idx+1,:] = fitting_save #cv_name_idx[0] is not use, index 0 is create to append np array
-            
-            # fit_a = np.squeeze(fitting_save_array)
-            # fit_b = np.arange(0,10)
-            # fit_c = np.array(fitting_save)
-            
-            # a = np.array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0,])
-            # b = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9,])
-            # c = np.array([0, 2, 4, 6, 8, 10, 12, 14, 16, 18])
-            # a[0] = c
-            
-            # np.put(fitting_save_array),np.arange(0,10),fitting_save)
-            # fitting_save_array.append(fitting_save)
-         
+            # aaa = int(fitting_save_array[1,0]):int(fitting_save_array[1,1])
             # Calculate voltages of the peaks
             vpa = peak_volt
             vpc = trough_volt           
@@ -412,18 +405,25 @@ while True:
                 
 
             # Start plotting
-            ax_cv.plot(volt_trim, current_trim, '-', color='black')
+            # cv_main = 'cv_main'+str(cv_name_idx)
+            # cv_main, = ax_cv.plot(volt_trim, current_trim, '-', color='black')
+            for j in np.arange(0,cv_name_idx+1):
+                
+                # [int(fitting_save_array[j,0]):int(fitting_save_array[j,1])]
+                k = j - 1 
+                ax_cv.plot(np.array(volt_array[k]).T, np.array(current_array[k]).T, '-', color='black')
+                # fitting_save_array
+                
+            # ax_cv.plot((volt_trim[low_range_peak],volt_trim[high_range_peak]),(current_trim[low_range_peak],current_trim[high_range_peak]),"|", markersize = 10)
+            # ax_cv.plot((volt_trim[low_range_trough],volt_trim[high_range_trough]),(current_trim[low_range_trough],current_trim[high_range_trough]),"|", markersize = 10)
 
-            ax_cv.plot((volt_trim[low_range_peak],volt_trim[high_range_peak]),(current_trim[low_range_peak],current_trim[high_range_peak]),"|", markersize = 10)
-            ax_cv.plot((volt_trim[low_range_trough],volt_trim[high_range_trough]),(current_trim[low_range_trough],current_trim[high_range_trough]),"|", markersize = 10)
-
-            ax_cv.plot(volt_trim[jpa_lns:jpa_lne],current_trim[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
-            ax_cv.annotate(text='',ha="center",va="center", xy=(peak_volt,jpa_base), xytext=(peak_volt,peak_curr), arrowprops=dict(arrowstyle='<-'))
-            ax_cv.plot((volt_trim[jpa_lns],peak_volt),(current_trim[jpa_lns],jpa_base),'--')
+            # ax_cv.plot(volt_trim[jpa_lns:jpa_lne],current_trim[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
+            # ax_cv.annotate(text='',ha="center",va="center", xy=(peak_volt,jpa_base), xytext=(peak_volt,peak_curr), arrowprops=dict(arrowstyle='<-'))
+            # ax_cv.plot((volt_trim[jpa_lns],peak_volt),(current_trim[jpa_lns],jpa_base),'--')
             
-            ax_cv.plot(volt_trim[jpc_lns:jpc_lne],current_trim[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
-            ax_cv.annotate(text='', ha="center",va="center", xy=(trough_volt,jpc_base), xytext=(trough_volt,trough_curr), arrowprops=dict(arrowstyle='<-'))
-            ax_cv.plot((volt_trim[jpc_lns],trough_volt),(current_trim[jpc_lns],jpc_base),'--')
+            # ax_cv.plot(volt_trim[jpc_lns:jpc_lne],current_trim[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
+            # ax_cv.annotate(text='', ha="center",va="center", xy=(trough_volt,jpc_base), xytext=(trough_volt,trough_curr), arrowprops=dict(arrowstyle='<-'))
+            # ax_cv.plot((volt_trim[jpc_lns],trough_volt),(current_trim[jpc_lns],jpc_base),'--')
 
             fig_agg_cv.draw()
          
