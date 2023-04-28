@@ -130,18 +130,18 @@ def trim_cv(volt, current, cut_val_s, cut_val_e):
 def get_CV_peak(volt_trim, current_trim, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen):
     # Search for peak between peak_range.
         
-    if jpa_lns == jpa_lne:
-        jpa_lne = jpa_lns+1
-    if jpa_lns > jpa_lne:
-        save_val_jpa = jpa_lns
-        jpa_lns = jpa_lne
-        jpa_lne = save_val_jpa
-    if jpc_lns == jpc_lne:
-        jpc_lne = jpc_lns+1
-    if jpc_lns > jpc_lne:
-        save_val_jpc = jpc_lns
-        jpc_lns = jpc_lne
-        jpc_lne = save_val_jpc    
+    # if jpa_lns == jpa_lne:
+    #     jpa_lne = jpa_lns+1
+    # if jpa_lns > jpa_lne:
+    #     save_val_jpa = jpa_lns
+    #     jpa_lns = jpa_lne
+    #     jpa_lne = save_val_jpa
+    # if jpc_lns == jpc_lne:
+    #     jpc_lne = jpc_lns+1
+    # if jpc_lns > jpc_lne:
+    #     save_val_jpc = jpc_lns
+    #     jpc_lns = jpc_lne
+    #     jpc_lne = save_val_jpc    
 
     # if cut_val_s == cut_val_e:
     #     cut_val_e = cut_val_s+2
@@ -169,11 +169,37 @@ def get_CV_peak(volt_trim, current_trim, cut_val_s, cut_val_e, peak_range, peak_
     trough_curr = min(trough_curr_range)
     trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
     trough_volt = volt_trim[low_range_trough:high_range_trough][trough_idx] 
+    
+    # print(volt_trim[jpa_lns:jpa_lne])
+    # print((volt_trim[jpa_lns:jpa_lne]).size)
+    # print(current_trim[jpa_lns:jpa_lne])
+    # print(jpa_lns,jpa_lne)
 
-    jpa_lnfit = np.polyfit(volt_trim[jpa_lns:jpa_lne],current_trim[jpa_lns:jpa_lne], 1)
+    if (volt_trim[jpa_lns:jpa_lne]).size == 0:
+        volt_trim_jpa = np.array([0, 1])
+        current_trim_jpa = np.array([0, 0])
+    else:
+        volt_trim_jpa = volt_trim[jpa_lns:jpa_lne]
+        current_trim_jpa = current_trim[jpa_lns:jpa_lne]
+        
+    if (volt_trim[jpc_lns:jpc_lne]).size == 0:
+        volt_trim_jpc = np.array([0, 1])
+        current_trim_jpc = np.array([0, 0])
+    else:
+        volt_trim_jpc = volt_trim[jpc_lns:jpc_lne]
+        current_trim_jpc = current_trim[jpc_lns:jpc_lne]
+
+    # print(volt_trim[jpa_lns:jpa_lne])
+    # print(current_trim[jpa_lns:jpa_lne])
+    # print(jpa_lns,jpa_lne)
+    jpa_lnfit = np.polyfit(volt_trim_jpa,current_trim_jpa, 1)
     jpa_base = jpa_lnfit[0]*peak_volt + jpa_lnfit[1]
+    
+    # print(volt_trim[jpc_lns:jpc_lne])
+    # print(current_trim[jpc_lns:jpc_lne])
+    # print(jpc_lns,jpc_lne)
 
-    jpc_lnfit = np.polyfit(volt_trim[jpc_lns:jpc_lne],current_trim[jpc_lns:jpc_lne], 1)
+    jpc_lnfit = np.polyfit(volt_trim_jpc,current_trim_jpc, 1)
     jpc_base = jpc_lnfit[0]*trough_volt + jpc_lnfit[1]
  
     return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns,jpa_lne,jpc_lns,jpc_lne, volt_trim, current_trim, jpa_base, jpc_base

@@ -387,6 +387,8 @@ while True:
                aac = int(fitting_save_array[cv_name_idx+1,1])
                window['sl_cut_val_s'].Update(aab)
                window['sl_cut_val_e'].Update(aac)
+               # window['sl_cut_val_s'].Update(0)
+               # window['sl_cut_val_e'].Update(range=(0,cv_size))
                cut_val_s = aab
                cut_val_e = aac
             elif cv_name_idx == cv_name_idx_old:
@@ -486,11 +488,11 @@ while True:
 
             ax_cv.plot(volt_trim[jpa_lns:jpa_lne],current_trim[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
             ax_cv.annotate(text='',ha="center",va="center", xy=(peak_volt,jpa_base), xytext=(peak_volt,peak_curr), arrowprops=dict(arrowstyle='<-'))
-            ax_cv.plot((volt_trim[jpa_lns],peak_volt),(current_trim[jpa_lns],jpa_base),'--')
+            # ax_cv.plot((volt_trim[jpa_lns],peak_volt),(current_trim[jpa_lns],jpa_base),'--')
             
             ax_cv.plot(volt_trim[jpc_lns:jpc_lne],current_trim[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
             ax_cv.annotate(text='', ha="center",va="center", xy=(trough_volt,jpc_base), xytext=(trough_volt,trough_curr), arrowprops=dict(arrowstyle='<-'))
-            ax_cv.plot((volt_trim[jpc_lns],trough_volt),(current_trim[jpc_lns],jpc_base),'--')
+            # ax_cv.plot((volt_trim[jpc_lns],trough_volt),(current_trim[jpc_lns],jpc_base),'--')
             
             ax_cv.grid()
             ax_cv.set_xlabel("Voltage")
