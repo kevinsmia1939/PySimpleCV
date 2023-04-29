@@ -112,33 +112,17 @@ def get_CV_init(df_CV, ir_compen):
     volt = volt[~np.isnan(volt)]
     current = current[~np.isnan(current)]
     cv_size = len(volt) # cv_size = df_CV.shape[0], not reliable, might contain NaN
-    # iR compensation
-    volt = volt - current*ir_compen   
     return cv_size, volt, current
 
-# def trim_cv(volt, current, cut_val_s, cut_val_e):
-#     if cut_val_s == cut_val_e:
-#         cut_val_e = cut_val_s+2
-#     if cut_val_s > cut_val_e:
-#         save_cut_val = cut_val_s
-#         cut_val_s = cut_val_e
-#         cut_val_e = save_cut_val    
-#     volt = volt[cut_val_s:cut_val_e]
-#     current = current[cut_val_s:cut_val_e]
-#     return volt, current, cut_val_s, cut_val_e
+def ir_compen_func(volt,current,ir_compen):
+    volt_compen = volt - current*ir_compen
+    return volt_compen
 
-def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen):
+def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne):
     # Search for peak between peak_range.
-    # print(cv_size, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen)
     high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
     low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
-    # print(low_range_peak,high_range_peak)
-    
     peak_curr_range = current[low_range_peak:high_range_peak]
-    # if peak_curr_range.size == 0:
-    #     peak_curr = 0
-    #     peak_idx = 0
-    # else:
     peak_curr = max(peak_curr_range)
         
     peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))
@@ -148,9 +132,6 @@ def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_ln
     high_range_trough = np.where((trough_pos+peak_range)>=(cv_size-1),(cv_size-1),trough_pos+peak_range)
     low_range_trough = np.where((trough_pos-peak_range)>=0,trough_pos-peak_range,0)
     trough_curr_range = current[low_range_trough:high_range_trough]
-    # if trough_curr_range.size == 0:
-        # trough_curr_range = 0
-    # else:
     trough_curr = min(trough_curr_range)
     trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
     trough_volt = volt[low_range_trough:high_range_trough][trough_idx] 
