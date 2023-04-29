@@ -10,7 +10,7 @@ from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
 # from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, lowess, diff, trim_cv
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, lowess, diff
 import statsmodels.api as sm
 
 
@@ -275,7 +275,9 @@ current_array = []
 cv_path_array = []
 cv_name_array = []
 cv_size_array = []
+# fitting_save_array = np.zeros((1,10))
 fitting_save_array = np.zeros((1,10))
+add_save_arr = np.array([[0,0,0,0,0,0,1,1,1,0]])
 # arr_roll = np.array([0,0])
 cv_name_idx_old = -1
 while True:
@@ -304,24 +306,25 @@ while True:
             ir_compen = 0 #initially is 0
             cv_size, volt, current = get_CV_init(df_CV,ir_compen) # Only need the cv_size so set to [0]
             
-            window['sl_cut_val_s'].Update(range=(0,cv_size))
-            window['sl_cut_val_e'].Update(range=(0,cv_size))
+            window['sl_cut_val_s'].Update(range=(0,cv_size-1))
+            window['sl_cut_val_e'].Update(range=(0,cv_size-1))
             window['sl_cut_val_e'].Update(cv_size)
-            window['sl_jpa_lns'].Update(range=(0,cv_size))
-            window['sl_jpa_lne'].Update(range=(0,cv_size))
-            window['sl_jpc_lns'].Update(range=(0,cv_size))
-            window['sl_jpc_lne'].Update(range=(0,cv_size))
+            window['sl_jpa_lns'].Update(range=(0,cv_size-1))
+            window['sl_jpa_lne'].Update(range=(0,cv_size-1))
+            window['sl_jpc_lns'].Update(range=(0,cv_size-1))
+            window['sl_jpc_lne'].Update(range=(0,cv_size-1))
             window['peak_range'].Update(range=(1, 100))
-            window['peak_pos'].Update(range=(1, cv_size))
-            window['trough_pos'].Update(range=(1, cv_size))
+            window['peak_pos'].Update(range=(0, cv_size-1))
+            window['trough_pos'].Update(range=(0, cv_size-1))
             
             cv_path_array.append(cv_file) #Create 2D array of CVs so we can select, plot, and analyze data based on index
             cv_name_array.append(cv_name)
             volt_array.append(volt)
             current_array.append(current)
             cv_size_array.append(cv_size)
-
-            fitting_save_array = np.append(fitting_save_array,np.zeros((1,10)),axis=0)
+            
+            # Add new default save data array
+            fitting_save_array = np.append(fitting_save_array,add_save_arr,axis=0)
             
             window['cv_combo'].Update(values=cv_name_array) # Update combo list of CVs
             window['cv_combo'].Update(cv_name) # Update default combo display
@@ -350,8 +353,8 @@ while True:
             current = current_array[cv_name_idx]
             cv_size = cv_size_array[cv_name_idx]
             
-            window['sl_cut_val_s'].Update(range=(0,cv_size))
-            window['sl_cut_val_e'].Update(range=(0,cv_size))
+            window['sl_cut_val_s'].Update(range=(0,cv_size-1))
+            window['sl_cut_val_e'].Update(range=(0,cv_size-1))
             # aab = int(fitting_save_array[cv_name_idx+1,0])
             # aac = int(fitting_save_array[cv_name_idx+1,1])
             # window['sl_cut_val_s'].Update(aab)
@@ -359,99 +362,83 @@ while True:
             
 
             
-            window['sl_jpa_lns'].Update(range=(0,cv_size))
-            window['sl_jpa_lne'].Update(range=(0,cv_size))
-            window['sl_jpc_lns'].Update(range=(0,cv_size))
-            window['sl_jpc_lne'].Update(range=(0,cv_size))
+            window['sl_jpa_lns'].Update(range=(0,cv_size-1))
+            window['sl_jpa_lne'].Update(range=(0,cv_size-1))
+            window['sl_jpc_lns'].Update(range=(0,cv_size-1))
+            window['sl_jpc_lne'].Update(range=(0,cv_size-1))
             window['peak_range'].Update(range=(1, 100))
-            window['peak_pos'].Update(range=(1, cv_size))
-            window['trough_pos'].Update(range=(1, cv_size))
-            
+            window['peak_pos'].Update(range=(1, cv_size-1))
+            window['trough_pos'].Update(range=(1, cv_size-1))
 
-            
-            #could it be that this over ride attemps to change value 
-            # if fitting_save_array[cv_select+1].size:
-            #     print()
-            # if cv_name_idx != cv_name_idx_old:
-            #     cv_name_idx_old = cv_name_idx
-                # cut_val_s = int(fitting_save_array[cv_name_idx+1,0])
-                # cut_val_e = int(fitting_save_array[cv_name_idx+1,1]) 
-            # cut_val_s = int(values['sl_cut_val_s'])
-            # cut_val_e = int(values['sl_cut_val_e'])
-            
-            # cut_val_s = int(fitting_save_array[cv_name_idx+1,0])
-            # cut_val_e = int(fitting_save_array[cv_name_idx+1,1]) 
-            if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
-               cv_name_idx_old = cv_name_idx
-               aab = int(fitting_save_array[cv_name_idx+1,0])
-               aac = int(fitting_save_array[cv_name_idx+1,1])
-               window['sl_cut_val_s'].Update(aab)
-               window['sl_cut_val_e'].Update(aac)
-               # window['sl_cut_val_s'].Update(0)
-               # window['sl_cut_val_e'].Update(range=(0,cv_size))
-               cut_val_s = aab
-               cut_val_e = aac
-            elif cv_name_idx == cv_name_idx_old:
-               cut_val_s = int(values['sl_cut_val_s'])
-               cut_val_e = int(values['sl_cut_val_e'])
-               fitting_save_array[cv_name_idx+1,0] = cut_val_s
-               fitting_save_array[cv_name_idx+1,1] = cut_val_e
-               
-            window['sl_jpa_lns'].Update(range=(0,cut_val_e-cut_val_s))
-            window['sl_jpa_lne'].Update(range=(0,cut_val_e-cut_val_s))
-            window['sl_jpc_lns'].Update(range=(0,cut_val_e-cut_val_s))
-            window['sl_jpc_lne'].Update(range=(0,cut_val_e-cut_val_s))
-            # window['peak_range'].Update(range=(1, 100))
-            window['peak_pos'].Update(range=(1, cut_val_e-cut_val_s))
-            window['trough_pos'].Update(range=(1, cut_val_e-cut_val_s))
-            jpa_lns = int(values['sl_jpa_lns'])
-            jpa_lne = int(values['sl_jpa_lne'])
-            jpc_lns = int(values['sl_jpc_lns'])
-            jpc_lne = int(values['sl_jpc_lne'])
-
-            #Find custom peak
-            peak_pos = int(values['peak_pos'])
-            trough_pos = int(values['trough_pos'])
-            peak_range = int(values['peak_range'])
-            
             #set default at 0
             ir_compen = 0
             try:
                 ir_compen = float(values['ir_compen'])
             except ValueError:
-                ir_compen = float(0)
+                ir_compen = float(0)            
 
+            if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
+               cv_name_idx_old = cv_name_idx
+               # Restore saved values
+               cut_val_s_save = int(fitting_save_array[cv_name_idx+1,0])
+               cut_val_e_save = int(fitting_save_array[cv_name_idx+1,1])
+               jpa_lns_save = int(fitting_save_array[cv_name_idx+1,2])
+               jpa_lne_save = int(fitting_save_array[cv_name_idx+1,3])
+               jpc_lns_save = int(fitting_save_array[cv_name_idx+1,4])
+               jpc_lne_save = int(fitting_save_array[cv_name_idx+1,5])
+               peak_pos_save = int(fitting_save_array[cv_name_idx+1,6])
+               trough_pos_save = int(fitting_save_array[cv_name_idx+1,7])
+               peak_range_save = int(fitting_save_array[cv_name_idx+1,8])
+               ir_compen_save = int(fitting_save_array[cv_name_idx+1,9])
+               # Put slider to previous position
+               window['sl_cut_val_s'].Update(cut_val_s_save)
+               window['sl_cut_val_e'].Update(cut_val_e_save)
+               window['sl_jpa_lns'].Update(jpa_lns_save)
+               window['sl_jpa_lne'].Update(jpa_lne_save)
+               window['sl_jpc_lns'].Update(jpc_lns_save)
+               window['sl_jpc_lne'].Update(jpc_lne_save)
+               window['peak_pos'].Update(peak_pos_save)
+               window['trough_pos'].Update(trough_pos_save)
+               window['peak_range'].Update(peak_range_save)
+               window['ir_compen'].Update(ir_compen_save)
+               # Assign the value from saved data
+               cut_val_s = cut_val_s_save
+               cut_val_e = cut_val_e_save
+               jpa_lns = jpa_lns_save
+               jpa_lne = jpa_lne_save
+               jpc_lns = jpc_lns_save
+               jpc_lne = jpc_lne_save
+               peak_pos = peak_pos_save
+               trough_pos = trough_pos_save
+               peak_range = peak_range_save
+               ir_compen = ir_compen_save
+            elif cv_name_idx == cv_name_idx_old:
+               cut_val_s = int(values['sl_cut_val_s'])
+               cut_val_e = int(values['sl_cut_val_e'])
+               jpa_lns = int(values['sl_jpa_lns'])
+               jpa_lne = int(values['sl_jpa_lne'])
+               jpc_lns = int(values['sl_jpc_lns'])
+               jpc_lne = int(values['sl_jpc_lne'])
+               peak_pos = int(values['peak_pos'])
+               trough_pos = int(values['trough_pos'])
+               peak_range = int(values['peak_range'])
+               fitting_save_array[cv_name_idx+1,0] = cut_val_s
+               fitting_save_array[cv_name_idx+1,1] = cut_val_e
+               fitting_save = np.array([jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen]) 
+               np.put(fitting_save_array,[2,3,4,5,6,7,8,9], fitting_save)   
             
-            volt_trim, current_trim, cut_val_s, cut_val_e = trim_cv(volt, current, cut_val_s, cut_val_e) #trim cv to what we are interest
-            low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa_lns, jpa_lne,jpc_lns,jpc_lne, volt_trim, current_trim, jpa_base, jpc_base = get_CV_peak(volt_trim, current_trim, cut_val_s, cut_val_e, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen)
-         
-            # Save curve fitting settings
-            # Put all parameters into an array to save them for later use when changing between CVs
-            # fitting_save = np.array([cut_val_s, cut_val_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen])
-            fitting_save = np.array([jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen]) 
-            # fitting_save_array[cv_name_idx+1,:] = fitting_save #cv_name_idx[0] is not use, index 0 is create to append np array
-            # fitting_save_array[cv_name_idx+1,2] = jpa_lns
-            np.put(fitting_save_array,[2,3,4,5,6,7,8,9], fitting_save)
+            if jpa_lns >= jpa_lne:
+                jpa_lne_old = jpa_lne
+                jpa_lne = jpa_lns
+                jpa_lns = jpa_lne_old
+            if jpc_lns >= jpc_lne:
+                jpc_lne_old = jpc_lne
+                jpc_lne = jpc_lns
+                jpc_lns = jpc_lne_old    
             
-            # If the active CV change (cv_name_idx change), the slider position must be update
-            # num = cv_name_idx
-            # val_change_arr = np.array([0,0]) 
-               
-            # arr_roll = np.roll(arr_roll,1)
-            # arr_roll[1] = num
-            # if arr_roll[0] != arr_roll[1]:
-                # aaaaa = 999
-            #     print("test")
-            
-            # if cv_name_idx != cv_name_idx_old:
-            #     cv_name_idx_old = cv_name_idx
-            #     # aaaaa = 999
-            #     # window['sl_cut_val_s'].Update(500)
-            #     addd = fitting_save_array[cv_name_idx+1,0]
-            #     window['sl_cut_val_s'].Update(fitting_save_array[cv_name_idx+1,0])
-            #     window['sl_cut_val_e'].Update(fitting_save_array[cv_name_idx+1,1])
-            
-            # Calculate voltages of the peaks
+            low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d = get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, ir_compen)
+
+            # Calculate peak potential
             vpa = peak_volt
             vpc = trough_volt           
             # Find estimate standard electrode potential (E1/2~E0)
@@ -459,8 +446,8 @@ while True:
             ax_cv.plot(E1_2,0,"D", markersize = 6)
             # Find peak-peak separation voltage
             delta_e = np.abs(trough_volt-peak_volt)
-            jpa = peak_curr - jpa_base
-            jpc = jpc_base - trough_curr
+            # jpa = peak_curr - jpa_base
+            # jpc = jpc_base - trough_curr
             
             # invert jpa and jpc or not
             if values['inv_jpa_jpc'] == False:   
@@ -482,17 +469,17 @@ while True:
                 bbb = int(fitting_save_array[j+1,1])
                 ax_cv.plot(np.array(volt_array[j][aaa:bbb]).T, np.array(current_array[j][aaa:bbb]).T, '-', color='black')
     
-                
-            ax_cv.plot((volt_trim[low_range_peak],volt_trim[high_range_peak]),(current_trim[low_range_peak],current_trim[high_range_peak]),"|", markersize = 10)
-            ax_cv.plot((volt_trim[low_range_trough],volt_trim[high_range_trough]),(current_trim[low_range_trough],current_trim[high_range_trough]),"|", markersize = 10)
 
-            ax_cv.plot(volt_trim[jpa_lns:jpa_lne],current_trim[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
-            ax_cv.annotate(text='',ha="center",va="center", xy=(peak_volt,jpa_base), xytext=(peak_volt,peak_curr), arrowprops=dict(arrowstyle='<-'))
-            # ax_cv.plot((volt_trim[jpa_lns],peak_volt),(current_trim[jpa_lns],jpa_base),'--')
+            ax_cv.plot((volt[low_range_peak],volt[high_range_peak]),(current[low_range_peak],current[high_range_peak]),"|", markersize = 10)
+            ax_cv.plot((volt[low_range_trough],volt[high_range_trough]),(current[low_range_trough],current[high_range_trough]),"|", markersize = 10)
+
+            ax_cv.plot(volt[jpa_lns:jpa_lne],current[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
+            ax_cv.annotate(text='',ha="center",va="center", xy=(peak_volt,jpa_poly1d(peak_volt)), xytext=(peak_volt,peak_curr), arrowprops=dict(arrowstyle='<-'))
+            ax_cv.plot(np.array([volt[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt[jpa_lns]),jpa_poly1d(peak_volt)]),'--')
             
-            ax_cv.plot(volt_trim[jpc_lns:jpc_lne],current_trim[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
-            ax_cv.annotate(text='', ha="center",va="center", xy=(trough_volt,jpc_base), xytext=(trough_volt,trough_curr), arrowprops=dict(arrowstyle='<-'))
-            # ax_cv.plot((volt_trim[jpc_lns],trough_volt),(current_trim[jpc_lns],jpc_base),'--')
+            ax_cv.plot(volt[jpc_lns:jpc_lne],current[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
+            ax_cv.annotate(text='',ha="center",va="center", xy=(trough_volt,jpc_poly1d(trough_volt)), xytext=(trough_volt,trough_curr), arrowprops=dict(arrowstyle='<-'))
+            ax_cv.plot(np.array([volt[jpc_lns],trough_volt]),np.array([jpc_poly1d(volt[jpc_lns]),jpc_poly1d(trough_volt)]),'--')
             
             ax_cv.grid()
             ax_cv.set_xlabel("Voltage")
