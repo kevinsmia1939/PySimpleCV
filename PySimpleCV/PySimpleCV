@@ -10,8 +10,13 @@ from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
 # from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, lowess, diff, ir_compen_func
-import statsmodels.api as sm
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, lowess, diff, ir_compen_func, lowess_diff, idx_intercept
+# import statsmodels.api as sm
+
+# ToDo
+# Save result in array
+# Delete selected CV
+# Detect deflection
 
 
 import os
@@ -48,11 +53,12 @@ sg.theme('DarkBlue')
 cv_slider_size = (50,8)
 cv_col1=[[sg.Canvas(key='-CANVAS_cv-')]]
 cv_col2 = [
-    [sg.Button("Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15))],
+    [sg.Button("Add/Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15)),sg.Button("Delete CV File")],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True)],
     [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(10,5),disabled=False, enable_events=True),sg.Text('Ω'),sg.Text('', key = 'ir_compen_warning')],
-    [sg.Text('jpa='), sg.Text('', key = 'output_jpa'), sg.Text('jpc='), sg.Text('', key = 'output_jpc'), sg.Text('vpa='), sg.Text('', key = 'output_vpa'), sg.Text('vpc='), sg.Text('', key = 'output_vpc'), sg.Text('E\u00bd='), sg.Text('', key = 'output_e1_2'), sg.Text('ΔE\u209a='), sg.Text('', key = 'output_delta_e')],
+    [sg.Text('jpa='), sg.Text('', key = 'output_jpa'), sg.Text('jpc='), sg.Text('', key = 'output_jpc'), sg.Text('Epa='), sg.Text('', key = 'output_epa'), 
+     sg.Text('Epc='), sg.Text('', key = 'output_epc'), sg.Text('E\u00bd='), sg.Text('', key = 'output_e1_2'), sg.Text('ΔE\u209a='), sg.Text('', key = 'output_delta_e')],
     [sg.Text('jpa/jpc='), sg.Text('', key = 'output_rev')],
     [sg.Text('Trim CV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s', enable_events=True, disabled=True)],
     [sg.Text('Trim CV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e', enable_events=True, disabled=True)],
@@ -61,8 +67,8 @@ cv_col2 = [
     [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
     [sg.Text('End 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
     [sg.Text('Peak search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=False)],
-    [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False)],
-    [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos', enable_events=True, disabled=False)],
+    [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False),sg.Checkbox('Detect deflection', default=False, key='peak_defl_bool', disabled=True, enable_events=True)],
+    [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos', enable_events=True, disabled=False),sg.Checkbox('Detect deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
     [sg.Multiline('',size=(90,5), disabled=True, key = 'cv_name_dis')],
     
     [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV')]
@@ -245,18 +251,6 @@ def clear_eis_plot():
     ax_eis.grid()
     fig_agg_eis.draw()
     
-def update_slider(cv_size):
-    window['sl_cutval_s'].Update(range=(0,cv_size))
-    window['sl_cutval_e'].Update(range=(0,cv_size))
-    window['sl_cutval_e'].Update(cv_size)
-    window['sl_jpa_lns'].Update(range=(0,cv_size))
-    window['sl_jpa_lne'].Update(range=(0,cv_size))
-    window['sl_jpc_lns'].Update(range=(0,cv_size))
-    window['sl_jpc_lne'].Update(range=(0,cv_size))
-    window['peak_range'].Update(range=(1, 100))
-    window['peak_pos'].Update(range=(1, cv_size))
-    window['trough_pos'].Update(range=(1, cv_size))
-    
 def enable_slider(bool):
     window['sl_cutval_s'].Update(disabled=bool)
     window['sl_cutval_e'].Update(disabled=bool)
@@ -268,21 +262,28 @@ def enable_slider(bool):
     window['peak_pos'].Update(disabled=bool)
     window['trough_pos'].Update(disabled=bool)
     window['inv_jpa_jpc'].Update(disabled=bool)
+    window['peak_defl_bool'].Update(disabled=bool)
+    window['trough_defl_bool'].Update(disabled=bool)
 
 randles_select = True
 volt_array = []
+smh_volt_array = []
+smh_curr_array = []
+diff1_curr_array = []
+diff2_curr_array = []
+diff3_curr_array = []
+idx_intc_peak_array = []
+idx_intc_deflection_array = []
 current_array = []
 volt_ir_array = []
-# current_ir_array = []
 cv_path_array = []
 cv_name_array = []
 cv_size_array = []
-# fitting_save_array = np.zeros((1,10))
-fitting_save_array = np.zeros((1,10))
-fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0]])
-# arr_roll = np.array([0,0])
+fitting_save_array = np.zeros((1,12))
+fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0,0,0]])
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
+diff1 = []
 while True:
     event, values = window.read()
     match event:
@@ -292,7 +293,7 @@ while True:
             About_PySimpleCV()
         case 'cv_clear':
             clear_cv_plot()
-        case 'Open CV File':
+        case 'Add/Open CV File':
             cv_file_new = sg.popup_get_file('Choose CV file')
             # If cancel, close the window, go back to beginning
             if cv_file_new is None:
@@ -307,7 +308,7 @@ while True:
             cv_name = os.path.basename(cv_file) #Get file name
             df_CV = CV_file2df(cv_file)
             ir_compen = 0 #initially is 0
-            cv_size, volt, current = get_CV_init(df_CV,ir_compen) # Only need the cv_size so set to [0]
+            cv_size, volt, current = get_CV_init(df_CV) # Only need the cv_size so set to [0]
             
             window['sl_cutval_s'].Update(range=(0,cv_size-1))
             window['sl_cutval_e'].Update(range=(0,cv_size-1))
@@ -327,6 +328,23 @@ while True:
             volt_ir_array.append(volt) #Append volt to ir compensated volt, this is like ir=0
             cv_size_array.append(cv_size)
             
+            # deflection and Peak detection
+            idx_arr = np.arange(0,cv_size)
+            frac = 0.05
+            _,smh_curr = lowess(idx_arr,current,frac)
+            _,smh_volt = lowess(idx_arr,volt,frac)
+            diff1_curr = diff(smh_volt,smh_curr) #First diff
+            diff2_curr = lowess_diff(idx_arr,smh_volt,diff1_curr,0.05)
+            diff3_curr = lowess_diff(idx_arr,smh_volt,diff2_curr,0) #Detect deflection
+            smh_volt_array.append(smh_volt)
+            smh_curr_array.append(smh_curr)
+            diff1_curr_array.append(diff1_curr)
+            diff2_curr_array.append(diff2_curr)
+            diff3_curr_array.append(diff3_curr) 
+            # Store peak and deflection value
+            idx_intc_peak_array.append(idx_intercept(0,diff1_curr))
+            idx_intc_deflection_array.append(idx_intercept(0,diff3_curr))
+
             # Add new default save data array
             fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
             
@@ -342,8 +360,7 @@ while True:
             cv_select = cv_name    
             cv_name_idx = cv_name_array.index(cv_select)
             window['cv_name_dis'].Update(cv_name_idx)
-            # window['cv_name_dis'].Update(cv_select)
-        case 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' | 'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_pos'| 'trough_pos'| 'peak_range' | 'inv_jpa_jpc' | 'ir_compen' | 'cv_combo':
+        case 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' | 'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_pos'| 'trough_pos'| 'peak_range' | 'inv_jpa_jpc' | 'ir_compen' | 'cv_combo' | 'peak_defl_bool' | 'trough_defl_bool':
 
             ax_cv.cla()
             # print(cv_init)
@@ -357,6 +374,9 @@ while True:
             current = current_array[cv_name_idx]
             cv_size = cv_size_array[cv_name_idx]
             
+            idx_peak_points = np.array(idx_intc_peak_array[cv_name_idx])
+            idx_defl_points = np.array(idx_intc_deflection_array[cv_name_idx])    
+            
             window['sl_cutval_s'].Update(range=(0,cv_size-1))
             window['sl_cutval_e'].Update(range=(0,cv_size-1))
             window['sl_jpa_lns'].Update(range=(0,cv_size-1))
@@ -366,8 +386,6 @@ while True:
             window['peak_range'].Update(range=(1, 100))
             window['peak_pos'].Update(range=(1, cv_size-1))
             window['trough_pos'].Update(range=(1, cv_size-1))
-
-            #set default at 0
 
             try:
                 ir_compen = float(values['ir_compen'])
@@ -387,6 +405,8 @@ while True:
                trough_pos_save = int(fitting_save_array[cv_name_idx+1,7])
                peak_range_save = int(fitting_save_array[cv_name_idx+1,8])
                ir_compen_save = int(fitting_save_array[cv_name_idx+1,9])
+               peak_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,10])
+               trough_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,11])
                # Put slider to previous position
                window['sl_cutval_s'].Update(cutval_s_save)
                window['sl_cutval_e'].Update(cutval_e_save)
@@ -398,6 +418,8 @@ while True:
                window['trough_pos'].Update(trough_pos_save)
                window['peak_range'].Update(peak_range_save)
                window['ir_compen'].Update(ir_compen_save)
+               window['peak_defl_bool'].Update(peak_defl_bool_save)
+               window['trough_defl_bool'].Update(trough_defl_bool_save)              
                # Assign the value from saved data
                cutval_s = cutval_s_save
                cutval_e = cutval_e_save
@@ -409,6 +431,8 @@ while True:
                trough_pos = trough_pos_save
                peak_range = peak_range_save
                ir_compen = ir_compen_save
+               peak_defl_bool = peak_defl_bool_save
+               trough_defl_bool = trough_defl_bool_save
             elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
                cutval_s = int(values['sl_cutval_s'])
                cutval_e = int(values['sl_cutval_e'])
@@ -418,14 +442,16 @@ while True:
                jpc_lne = int(values['sl_jpc_lne'])
                peak_pos = int(values['peak_pos'])
                trough_pos = int(values['trough_pos'])
-               peak_range = int(values['peak_range'])     
+               peak_range = int(values['peak_range'])
+               peak_defl_bool = int(values['peak_defl_bool'])
+               trough_defl_bool = int(values['trough_defl_bool'])
                # Only accept float value from ir compensation
                try:
                    ir_compen = float(values['ir_compen'])
                except ValueError:
                    ir_compen = float(0)   
-               fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen]) 
-               np.put(fitting_save_array[cv_name_idx+1],[0,1,2,3,4,5,6,7,8,9], fitting_save) #Save data 
+               fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool]) 
+               np.put(fitting_save_array[cv_name_idx+1],[0,1,2,3,4,5,6,7,8,9,10,11], fitting_save) #Save data 
             
             if ir_compen != ir_compen_old:
                 ir_compen_old = ir_compen
@@ -442,14 +468,27 @@ while True:
             if jpc_lns >= jpc_lne:
                 jpc_lne_old = jpc_lne
                 jpc_lne = jpc_lns
-                jpc_lns = jpc_lne_old    
+                jpc_lns = jpc_lne_old  
             
-            
-            low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d = get_CV_peak(cv_size, volt_compen, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne)
-
-            # Calculate peak potential
-            # vpa = peak_volt
-            # vpc = trough_volt           
+            if values['peak_defl_bool'] == 1:
+                peak_range = 0
+                peak_defl_bool = 1
+                # aaa = idx_defl_points - peak_pos
+                peak_pos = idx_defl_points[np.abs(idx_defl_points - peak_pos).argmin()]
+                peak_pos = int(peak_pos)
+            else:
+                peak_defl_bool = 0
+            if values['trough_defl_bool'] == 1:
+                trough_range = 0
+                trough_defl_bool = 1
+                # aaa = idx_defl_points - peak_pos
+                trough_pos = idx_defl_points[np.abs(idx_defl_points - trough_pos).argmin()]
+                trough_pos = int(trough_pos)
+            else:
+                trough_defl_bool = 0
+                
+            low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d = get_CV_peak(cv_size, volt_compen, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool)
+         
             # Find estimate standard electrode potential (E1/2~E0)
             E1_2 = (trough_volt+peak_volt)/2
             ax_cv.plot(E1_2,0,"D", markersize = 6)
@@ -468,14 +507,37 @@ while True:
                 jpa_text = 'jpc'
                 jpc_text = 'jpa'
                 
+
             # Start plotting
             ccc = len(volt_array)
             for j in np.arange(0,ccc):
                 cutval_s_all = int(fitting_save_array[j+1,0])
                 cutval_e_all = int(fitting_save_array[j+1,1])
                 ax_cv.plot(np.array(volt_ir_array[j][cutval_s_all:cutval_e_all]).T, np.array(current_array[j][cutval_s_all:cutval_e_all]).T, '-', color='black')
-    
+                
+            clip_defl = idx_defl_points[(idx_defl_points >= cutval_s_all) & (idx_defl_points <= cutval_e_all)]
+            volt_defl = np.interp([clip_defl], idx_arr, volt_compen)
+            curr_defl = np.interp([clip_defl], idx_arr, current)
+            ax_cv.plot(volt_defl,curr_defl,'*',color='red')
 
+            # clip_defl = defl_points[(defl_points >= 3995) & (defl_points <= 5995)]
+            
+            # volt_defl = np.interp([deflection_points], idx_arr, volt_compen)
+            # curr_defl = np.interp([deflection_points], idx_arr, current)
+            # ax_cv.plot(volt_defl,curr_defl,'*',color='red')
+                
+            # Peak
+            # ax_cv.plot(volt_compen[peak_points],current[peak_points],'o',color='red')
+            
+            # volt_peak = np.interp([peak_points], idx_arr, volt_compen)
+            # curr_peak = np.interp([peak_points], idx_arr, current)
+            # ax_cv.plot(volt_peak,curr_peak,'*',color='blue')
+            
+            # volt_defl = np.interp([deflection_points], idx_arr, volt_compen)
+            # curr_defl = np.interp([deflection_points], idx_arr, current)
+            # ax_cv.plot(volt_defl,curr_defl,'*',color='red')
+            
+            
             ax_cv.plot((volt_compen[low_range_peak],volt_compen[high_range_peak]),(current[low_range_peak],current[high_range_peak]),"|", markersize = 10)
             ax_cv.plot((volt_compen[low_range_trough],volt_compen[high_range_trough]),(current[low_range_trough],current[high_range_trough]),"|", markersize = 10)
 
@@ -493,8 +555,8 @@ while True:
             fig_agg_cv.draw()
             window['output_jpa'].Update(np.round(jpa_show*1000/5,3)) #convert to mA in 5 cm2 area
             window['output_jpc'].Update(np.round(jpc_show*1000/5,3))
-            window['output_vpa'].Update(np.round(peak_volt,3))
-            window['output_vpc'].Update(np.round(trough_volt,3))
+            window['output_epa'].Update(np.round(peak_volt,3))
+            window['output_epc'].Update(np.round(trough_volt,3))
             window['output_rev'].Update(np.round((jpa_show/jpc_show),3))
             window['output_e1_2'].Update(np.round(E1_2,3))
             window['output_delta_e'].Update(np.round(delta_e,3))

@@ -5,7 +5,7 @@ import re
 from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
 import statsmodels.api as sm
-
+from scipy import interpolate
 
 def search_string_in_file(file_name, string_to_search):
     line_number = 0
@@ -104,7 +104,7 @@ def search_pattern(lst, pattern):
             indices.append(i)
     return indices
 
-def get_CV_init(df_CV, ir_compen):
+def get_CV_init(df_CV):
     # cv_size = df_CV.shape[0]
     volt = df_CV[:,0]
     current = df_CV[:,1]
@@ -118,24 +118,34 @@ def ir_compen_func(volt,current,ir_compen):
     volt_compen = volt - current*ir_compen
     return volt_compen
 
-def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne):
-    # Search for peak between peak_range.
-    high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
-    low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
-    peak_curr_range = current[low_range_peak:high_range_peak]
-    peak_curr = max(peak_curr_range)
-        
-    peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))
-        
-    peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
-
-    high_range_trough = np.where((trough_pos+peak_range)>=(cv_size-1),(cv_size-1),trough_pos+peak_range)
-    low_range_trough = np.where((trough_pos-peak_range)>=0,trough_pos-peak_range,0)
-    trough_curr_range = current[low_range_trough:high_range_trough]
-    trough_curr = min(trough_curr_range)
-    trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
-    trough_volt = volt[low_range_trough:high_range_trough][trough_idx] 
-
+def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool):
+    # If peak range is given as 0, then peak is just where peak position is
+    if peak_range == 0:
+        peak_curr = current[peak_pos]
+        peak_volt = volt[peak_pos]     
+        trough_curr = current[trough_pos]
+        trough_volt = volt[trough_pos]
+        low_range_peak = peak_pos
+        high_range_peak = peak_pos
+        high_range_trough = trough_pos
+        low_range_trough = trough_pos
+    # Search for peak between peak_range.       
+    else:    
+        high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
+        low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
+        peak_curr_range = current[low_range_peak:high_range_peak]
+        peak_curr = max(peak_curr_range)       
+        peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))     
+        peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
+    
+        high_range_trough = np.where((trough_pos+peak_range)>=(cv_size-1),(cv_size-1),trough_pos+peak_range)
+        low_range_trough = np.where((trough_pos-peak_range)>=0,trough_pos-peak_range,0)
+        trough_curr_range = current[low_range_trough:high_range_trough]
+        trough_curr = min(trough_curr_range)
+        trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
+        trough_volt = volt[low_range_trough:high_range_trough][trough_idx] 
+    
+    # If the extrapolation coordinate overlapped, just give horizontal line
     if (volt[jpa_lns:jpa_lne]).size == 0:
         volt_jpa = np.array([0, 1])
         current_jpa = np.array([0, 0])
@@ -150,7 +160,7 @@ def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_ln
         volt_jpc = volt[jpc_lns:jpc_lne]
         current_jpc = current[jpc_lns:jpc_lne]
 
-    jpa_lnfit_coef = np.polyfit(volt_jpa,current_jpa, 1)
+    jpa_lnfit_coef = np.polyfit(volt_jpa,current_jpa, 1) # 1 for linear fit
     jpc_lnfit_coef = np.polyfit(volt_jpc,current_jpc, 1)
     jpa_poly1d = np.poly1d(jpa_lnfit_coef)
     jpc_poly1d = np.poly1d(jpc_lnfit_coef)
@@ -158,12 +168,9 @@ def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_ln
     jpc = jpc_poly1d(trough_volt) - trough_curr
     return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d#, jpa_base, jpc_base
 
-
 def cv_inflection(df_CV, ir_compen):
-    #Separate CV into top part and bottom
     cv_size, volt, current = get_CV_init(df_CV, ir_compen)
     
-
 def time2sec(time_raw,delim):
     # Take time format such as 1-12:05:24 and convert to seconds
     time_raw = str(time_raw)
@@ -283,9 +290,20 @@ def lowess(x,y,frac):
     return smh_x, smh_y
 
 def diff(x,y):
-    # diff = np.gradient(current,volt)
-    # lowess = sm.nonparametric.lowess(diff, volt, frac=frac)
-    # smh_diff_volt = lowess[:, 0]
-    # smh_diff_curr = lowess[:, 1]
-    diff = np.gradient(y,x)
-    return x, diff
+    return np.gradient(y,x) #This is y
+
+def lowess_diff(x_idx,x,y,frac):
+    _, smh_y = lowess(x_idx,y,frac)
+    smh_diff_y = diff(x,smh_y)
+    return smh_diff_y
+
+def idx_intercept(ynew,y):
+    idx_intc = []
+    y = np.squeeze(y)
+    for i in np.arange(1,y.size):
+        if y[i] == ynew:
+            idx_intc.append(i)
+        if y[i] < ynew and y[i-1] > ynew or y[i] > ynew and y[i-1] < ynew: #in negative
+            new_x = interpolate.interp1d(y[i-1:i+1], [i-1,i])(ynew).item() #Give float value rather than np array
+            idx_intc.append(new_x)
+    return idx_intc
