@@ -17,6 +17,7 @@ from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, ge
 # Save result in array
 # Delete selected CV
 # Detect deflection
+    # Work with sub-index
 
 
 import os
@@ -50,7 +51,7 @@ def About_PySimpleCV():
 sg.theme('DarkBlue')
 
 # Generate layout for CV tab
-cv_slider_size = (50,8)
+cv_slider_size = (50,18)
 cv_col1=[[sg.Canvas(key='-CANVAS_cv-')]]
 cv_col2 = [
     [sg.Button("Add/Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15)),sg.Button("Delete CV File")],
@@ -507,31 +508,13 @@ while True:
             for j in np.arange(0,ccc):
                 cutval_s_all = int(fitting_save_array[j+1,0])
                 cutval_e_all = int(fitting_save_array[j+1,1])
-                ax_cv.plot(np.array(volt_ir_array[j][cutval_s_all:cutval_e_all]).T, np.array(current_array[j][cutval_s_all:cutval_e_all]).T, '-', color='black')
+                ax_cv.plot(np.array(volt_ir_array[j][cutval_s_all:cutval_e_all]).T, np.array(current_array[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=0.8)
                 
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s_all) & (idx_defl_points <= cutval_e_all)]
             volt_defl = np.interp([clip_defl], idx_arr, volt_compen)
             curr_defl = np.interp([clip_defl], idx_arr, current)
-            ax_cv.plot(volt_defl,curr_defl,'*',color='red')
+            ax_cv.plot(volt_defl,curr_defl,'.',color='green')
 
-            # clip_defl = defl_points[(defl_points >= 3995) & (defl_points <= 5995)]
-            
-            # volt_defl = np.interp([deflection_points], idx_arr, volt_compen)
-            # curr_defl = np.interp([deflection_points], idx_arr, current)
-            # ax_cv.plot(volt_defl,curr_defl,'*',color='red')
-                
-            # Peak
-            # ax_cv.plot(volt_compen[peak_points],current[peak_points],'o',color='red')
-            
-            # volt_peak = np.interp([peak_points], idx_arr, volt_compen)
-            # curr_peak = np.interp([peak_points], idx_arr, current)
-            # ax_cv.plot(volt_peak,curr_peak,'*',color='blue')
-            
-            # volt_defl = np.interp([deflection_points], idx_arr, volt_compen)
-            # curr_defl = np.interp([deflection_points], idx_arr, current)
-            # ax_cv.plot(volt_defl,curr_defl,'*',color='red')
-            
-            
             ax_cv.plot((volt_compen[low_range_peak],volt_compen[high_range_peak]),(current[low_range_peak],current[high_range_peak]),"|", markersize = 10)
             ax_cv.plot((volt_compen[low_range_trough],volt_compen[high_range_trough]),(current[low_range_trough],current[high_range_trough]),"|", markersize = 10)
 
