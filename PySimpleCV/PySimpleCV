@@ -471,17 +471,11 @@ while True:
                 jpc_lns = jpc_lne_old  
             
             if values['peak_defl_bool'] == 1:
-                peak_range = 0
-                peak_defl_bool = 1
-                # aaa = idx_defl_points - peak_pos
                 peak_pos = idx_defl_points[np.abs(idx_defl_points - peak_pos).argmin()]
                 peak_pos = int(peak_pos)
             else:
                 peak_defl_bool = 0
             if values['trough_defl_bool'] == 1:
-                trough_range = 0
-                trough_defl_bool = 1
-                # aaa = idx_defl_points - peak_pos
                 trough_pos = idx_defl_points[np.abs(idx_defl_points - trough_pos).argmin()]
                 trough_pos = int(trough_pos)
             else:
@@ -804,109 +798,3 @@ while True:
         case "eis_clear":
             clear_eis_plot()
 window.close()
-
-            # Clear plot every time new plot open
-            
-            # frac = 0.01
-            # cv_idx = np.arange(0,cv_size)  
-            # cv_init, = ax_cv.plot(cv_idx, current, '-', color='black')
-            
-            #Smooth CV
-            # smh_volt, smh_curr = lowess(cv_idx,current,frac)
-            # ax_cv.plot(smh_volt, smh_curr)
-            
-            # #Diff CV
-            # diff_volt, diff_curr = diff(smh_volt, smh_curr)
-            # sdiff_volt, sdiff_curr = lowess(diff_volt, diff_curr,frac)
-            # ax_cv.plot(sdiff_volt, sdiff_curr*180)
-            
-            # #Diff2
-            # diff2_volt, diff2_curr = diff(sdiff_volt, sdiff_curr)
-            # sdiff2_volt, sdiff2_curr = lowess(diff2_volt, diff2_curr,frac)
-            # # ax_cv.plot(sdiff2_volt, sdiff2_curr*10000)           
-            
-            # #Diff3
-            # diff3_volt, diff3_curr = diff(sdiff2_volt, sdiff2_curr)
-            # sdiff3_volt, sdiff3_curr = lowess(diff3_volt, diff3_curr,frac)
-            # ax_cv.plot(sdiff3_volt, sdiff3_curr*1000000)            
-            
-            # print(idx.size)
-            # print(current.size)
-            # print(cv_idx.size)
-            # ax_cv.plot(cv_idx,current)
-            
-            # diff_cv_idx, diff_curr, diff = diff_smh(cv_idx,current,frac)
-            # print(diff_curr.size)
-            # print(diff_volt.size)
-            # ax_cv.plot(cv_idx,diff*170)
-            # ax_cv.plot(diff_cv_idx,diff_curr*170)
-            
-            # diff2_curr = np.gradient(diff_curr,cv_idx)
-            
-            # diff2_cv_idx, diff2_curr, diff = diff_smh(diff_cv_idx,diff_curr,frac)
-            # ax_cv.plot(diff2_cv_idx, diff2_curr*20000)
-
-            # ax_cv.set_ylim(-0.1,0.1)
-            # ax_cv.set_xlim(0,1000)
-            
-                        
-            
-                            
-                
-            ########################################################################
-
-            # max_v_idx = np.argmax(volt)
-            # min_v_idx = np.argmin(volt)
-            
-            
-            # print(max_v_idx,min_v_idx)
-            # print(volt.size)
-            # cv_size = volt.size-1
-            # if max_v_idx == 0 or min_v_idx == 0 or max_v_idx == cv_size or min_v_idx == cv_size:
-            #     if max_v_idx == 0 or max_v_idx == cv_size:
-            #         #negative
-            #         seg1 = (0,min_v_idx)
-            #         seg2 = (min_v_idx,cv_size)
-            #     elif min_v_idx == 0 or min_v_idx == cv_size:
-            #         #positive
-            #         seg1 = (0,max_v_idx)
-            #         seg2 = (max_v_idx,cv_size)
-            #     smh_volt1, smh_curr1 = diff_smh(volt[seg1[0]:seg1[1]],current[seg1[0]:seg1[1]],frac)
-            #     smh_volt2, smh_curr2 = diff_smh(volt[seg2[0]:seg2[1]],current[seg2[0]:seg2[1]],frac)
-            #     print('test')
-            #     ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2)      
-                
-            # else:
-            #     print(max_v_idx,min_v_idx)
-            #     if max_v_idx <= min_v_idx:
-            #         seg1 = (0,max_v_idx)
-            #         seg2 = (max_v_idx,min_v_idx)
-            #         seg3 = (min_v_idx,volt.size)
-            #         print(seg3)
-            #         print(volt.size)
-            #     else: 
-            #         seg1 = (0,min_v_idx)
-            #         seg2 = (min_v_idx,max_v_idx)
-            #         seg3 = (max_v_idx,volt.size)
-            #         print(volt.size)
-            #         print(seg3)
-            #     smh_volt1, smh_curr1 = diff_smh(volt[seg1[0]:seg1[1]],current[seg1[0]:seg1[1]],frac)
-            #     smh_volt2, smh_curr2 = diff_smh(volt[seg2[0]:seg2[1]],current[seg2[0]:seg2[1]],frac)
-            #     smh_volt3, smh_curr3 = diff_smh(volt[seg3[0]:seg3[1]],current[seg3[0]:seg3[1]],frac)
-            #     ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2, smh_volt3, smh_curr3)
-            # idx = np.arange(0,volt.size)  
-            # print(idx.size)
-            # print(current.size)
-            # ax_cv.plot(idx,current)
-            # frac = 0.09
-            # diff_volt, diff_curr = diff_smh(idx,current,frac)
-            # ax_cv.plot(idx,diff_curr*170)
-            
-            # diff2_curr = np.gradient(diff_curr,idx)
-            
-            # # diff2_volt, diff2_curr = diff_smh(idx,diff_curr,frac)
-            # ax_cv.plot(idx, diff2_curr*20000)
-            ########################################################################
-            
-            
-            # ax_cv.plot(smh_volt1, smh_curr1, smh_volt2, smh_curr2)    

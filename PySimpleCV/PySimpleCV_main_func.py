@@ -120,26 +120,31 @@ def ir_compen_func(volt,current,ir_compen):
 
 def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool):
     # If peak range is given as 0, then peak is just where peak position is
-    if peak_range == 0:
+    trough_range = peak_range
+    if peak_defl_bool == 1:
+        peak_range = 0
         peak_curr = current[peak_pos]
-        peak_volt = volt[peak_pos]     
-        trough_curr = current[trough_pos]
-        trough_volt = volt[trough_pos]
+        peak_volt = volt[peak_pos]   
         low_range_peak = peak_pos
         high_range_peak = peak_pos
-        high_range_trough = trough_pos
-        low_range_trough = trough_pos
-    # Search for peak between peak_range.       
-    else:    
+    # Search for peak between peak_range.     
+    else:
         high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
         low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
         peak_curr_range = current[low_range_peak:high_range_peak]
         peak_curr = max(peak_curr_range)       
         peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))     
         peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
-    
-        high_range_trough = np.where((trough_pos+peak_range)>=(cv_size-1),(cv_size-1),trough_pos+peak_range)
-        low_range_trough = np.where((trough_pos-peak_range)>=0,trough_pos-peak_range,0)
+        
+    if trough_defl_bool == 1:
+        trough_range = 0
+        trough_curr = current[trough_pos]
+        trough_volt = volt[trough_pos]
+        high_range_trough = trough_pos
+        low_range_trough = trough_pos      
+    else:    
+        high_range_trough = np.where((trough_pos+trough_range)>=(cv_size-1),(cv_size-1),trough_pos+trough_range)
+        low_range_trough = np.where((trough_pos-trough_range)>=0,trough_pos-trough_range,0)
         trough_curr_range = current[low_range_trough:high_range_trough]
         trough_curr = min(trough_curr_range)
         trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
