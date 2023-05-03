@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import os
+import sys
 import numpy as np 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg 
 from matplotlib.figure import Figure
@@ -8,27 +10,33 @@ from matplotlib.lines import Line2D
 import pandas as pd
 from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
+from pathlib import Path
 # from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
 from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, lowess, diff, ir_compen_func, lowess_diff, idx_intercept
-# import statsmodels.api as sm
 
 # ToDo
 # Save result in array
 # Delete selected CV
 # Detect deflection
-    # Work with sub-index
-
-
-import os
-
-import sys
+    # Work with sub-index(Maybe not)
+    # 
+# Add option to change electrode area and current unit
 
 if not sys.warnoptions:
     import warnings
     warnings.simplefilter("ignore")
 
 matplotlib.rcParams['figure.dpi'] = 80
+
+parentDirectory = os.path.abspath(os.path.join(os.getcwd(), os.pardir))
+
+# font = (os.path.join(parentDirectory, 'font', 'DejaVuSansMono.ttf'),12)
+
+# font = ("DejaVu Sans Mono", 12)
+# sg.set_options(font=font)
+
+# sg.set_options(font=('DejaVuSansMono.ttf', 12))
 
 def draw_figure(canvas, figure): 
     figure_canvas_agg = FigureCanvasTkAgg(figure, canvas) 
@@ -70,7 +78,7 @@ cv_col2 = [
     [sg.Text('Peak search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=False)],
     [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False),sg.Checkbox('Detect deflection', default=False, key='peak_defl_bool', disabled=True, enable_events=True)],
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos', enable_events=True, disabled=False),sg.Checkbox('Detect deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
-    [sg.Multiline('',size=(90,5), disabled=True, key = 'cv_name_dis')],
+    [sg.Multiline('',size=(90,5), disabled=True, key = 'cv_results_dis', font=('DejaVu Sans Mono', 12))],
     
     [sg.Button('Clear plot', key='cv_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV')]
 ]
@@ -284,7 +292,9 @@ fitting_save_array = np.zeros((1,12))
 fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0,0,0]])
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
-diff1 = []
+# cv_results = np.zeros((1,7)) # Save result from CV
+cv_results = pd.DataFrame(columns =  ["Jpa", "Jpc", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a"])
+# diff1 = []
 while True:
     event, values = window.read()
     match event:
@@ -348,6 +358,8 @@ while True:
 
             # Add new default save data array
             fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
+            # Add default unuse result
+            # cv_results = np.append(cv_results,np.zeros((1,7)),axis=0)
             
             window['cv_combo'].Update(values=cv_name_array) # Update combo list of CVs
             window['cv_combo'].Update(cv_name) # Update default combo display
@@ -360,7 +372,6 @@ while True:
                 # sg.popup(file_error, keep_on_top=True)
             cv_select = cv_name    
             cv_name_idx = cv_name_array.index(cv_select)
-            window['cv_name_dis'].Update(cv_name_idx)
         case 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' | 'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_pos'| 'trough_pos'| 'peak_range' | 'inv_jpa_jpc' | 'ir_compen' | 'cv_combo' | 'peak_defl_bool' | 'trough_defl_bool':
 
             ax_cv.cla()
@@ -369,11 +380,11 @@ while True:
             
             cv_select = values['cv_combo']
             cv_name_idx = cv_name_array.index(cv_select)
-            window['cv_name_dis'].Update(cv_name_idx)
 
             volt = volt_array[cv_name_idx]
             current = current_array[cv_name_idx]
             cv_size = cv_size_array[cv_name_idx]
+            idx_arr = np.arange(0,cv_size)
             
             idx_peak_points = np.array(idx_intc_peak_array[cv_name_idx])
             idx_defl_points = np.array(idx_intc_deflection_array[cv_name_idx])    
@@ -537,6 +548,8 @@ while True:
             window['output_rev'].Update(np.round((jpa_show/jpc_show),3))
             window['output_e1_2'].Update(np.round(E1_2,3))
             window['output_delta_e'].Update(np.round(delta_e,3))
+            cv_results.loc[cv_name_idx] = [jpa_show*1000/5, jpc_show*1000/5, peak_volt, trough_volt, jpa_show/jpc_show, E1_2, delta_e]
+            window['cv_results_dis'].Update(cv_results.to_string()) 
         case 'save_cv':
             save_cv_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
             if save_cv_loc is None:
