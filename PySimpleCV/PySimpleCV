@@ -286,9 +286,9 @@ volt_ir_array = []
 cv_path_array = []
 cv_name_array = []
 cv_size_array = []
-# fitting_save_array = np.zeros((1,12))
+fitting_save_array = np.zeros((1,12))
 fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0,0,0]])
-fitting_df = pd.DataFrame(columns =  ["Start CV Trim", "End CV Trim", "Start Jpa baseline", "End Jpa baseline", "Start Jpc baseline", "End Jpc baseline", "Epa", "Epc", "Peak search range", "iR compensation", "Anodic peak deflection toggle" ,"Cathodic peak deflection toggle"])
+# fitting_df = pd.DataFrame(columns =  ["Start CV Trim", "End CV Trim", "Start Jpa baseline", "End Jpa baseline", "Start Jpc baseline", "End Jpc baseline", "Epa", "Epc", "Peak search range", "iR compensation", "Anodic peak deflection toggle" ,"Cathodic peak deflection toggle"])
 
 # ([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool]) 
 
@@ -357,9 +357,9 @@ while True:
             idx_intc_deflection_array.append(idx_intercept(0,diff3_curr))
 
             # Add new default save data array
-            # fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
+            fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
             
-            fitting_df = fitting_df.append(pd.DataFrame(fitting_default, columns=list(fitting_df)), ignore_index=True)
+            # fitting_df = fitting_df.append(pd.DataFrame(fitting_default, columns=list(fitting_df)), ignore_index=True)
             
             
             # Add default unuse result
@@ -411,20 +411,20 @@ while True:
             if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
                cv_name_idx_old = cv_name_idx
                # Restore saved values
-               # cutval_s_save = int(fitting_save_array[cv_name_idx+1,0])
-               # cutval_e_save = int(fitting_save_array[cv_name_idx+1,1])
-               # jpa_lns_save = int(fitting_save_array[cv_name_idx+1,2])
-               # jpa_lne_save = int(fitting_save_array[cv_name_idx+1,3])
-               # jpc_lns_save = int(fitting_save_array[cv_name_idx+1,4])
-               # jpc_lne_save = int(fitting_save_array[cv_name_idx+1,5])
-               # peak_pos_save = int(fitting_save_array[cv_name_idx+1,6])
-               # trough_pos_save = int(fitting_save_array[cv_name_idx+1,7])
-               # peak_range_save = int(fitting_save_array[cv_name_idx+1,8])
-               # ir_compen_save = int(fitting_save_array[cv_name_idx+1,9])
-               # peak_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,10])
-               # trough_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,11])
+               cutval_s_save = int(fitting_save_array[cv_name_idx+1,0])
+               cutval_e_save = int(fitting_save_array[cv_name_idx+1,1])
+               jpa_lns_save = int(fitting_save_array[cv_name_idx+1,2])
+               jpa_lne_save = int(fitting_save_array[cv_name_idx+1,3])
+               jpc_lns_save = int(fitting_save_array[cv_name_idx+1,4])
+               jpc_lne_save = int(fitting_save_array[cv_name_idx+1,5])
+               peak_pos_save = int(fitting_save_array[cv_name_idx+1,6])
+               trough_pos_save = int(fitting_save_array[cv_name_idx+1,7])
+               peak_range_save = int(fitting_save_array[cv_name_idx+1,8])
+               ir_compen_save = int(fitting_save_array[cv_name_idx+1,9])
+               peak_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,10])
+               trough_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,11])
                
-               cutval_s_save, cutval_e_save, jpa_lns_save, jpa_lne_save, jpc_lns_save, jpc_lne_save, peak_pos_save, trough_pos_save, peak_range_save, ir_compen_save, peak_defl_bool_save, trough_defl_bool_save = fitting_df.iloc[cv_name_idx]
+               # cutval_s_save, cutval_e_save, jpa_lns_save, jpa_lne_save, jpc_lns_save, jpc_lne_save, peak_pos_save, trough_pos_save, peak_range_save, ir_compen_save, peak_defl_bool_save, trough_defl_bool_save = fitting_df.iloc[cv_name_idx]
                # Put slider to previous position
                window['sl_cutval_s'].Update(cutval_s_save)
                window['sl_cutval_e'].Update(cutval_e_save)
@@ -468,9 +468,11 @@ while True:
                    ir_compen = float(values['ir_compen'])
                except ValueError:
                    ir_compen = float(0)   
+                   
                fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool]) 
                # np.put(fitting_save_array[cv_name_idx+1],[0,1,2,3,4,5,6,7,8,9,10,11], fitting_save) #Save data 
-               fitting_df.iloc[cv_name_idx] = fitting_save
+               fitting_save_array[cv_name_idx+1] = fitting_save
+               # fitting_df.iloc[cv_name_idx] = fitting_save
             
             if ir_compen != ir_compen_old:
                 ir_compen_old = ir_compen
@@ -520,14 +522,11 @@ while True:
                 jpa_text = 'jpc'
                 jpc_text = 'jpa'
                 
-
             # Start plotting
             ccc = len(volt_array)
             for j in np.arange(0,ccc):
-                # cutval_s_all = int(fitting_save_array[j+1,0])
-                cutval_s_all = int(fitting_df["Start CV Trim"].iloc[j])
-                # cutval_e_all = int(fitting_save_array[j+1,1])
-                cutval_e_all = int(fitting_df["End CV Trim"].iloc[j])
+                cutval_s_all = int(fitting_save_array[j+1,0])
+                cutval_e_all = int(fitting_save_array[j+1,1])
                 ax_cv.plot(np.array(volt_ir_array[j][cutval_s_all:cutval_e_all]).T, np.array(current_array[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=0.8)
                 
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s_all) & (idx_defl_points <= cutval_e_all)]
