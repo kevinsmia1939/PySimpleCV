@@ -189,7 +189,6 @@ def clear_battery_plot():
     ax_bat_eff.cla()
     ax_bat_cap.cla()
     ax_bat_cycle.cla()
-    
     #Redraw Efficiency axis and labels.
     ax_bat_eff.spines.right.set_position(("axes", 1.11))
     ax_bat_cap.spines.right.set_position(("axes", 1.21))
@@ -290,7 +289,7 @@ while True:
         case 'cv_clear':
             clear_cv_plot()
         case 'Add/Open CV File':
-            cv_file_new = sg.popup_get_file('Choose CV file')
+            cv_file_new = sg.popup_get_file('Choose CV file',multiple_files=True)
             # If cancel, close the window, go back to beginning
             if cv_file_new is None:
                 continue
@@ -298,8 +297,13 @@ while True:
                 continue
             # try:
                 # Clear plot every time new plot open
-            # clear_cv_plot()       
+            # clear_cv_plot()
+            
+            print(cv_file_new)
             cv_file = cv_file_new
+            
+            for cv in cv_file.split(';'):
+            
             cv_name = os.path.basename(cv_file) #Get file name
             df_CV = CV_file2df(cv_file)       
             cv_size, volt, current = get_CV_init(df_CV) # Only need the cv_size so set to [0]
@@ -348,7 +352,6 @@ while True:
             window['cv_combo'].Update(values=cv_name_lst) # Update combo list of CVs
             window['cv_combo'].Update(cv_name) # Update default combo display
             disable_slider(False)
-            # ax_cv.grid()
             # except Exception as file_error:
                 # sg.popup(file_error, keep_on_top=True)
             cv_select = cv_name    
@@ -808,7 +811,8 @@ while True:
     ax_cv.plot((volt_compen[low_range_trough],volt_compen[high_range_trough]),(current_den[low_range_trough],current_den[high_range_trough]),"|", markersize = 10)
 
     ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=4,linestyle='-',color='red')
-    ax_cv.annotate(text='',ha="center",va="center", xy=(peak_volt,jpa_poly1d(peak_volt)), xytext=(peak_volt,peak_curr), arrowprops=dict(arrowstyle='<-'))
+    # ax_cv.annotate(text='',ha="center",va="center", xy=(peak_volt,jpa_poly1d(peak_volt)), xytext=(peak_volt,peak_curr), arrowprops=dict(arrowstyle='<-'))
+    ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,peak_curr-jpa_poly1d(peak_volt),linewidth=0.2, color='g', length_includes_head=True)
     ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--')
     
     ax_cv.plot(volt_compen[jpc_lns:jpc_lne],current_den[jpc_lns:jpc_lne],linewidth=4,linestyle='-',color='blue')
