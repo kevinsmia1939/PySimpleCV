@@ -312,3 +312,12 @@ def idx_intercept(ynew,y):
             new_x = interpolate.interp1d(y[i-1:i+1], [i-1,i])(ynew).item() #Give float value rather than np array
             idx_intc.append(new_x)
     return idx_intc
+
+
+def nicholson(jpc,jpa0,jsp0):
+    # Nicholson, R. S. Semiempirical Procedure for Measuring with
+    # Stationary Electrode Polarography Rates of Chemical Reactions
+    # Involving the Product of Electron Transfer. Anal. Chem. 1966, 38
+    # (10), 1406.
+    jpa = jpc*((jpa0/jpc)+((0.485*jsp0)/jpc)+0.086)
+    return jpa

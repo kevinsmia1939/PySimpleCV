@@ -13,7 +13,7 @@ from impedance.models.circuits import Randles, CustomCircuit
 # from pathlib import Path
 # from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, lowess, diff, ir_compen_func, lowess_diff, idx_intercept
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, lowess, diff, ir_compen_func, lowess_diff, idx_intercept, nicholson
 
 # ToDo
 # Optimize peak deflection regcognision
@@ -53,15 +53,17 @@ cv_col2 = [
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True)],
     [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(10,5),disabled=False, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'),sg.Input(default_text=('1'), key='elec_area',size=(10,5),disabled=False, enable_events=True),sg.Text('cm2')],
-    [sg.Text('Trim CV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s', enable_events=True, disabled=True)],
+    [sg.Text('Trim CV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s', disable_number_display=True, enable_events=True, disabled=True)],
     [sg.Text('Trim CV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e', enable_events=True, disabled=True)],
     [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
     [sg.Text('End 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpa_lne', enable_events=True, disabled=True)],
     [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
     [sg.Text('End 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
     [sg.Text('Peak search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=False)],
-    [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False),sg.Checkbox('Detect deflection', default=False, key='peak_defl_bool', disabled=True, enable_events=True)],
-    [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos', enable_events=True, disabled=False),sg.Checkbox('Detect deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
+    [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False), sg.Checkbox('Detect deflection', default=False, key='peak_defl_bool', disabled=True, enable_events=True)],
+    [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos',  enable_events=True, disabled=False), sg.Checkbox('Detect deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
+    [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson', enable_events=True, disabled=True)],
+    [sg.Text('Switching potential current (jps0)'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='idx_jsp0', enable_events=True, disabled=True),sg.Text('', key='jsp0_volt')],
     [sg.Text('Results')],
     [sg.Multiline('',size=(70,5), disabled=True, key = 'cv_results_dis', font=('DejaVu Sans Mono', 12))],
     
@@ -257,6 +259,8 @@ def disable_slider(bool):
     window['inv_jpa_jpc'].Update(disabled=bool)
     window['peak_defl_bool'].Update(disabled=bool)
     window['trough_defl_bool'].Update(disabled=bool)
+    window['nicholson'].Update(disabled=bool)
+    window['idx_jsp0'].Update(disabled=bool)
 
 randles_select = True
 volt_lst = []
@@ -273,8 +277,8 @@ volt_ir_lst = []
 cv_path_lst = []
 cv_name_lst = []
 cv_size_lst = []
-fitting_save_array = np.zeros((1,13))
-fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0,0,0,1]])
+fitting_save_array = np.zeros((1,14))
+fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0,0,0,1,0]])
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
 elec_area_old = 1
@@ -299,7 +303,7 @@ while True:
                 # Clear plot every time new plot open
             # clear_cv_plot()
             
-            print(cv_file_new)
+            # print(cv_file_new)
             cv_file_multiple = cv_file_new
             
             for cv_file in cv_file_multiple.split(';'):      
@@ -317,6 +321,7 @@ while True:
                 window['peak_range'].Update(range=(1, 100))
                 window['peak_pos'].Update(range=(0, cv_size-1))
                 window['trough_pos'].Update(range=(0, cv_size-1))
+                window['idx_jsp0'].Update(range=(0, cv_size-1))
                 
                 cv_path_lst.append(cv_file) #Create 2D array of CVs so we can select, plot, and analyze data based on index
                 cv_name_lst.append(cv_name)
@@ -369,7 +374,7 @@ while True:
             del smh_volt_lst[cv_name_idx]
             del smh_curr_lst[cv_name_idx]
             del volt_lst[cv_name_idx]
-            del volt_ir_lst[cv_name_idx]
+            del volt_ir_lst[cv_name_idx]           
             fitting_save_array = np.delete(fitting_save_array,1+cv_name_idx,0)
             cv_results = cv_results.drop([cv_name_idx])
             cv_results.reset_index(inplace=True)
@@ -660,6 +665,7 @@ while True:
     window['peak_range'].Update(range=(1, 100))
     window['peak_pos'].Update(range=(1, cv_size-1))
     window['trough_pos'].Update(range=(1, cv_size-1))
+    window['idx_jsp0'].Update(range=(1, cv_size-1))
     
     try:
         ir_compen = float(values['ir_compen'])
@@ -682,6 +688,7 @@ while True:
        peak_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,10])
        trough_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,11])
        elec_area_save = int(fitting_save_array[cv_name_idx+1,12])
+       idx_jsp0_save = int(fitting_save_array[cv_name_idx+1,13])
 
        # Put slider to previous position
        window['sl_cutval_s'].Update(cutval_s_save)
@@ -697,6 +704,7 @@ while True:
        window['peak_defl_bool'].Update(peak_defl_bool_save)
        window['trough_defl_bool'].Update(trough_defl_bool_save)
        window['elec_area'].Update(elec_area_save)
+       window['idx_jsp0'].Update(idx_jsp0_save)
        # Assign the value from saved data
        cutval_s = cutval_s_save
        cutval_e = cutval_e_save
@@ -711,6 +719,7 @@ while True:
        peak_defl_bool = peak_defl_bool_save
        trough_defl_bool = trough_defl_bool_save
        elec_area = elec_area_save
+       idx_jsp0 = idx_jsp0_save
     elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
        cutval_s = int(values['sl_cutval_s'])
        cutval_e = int(values['sl_cutval_e'])
@@ -723,6 +732,7 @@ while True:
        peak_range = int(values['peak_range'])
        peak_defl_bool = int(values['peak_defl_bool'])
        trough_defl_bool = int(values['trough_defl_bool'])
+       idx_jsp0 = int(values['idx_jsp0'])
        # Only accept float value from ir compensation
        try:
            ir_compen = float(values['ir_compen'])
@@ -735,7 +745,7 @@ while True:
            elec_area = float(1)                  
     
            
-       fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool,elec_area]) 
+       fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool,elec_area,idx_jsp0]) 
        fitting_save_array[cv_name_idx+1] = fitting_save
     
     if ir_compen != ir_compen_old:
@@ -774,22 +784,52 @@ while True:
     else:
         trough_defl_bool = 0
         
-    low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d = get_CV_peak(cv_size, volt_compen, current_den, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool)
- 
-    # Find estimate standard electrode potential (E1/2~E0)
-    E1_2 = (trough_volt+peak_volt)/2
-    # invert jpa and jpc or not
-    if values['inv_jpa_jpc'] == False:   
-        jpa_show = jpa
-        jpc_show = jpc
-        jpa_text = 'jpa'
-        jpc_text = 'jpc'
-    else:
-        jpa_show = jpc
-        jpc_show = jpa    
-        jpa_text = 'jpc'
-        jpc_text = 'jpa'
+    # low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d = get_CV_peak(cv_size, volt_compen, current_den, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool)
+    
+
+    
+    if values['nicholson'] == True:
+        low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa0, jpc, _, jpc_poly1d = get_CV_peak(cv_size, volt_compen, current_den, peak_range, peak_pos, trough_pos, jpc_lns, jpc_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool)
+        # Find estimate standard electrode potential (E1/2~E0)
+        E1_2 = (trough_volt+peak_volt)/2
+        ax_cv.plot(E1_2,0,"D", markersize = 6)
+    
+        ax_cv.plot((volt_compen[low_range_peak],volt_compen[high_range_peak]),(current_den[low_range_peak],current_den[high_range_peak]),"|", markersize = 10)
+        ax_cv.plot((volt_compen[low_range_trough],volt_compen[high_range_trough]),(current_den[low_range_trough],current_den[high_range_trough]),"|", markersize = 10)
+    
+        ax_cv.plot(volt_compen[jpc_lns:jpc_lne],current_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-', color='green')
+        ax_cv.plot(np.array([volt_compen[jpc_lns],peak_volt]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(peak_volt)]),'--', color='green')
+        ax_cv.plot(np.array([volt_compen[jpc_lns],trough_volt]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(trough_volt)]),'--', color='green')
         
+        ax_cv.arrow(peak_volt,jpc_poly1d(peak_volt),0,jpa0,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='green', length_includes_head=True)
+        ax_cv.arrow(trough_volt,jpc_poly1d(trough_volt),0,-jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
+        
+        jsp0_volt = volt_compen[idx_jsp0]
+        jsp0 = current_den[idx_jsp0]-jpc_poly1d(jsp0_volt)
+        ax_cv.plot(np.array([volt_compen[jpc_lns],volt_compen[idx_jsp0]]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(jsp0_volt)]),'--', color='green')
+        ax_cv.arrow(volt_compen[idx_jsp0],jpc_poly1d(jsp0_volt),0,jsp0,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
+        ax_cv.plot(volt_compen[idx_jsp0],current_den[idx_jsp0],"*", markersize = 6)
+        jpa = jpc*((jpa0/jpc)+((0.485*np.abs(jsp0))/jpc)+0.086)
+        window['jsp0_volt'].Update(jsp0_volt)
+    else:
+        low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d = get_CV_peak(cv_size, volt_compen, current_den, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool)
+        # Find estimate standard electrode potential (E1/2~E0)
+        E1_2 = (trough_volt+peak_volt)/2
+        ax_cv.plot(E1_2,0,"D", markersize = 6)
+        
+        
+        ax_cv.plot((volt_compen[low_range_peak],volt_compen[high_range_peak]),(current_den[low_range_peak],current_den[high_range_peak]),"|", markersize = 10)
+        ax_cv.plot((volt_compen[low_range_trough],volt_compen[high_range_trough]),(current_den[low_range_trough],current_den[high_range_trough]),"|", markersize = 10)
+    
+        ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='red')
+        ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='r', length_includes_head=True)
+        ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--', color='red')
+        
+        ax_cv.plot(volt_compen[jpc_lns:jpc_lne],current_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
+        ax_cv.arrow(trough_volt,jpc_poly1d(trough_volt),0,-jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
+        ax_cv.plot(np.array([volt_compen[jpc_lns],trough_volt]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(trough_volt)]),'--', color='blue')
+    # Find peak-peak separation voltage
+    delta_e = np.abs(trough_volt-peak_volt)
     # Start plotting
     volt_lst_len = len(volt_lst)
     for j in np.arange(0,volt_lst_len):
@@ -802,26 +842,25 @@ while True:
         volt_defl = np.interp([clip_defl], idx_arr, volt_compen)
         curr_defl = np.interp([clip_defl], idx_arr, current_den)
         ax_cv.plot(volt_defl,curr_defl,'.',color='green')
-    
-    ax_cv.plot(E1_2,0,"D", markersize = 6)
-    # Find peak-peak separation voltage
-    delta_e = np.abs(trough_volt-peak_volt)
-    ax_cv.plot((volt_compen[low_range_peak],volt_compen[high_range_peak]),(current_den[low_range_peak],current_den[high_range_peak]),"|", markersize = 10)
-    ax_cv.plot((volt_compen[low_range_trough],volt_compen[high_range_trough]),(current_den[low_range_trough],current_den[high_range_trough]),"|", markersize = 10)
-
-    ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-',color='red')
-    ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,peak_curr-jpa_poly1d(peak_volt),linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='g', length_includes_head=True)
-    ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--')
-    
-    ax_cv.plot(volt_compen[jpc_lns:jpc_lne],current_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
-    ax_cv.arrow(trough_volt,jpa_poly1d(trough_volt),0,trough_curr-jpa_poly1d(trough_volt),linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='g', length_includes_head=True)
-    ax_cv.plot(np.array([volt_compen[jpc_lns],trough_volt]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(trough_volt)]),'--')
-    
+        
     ax_cv.grid()
     ax_cv.set_xlabel("Voltage")
     ax_cv.set_ylabel("Current")
     fig_agg_cv.draw()
-    print(cv_name_idx)
+    # print(cv_name_idx)
+    
+    # invert jpa and jpc or not
+    if values['inv_jpa_jpc'] == False:   
+        jpa_show = jpa
+        jpc_show = jpc
+        jpa_text = 'jpa'
+        jpc_text = 'jpc'
+    else:
+        jpa_show = jpc
+        jpc_show = jpa    
+        jpa_text = 'jpc'
+        jpc_text = 'jpa'
+    
     cv_results.loc[cv_name_idx] = [jpa_show*1000, jpc_show*1000, peak_volt, trough_volt, jpa_show/jpc_show, E1_2, delta_e]
     cv_results = cv_results.sort_index()
     window['cv_results_dis'].Update(cv_results.to_string(index=False)) 
