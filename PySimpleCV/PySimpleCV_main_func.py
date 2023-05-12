@@ -118,7 +118,7 @@ def ir_compen_func(volt,current,ir_compen):
     volt_compen = volt - current*ir_compen
     return volt_compen
 
-def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool):
+def get_CV_peak(inv_peak_trough,cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool):
     # If peak range is given as 0, then peak is just where peak position is
     trough_range = peak_range
     if peak_defl_bool == 1:
@@ -132,7 +132,10 @@ def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_ln
         high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
         low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
         peak_curr_range = current[low_range_peak:high_range_peak]
-        peak_curr = max(peak_curr_range)       
+        if inv_peak_trough == False:
+            peak_curr = max(peak_curr_range)
+        else:
+            peak_curr = min(peak_curr_range)
         peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))     
         peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
         
@@ -146,7 +149,10 @@ def get_CV_peak(cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_ln
         high_range_trough = np.where((trough_pos+trough_range)>=(cv_size-1),(cv_size-1),trough_pos+trough_range)
         low_range_trough = np.where((trough_pos-trough_range)>=0,trough_pos-trough_range,0)
         trough_curr_range = current[low_range_trough:high_range_trough]
-        trough_curr = min(trough_curr_range)
+        if inv_peak_trough == False:
+            trough_curr = min(trough_curr_range)
+        else:
+            trough_curr = max(trough_curr_range)
         trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
         trough_volt = volt[low_range_trough:high_range_trough][trough_idx] 
     
