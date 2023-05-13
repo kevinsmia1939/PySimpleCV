@@ -51,7 +51,7 @@ cv_col1=[[sg.Canvas(key='-CANVAS_cv-')]]
 cv_col2 = [
     [sg.Button("Add/Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15)),sg.Button("Delete CV File")],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
-    [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True)],
+    [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True),sg.Checkbox('Switch finding max and min peak', default=False, key='inv_peak', disabled=True, enable_events=True)],
     [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(10,5),disabled=False, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'),sg.Input(default_text=('1'), key='elec_area',size=(10,5),disabled=False, enable_events=True),sg.Text('cm2')],
     [sg.Text('Trim CV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s', disable_number_display=True, enable_events=True, disabled=True)],
     [sg.Text('Trim CV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e', enable_events=True, disabled=True)],
@@ -60,8 +60,8 @@ cv_col2 = [
     [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True)],
     [sg.Text('End 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True)],
     [sg.Text('Peak search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=False)],
-    [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False), sg.Checkbox('Detect deflection', default=False, key='peak_defl_bool', disabled=True, enable_events=True)],
-    [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos',  enable_events=True, disabled=False), sg.Checkbox('Detect deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
+    [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False), sg.Checkbox('Deflection', default=False, key='peak_defl_bool', disabled=True, enable_events=True)],
+    [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos',  enable_events=True, disabled=False), sg.Checkbox('Deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
     [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson', enable_events=True, disabled=True)],
     [sg.Text('Switching potential current (jps0)'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='idx_jsp0', enable_events=True, disabled=True),sg.Text('', key='jsp0_volt')],
     [sg.Text('Results')],
@@ -257,6 +257,7 @@ def disable_slider(bool):
     window['peak_pos'].Update(disabled=bool)
     window['trough_pos'].Update(disabled=bool)
     window['inv_jpa_jpc'].Update(disabled=bool)
+    window['inv_peak'].Update(disabled=bool)
     window['peak_defl_bool'].Update(disabled=bool)
     window['trough_defl_bool'].Update(disabled=bool)
     window['nicholson'].Update(disabled=bool)
@@ -277,8 +278,8 @@ volt_ir_lst = []
 cv_path_lst = []
 cv_name_lst = []
 cv_size_lst = []
-fitting_save_array = np.zeros((1,15))
-fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0,0,0,1,0,0]])
+fitting_save_array = np.zeros((1,16))
+fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0,0,0,1,0,0,0]])
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
 elec_area_old = 1
@@ -689,7 +690,8 @@ while True:
        trough_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,11])
        elec_area_save = int(fitting_save_array[cv_name_idx+1,12])
        idx_jsp0_save = int(fitting_save_array[cv_name_idx+1,13])
-       inv_jpa_jpc = int(fitting_save_array[cv_name_idx+1,14])
+       inv_jpa_jpc_save = int(fitting_save_array[cv_name_idx+1,14])
+       inv_peak_save = int(fitting_save_array[cv_name_idx+1,15])
 
        # Put slider to previous position
        window['sl_cutval_s'].Update(cutval_s_save)
@@ -706,6 +708,8 @@ while True:
        window['trough_defl_bool'].Update(trough_defl_bool_save)
        window['elec_area'].Update(elec_area_save)
        window['idx_jsp0'].Update(idx_jsp0_save)
+       window['inv_jpa_jpc'].Update(inv_jpa_jpc_save)
+       window['inv_peak'].Update(inv_peak_save)
        # Assign the value from saved data
        cutval_s = cutval_s_save
        cutval_e = cutval_e_save
@@ -721,6 +725,8 @@ while True:
        trough_defl_bool = trough_defl_bool_save
        elec_area = elec_area_save
        idx_jsp0 = idx_jsp0_save
+       inv_jpa_jpc = inv_jpa_jpc_save
+       inv_peak = inv_peak_save
     elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
        cutval_s = int(values['sl_cutval_s'])
        cutval_e = int(values['sl_cutval_e'])
@@ -735,6 +741,7 @@ while True:
        trough_defl_bool = int(values['trough_defl_bool'])
        idx_jsp0 = int(values['idx_jsp0'])
        inv_jpa_jpc = int(values['inv_jpa_jpc'])
+       inv_peak = int(values['inv_peak'])
        # Only accept float value from ir compensation
        try:
            ir_compen = float(values['ir_compen'])
@@ -747,7 +754,7 @@ while True:
            elec_area = float(1)                  
     
            
-       fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool,elec_area, idx_jsp0, inv_jpa_jpc]) 
+       fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool,elec_area, idx_jsp0, inv_jpa_jpc, inv_peak]) 
        fitting_save_array[cv_name_idx+1] = fitting_save
     
     if ir_compen != ir_compen_old:
@@ -791,9 +798,15 @@ while True:
 
     
     if values['nicholson'] == True:
+        if values['inv_jpa_jpc'] == True: 
+            jp1_text = 'jpc'
+            jp2_text = 'jpa0'
+        else:
+            jp1_text = 'jpa'
+            jp2_text = 'jpc0'
         jpc0_lns = jpa_lns
         jpc0_lne = jpa_lne
-        low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc0, jpa_poly1d, _ = get_CV_peak(inv_jpa_jpc,cv_size, volt_compen, current_den, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc0_lns, jpc0_lne, peak_defl_bool, trough_defl_bool)
+        low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc0, jpa_poly1d, _ = get_CV_peak(inv_peak, cv_size, volt_compen, current_den, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc0_lns, jpc0_lne, peak_defl_bool, trough_defl_bool)
         
         # if values['inv_jpa_jpc'] == True:   
         #     jpc_temp = jpc
@@ -807,26 +820,21 @@ while True:
         ax_cv.plot((volt_compen[low_range_peak],volt_compen[high_range_peak]),(current_den[low_range_peak],current_den[high_range_peak]),"|", markersize = 10)
         ax_cv.plot((volt_compen[low_range_trough],volt_compen[high_range_trough]),(current_den[low_range_trough],current_den[high_range_trough]),"|", markersize = 10)
     
-        ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='green')
-        ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--', color='green')
-        ax_cv.plot(np.array([volt_compen[jpa_lns],trough_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(trough_volt)]),'--', color='green')
-        
-        
-        ax_cv.arrow(trough_volt,jpa_poly1d(trough_volt),0,-jpc0,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='green',linestyle='--', length_includes_head=True) #jpc0 
-        ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003, color='black',linestyle='-', length_includes_head=True) #jpa
-        
+        ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--', color='green') #Peak
+        ax_cv.plot(np.array([volt_compen[jpa_lns],trough_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(trough_volt)]),'--', color='green') #Peak    
+        ax_cv.arrow(trough_volt,jpa_poly1d(trough_volt),0,-jpc0,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='green', length_includes_head=True) #jpc0 
+        ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003, color='black', length_includes_head=True) #jpa
+
         jsp0_volt = volt_compen[idx_jsp0]
         jsp0 = current_den[idx_jsp0]-jpa_poly1d(jsp0_volt)
-        # # ax_cv.plot(np.array([volt_compen[jpc_lns],volt_compen[idx_jsp0]]),np.array([jpa_poly1d(volt_compen[jpc_lns]),jpa_poly1d(jsp0_volt)]),'--', color='green')
-        ax_cv.arrow(volt_compen[idx_jsp0],jpa_poly1d(jsp0_volt),0,jsp0,linewidth=0.2,head_width=0.005, head_length=0.0003,linestyle=':', color='b', length_includes_head=True)
-        # ax_cv.plot(volt_compen[idx_jsp0],current_den[idx_jsp0],"*", markersize = 6)
-        print(jpa)
-        print(jpc0)
-        print(jsp0)
+        ax_cv.plot(np.array([volt_compen[jpa_lns],volt_compen[idx_jsp0]]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(jsp0_volt)]),'--', color='green') #jsp0
+        ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='blue')
+        ax_cv.arrow(volt_compen[idx_jsp0],jpa_poly1d(jsp0_volt),0,jsp0,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True) #jsp0
         
-        # if values['inv_jpa_jpc'] == True:
-        #     jpa = jpc*((jpa0/jpc)+((0.485*np.abs(jsp0))/jpc)+0.086)
-        # else:
+        ax_cv.text(peak_volt,jpa_poly1d(peak_volt), jp1_text, fontsize=10)
+        ax_cv.text(trough_volt,jpa_poly1d(trough_volt), jp2_text, fontsize=10)
+        ax_cv.text(volt_compen[idx_jsp0],jpa_poly1d(jsp0_volt), 'jsp0', fontsize=10)
+        
         jpa = np.abs(jpa)
         jpc0 = np.abs(jpc0)
         jsp0 = np.abs(jsp0)
@@ -850,11 +858,13 @@ while True:
         ax_cv.plot(volt_compen[jpc_lns:jpc_lne],current_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
         ax_cv.arrow(trough_volt,jpc_poly1d(trough_volt),0,-jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
         ax_cv.plot(np.array([volt_compen[jpc_lns],trough_volt]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(trough_volt)]),'--', color='blue')
-        # invert jpa and jpc or not
-        if values['inv_jpa_jpc'] == True:   
-            jpc_temp = jpc
-            jpc = jpa
-            jpa = jpc_temp
+    # invert jpa and jpc or not
+    if values['inv_jpa_jpc'] == True:   
+        jpc_temp = jpc
+        jpc = jpa
+        jpa = jpc_temp
+        print(jpa)
+        print(jpc)
 
     # Find peak-peak separation voltage
     delta_e = np.abs(trough_volt-peak_volt)
