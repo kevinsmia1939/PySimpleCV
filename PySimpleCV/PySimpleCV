@@ -41,6 +41,16 @@ def About_PySimpleCV():
     'Matplotlib - https://matplotlib.org/',
     'PySimpleGUI - https://www.pysimplegui.org',
     'impedance.py - https://impedancepy.readthedocs.io/en/latest/',
+    'statsmodels - https://www.statsmodels.org',
+    
+    'Abbreviation',
+    'Jpa - Anodic peak current/current density',
+    'Jpc - Cathodic peak current/current density',
+    'Epa - Anodic peak potential',
+    'Epc - Cathodic peak potential',
+    'E\u00bd  - Half-wave potential',
+    'ΔE\u209a - Peak-to-peak separation potential',
+    'Nicholson method - Nicholson, R. S. Semiempirical Procedure for Measuring with Stationary Electrode Polarography Rates of Chemical Reactions Involving the Product of Electron Transfer. Anal. Chem. 1966, 38 (10), 1406.'
     )]
     
 sg.theme('DarkBlue')
@@ -291,6 +301,7 @@ while True:
             break
         case 'About PySimpleCV':
             About_PySimpleCV()
+            continue
         case 'cv_clear':
             clear_cv_plot()
         case 'Add/Open CV File':
@@ -354,6 +365,7 @@ while True:
                     disable_slider(False)
                     cv_select = cv_name    
                     cv_name_idx = cv_name_lst.index(cv_select)
+                    print()
             except Exception as file_error:
                 sg.popup(file_error, keep_on_top=True)
                 continue
@@ -391,15 +403,15 @@ while True:
             if len(cv_name_lst) == 0: # If CV all delete, make combo empty and disable slider
                 window['cv_combo'].Update()
                 disable_slider(True)
+                window['Delete CV File'].Update(disabled=True) # Disable delete button if empty
+                window['cv_combo'].Update('')
+                values['cv_combo'] = ''
+                continue
             elif len(cv_name_lst) >= 1:
-                window['cv_combo'].Update(cv_name_lst)
-
-            if len(cv_name_lst) == 0: # Disable delete button if empty
-                window['Delete CV File'].Update(disabled=True)
-                
-            cv_select = cv_name_lst[cv_name_idx]
-            window['cv_combo'].Update(cv_select)
-            values['cv_combo'] = cv_select
+                window['cv_combo'].Update(cv_name_lst)     
+                cv_select = cv_name_lst[cv_name_idx]
+                window['cv_combo'].Update(cv_select)
+                values['cv_combo'] = cv_select
         case 'save_cv':
             save_cv_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
             if save_cv_loc is None:
