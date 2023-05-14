@@ -300,67 +300,63 @@ while True:
                 continue
             elif cv_file_new == '':
                 continue
-            # try:
-                # Clear plot every time new plot open
-            # clear_cv_plot()
-            
-            # print(cv_file_new)
-            cv_file_multiple = cv_file_new
-            
-            for cv_file in cv_file_multiple.split(';'):      
-                cv_name = os.path.basename(cv_file) #Get file name
-                df_CV = CV_file2df(cv_file)       
-                cv_size, volt, current = get_CV_init(df_CV) # Only need the cv_size so set to [0]
-                
-                window['sl_cutval_s'].Update(range=(0,cv_size-1))
-                window['sl_cutval_e'].Update(range=(0,cv_size-1))
-                window['sl_cutval_e'].Update(cv_size)
-                window['sl_jpa_lns'].Update(range=(0,cv_size-1))
-                window['sl_jpa_lne'].Update(range=(0,cv_size-1))
-                window['sl_jpc_lns'].Update(range=(0,cv_size-1))
-                window['sl_jpc_lne'].Update(range=(0,cv_size-1))
-                window['peak_range'].Update(range=(1, 100))
-                window['peak_pos'].Update(range=(0, cv_size-1))
-                window['trough_pos'].Update(range=(0, cv_size-1))
-                window['idx_jsp0'].Update(range=(0, cv_size-1))
-                
-                cv_path_lst.append(cv_file) #Create 2D array of CVs so we can select, plot, and analyze data based on index
-                cv_name_lst.append(cv_name)
-                volt_lst.append(volt)
-                current_lst.append(current)
-                volt_ir_lst.append(volt) #Append volt to ir compensated volt, this is like ir=0
-                current_den_lst.append(current) # This is like elec_area = 1
-                cv_size_lst.append(cv_size)
-                
-                # deflection and Peak detection
-                idx_arr = np.arange(0,cv_size)
-                frac = 0.05
-                _,smh_curr = lowess(idx_arr,current,frac)
-                _,smh_volt = lowess(idx_arr,volt,frac)
-                diff1_curr = diff(smh_volt,smh_curr) #First diff
-                diff2_curr = lowess_diff(idx_arr,smh_volt,diff1_curr,0.05)
-                diff3_curr = lowess_diff(idx_arr,smh_volt,diff2_curr,0) #Detect deflection
-                smh_volt_lst.append(smh_volt)
-                smh_curr_lst.append(smh_curr)
-                diff1_curr_lst.append(diff1_curr)
-                diff2_curr_lst.append(diff2_curr)
-                diff3_curr_lst.append(diff3_curr) 
-                # Store peak and deflection value
-                idx_intc_peak_lst.append(idx_intercept(0,diff1_curr))
-                idx_intc_deflection_lst.append(idx_intercept(0,diff3_curr))
-    
-                # Add new default save data array
-                # But instead of 0 in fitting_default, change to cv_size
-                fitting_default[:,1] = cv_size 
-                fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
-                
-                window['cv_combo'].Update(values=cv_name_lst) # Update combo list of CVs
-                window['cv_combo'].Update(cv_name) # Update default combo display
-                disable_slider(False)
-                # except Exception as file_error:
-                    # sg.popup(file_error, keep_on_top=True)
-                cv_select = cv_name    
-                cv_name_idx = cv_name_lst.index(cv_select)
+            try:
+                cv_file_multiple = cv_file_new     
+                for cv_file in cv_file_multiple.split(';'):      
+                    cv_name = os.path.basename(cv_file) #Get file name
+                    df_CV = CV_file2df(cv_file)       
+                    cv_size, volt, current = get_CV_init(df_CV) # Only need the cv_size so set to [0]
+                    
+                    window['sl_cutval_s'].Update(range=(0,cv_size-1))
+                    window['sl_cutval_e'].Update(range=(0,cv_size-1))
+                    window['sl_cutval_e'].Update(cv_size)
+                    window['sl_jpa_lns'].Update(range=(0,cv_size-1))
+                    window['sl_jpa_lne'].Update(range=(0,cv_size-1))
+                    window['sl_jpc_lns'].Update(range=(0,cv_size-1))
+                    window['sl_jpc_lne'].Update(range=(0,cv_size-1))
+                    window['peak_range'].Update(range=(1, 100))
+                    window['peak_pos'].Update(range=(0, cv_size-1))
+                    window['trough_pos'].Update(range=(0, cv_size-1))
+                    window['idx_jsp0'].Update(range=(0, cv_size-1))
+                    
+                    cv_path_lst.append(cv_file) #Create 2D array of CVs so we can select, plot, and analyze data based on index
+                    cv_name_lst.append(cv_name)
+                    volt_lst.append(volt)
+                    current_lst.append(current)
+                    volt_ir_lst.append(volt) #Append volt to ir compensated volt, this is like ir=0
+                    current_den_lst.append(current) # This is like elec_area = 1
+                    cv_size_lst.append(cv_size)
+                    
+                    # deflection and Peak detection
+                    idx_arr = np.arange(0,cv_size)
+                    frac = 0.05
+                    _,smh_curr = lowess(idx_arr,current,frac)
+                    _,smh_volt = lowess(idx_arr,volt,frac)
+                    diff1_curr = diff(smh_volt,smh_curr) #First diff
+                    diff2_curr = lowess_diff(idx_arr,smh_volt,diff1_curr,0.05)
+                    diff3_curr = lowess_diff(idx_arr,smh_volt,diff2_curr,0) #Detect deflection
+                    smh_volt_lst.append(smh_volt)
+                    smh_curr_lst.append(smh_curr)
+                    diff1_curr_lst.append(diff1_curr)
+                    diff2_curr_lst.append(diff2_curr)
+                    diff3_curr_lst.append(diff3_curr) 
+                    # Store peak and deflection value
+                    idx_intc_peak_lst.append(idx_intercept(0,diff1_curr))
+                    idx_intc_deflection_lst.append(idx_intercept(0,diff3_curr))
+        
+                    # Add new default save data array
+                    # But instead of 0 in fitting_default, change to cv_size
+                    fitting_default[:,1] = cv_size 
+                    fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
+                    
+                    window['cv_combo'].Update(values=cv_name_lst) # Update combo list of CVs
+                    window['cv_combo'].Update(cv_name) # Update default combo display
+                    disable_slider(False)
+                    cv_select = cv_name    
+                    cv_name_idx = cv_name_lst.index(cv_select)
+            except Exception as file_error:
+                sg.popup(file_error, keep_on_top=True)
+                continue
         case 'Delete CV File':
             del current_lst[cv_name_idx]
             del current_den_lst[cv_name_idx]
@@ -828,7 +824,7 @@ while True:
         jsp0_volt = volt_compen[idx_jsp0]
         jsp0 = current_den[idx_jsp0]-jpa_poly1d(jsp0_volt)
         ax_cv.plot(np.array([volt_compen[jpa_lns],volt_compen[idx_jsp0]]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(jsp0_volt)]),'--', color='green') #jsp0
-        ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='blue')
+        ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=3,linestyle='-', color='blue')
         ax_cv.arrow(volt_compen[idx_jsp0],jpa_poly1d(jsp0_volt),0,jsp0,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True) #jsp0
         
         ax_cv.text(peak_volt,jpa_poly1d(peak_volt), jp1_text, fontsize=10)
@@ -842,7 +838,7 @@ while True:
             
         window['jsp0_volt'].Update(jsp0_volt)
     else:
-        low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d = get_CV_peak(False,cv_size, volt_compen, current_den, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool)
+        low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d = get_CV_peak(inv_peak,cv_size, volt_compen, current_den, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool)
         # Find estimate standard electrode potential (E1/2~E0)
         E1_2 = (trough_volt+peak_volt)/2
         ax_cv.plot(E1_2,0,"D", markersize = 6)
@@ -860,9 +856,10 @@ while True:
         ax_cv.plot(np.array([volt_compen[jpc_lns],trough_volt]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(trough_volt)]),'--', color='blue')
     # invert jpa and jpc or not
     if values['inv_jpa_jpc'] == True:   
-        jpc_temp = jpc
-        jpc = jpa
-        jpa = jpc_temp
+        # jpc_temp = jpc
+        # jpc = jpa
+        # jpa = jpc_temp
+        jpa, jpc = jpc, jpa
         print(jpa)
         print(jpc)
 
@@ -884,11 +881,7 @@ while True:
     ax_cv.grid()
     ax_cv.set_xlabel("Voltage")
     ax_cv.set_ylabel("Current")
-    fig_agg_cv.draw()
-    # print(cv_name_idx)
-    
-
-    
+    fig_agg_cv.draw()    
     cv_results.loc[cv_name_idx] = [jpa*1000, jpc*1000, peak_volt, trough_volt, jpa/jpc, E1_2, delta_e]
     cv_results = cv_results.sort_index()
     window['cv_results_dis'].Update(cv_results.to_string(index=False)) 
