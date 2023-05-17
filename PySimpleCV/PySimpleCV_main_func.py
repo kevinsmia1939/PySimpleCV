@@ -178,10 +178,7 @@ def get_CV_peak(inv_peak_trough,cv_size, volt, current, peak_range, peak_pos, tr
     jpa = peak_curr - jpa_poly1d(peak_volt)
     jpc = jpc_poly1d(trough_volt) - trough_curr
     return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d#, jpa_base, jpc_base
-
-def cv_inflection(df_CV, ir_compen):
-    cv_size, volt, current = get_CV_init(df_CV, ir_compen)
-    
+ 
 def time2sec(time_raw,delim):
     # Take time format such as 1-12:05:24 and convert to seconds
     time_raw = str(time_raw)
