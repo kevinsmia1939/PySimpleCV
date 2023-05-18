@@ -57,8 +57,10 @@ sg.theme('DarkBlue')
 
 # Generate layout for CV tab
 cv_slider_size = (50,18)
-cv_col1=[[sg.Canvas(key='-CANVAS_cv-'),sg.Canvas(key='-CANVAS_diff-')]]
-cv_col2 = [
+cv_col1=[[sg.Canvas(key='-CANVAS_cv-'),]]
+cv_col2=[[sg.Canvas(key='-CANVAS_cv_D-')],
+         [sg.Canvas(key='-CANVAS_cv_k-')]]
+cv_col3 = [
     [sg.Button("Add/Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15)),sg.Button("Delete CV File", disabled=True)],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True),sg.Checkbox('Switch finding max and min peak', default=False, key='inv_peak', disabled=True, enable_events=True)],
@@ -75,11 +77,13 @@ cv_col2 = [
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos',  enable_events=True, disabled=False), sg.Checkbox('Deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
     [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson', enable_events=True, disabled=True)],
     [sg.Text('Switching potential current (jps0)'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='idx_jsp0', enable_events=True, disabled=True),sg.Text('', key='jsp0_volt')],
+    [sg.Text('D jpa'),sg.Text('', key='d_jpa'),sg.Text('D jpc'),sg.Text('', key='d_jpc')],
+    [sg.Text('k jpa'),sg.Text('', key='k_jpa'),sg.Text('k jpc'),sg.Text('', key='k_jpc')],
     [sg.Text('Results')],
     [sg.Multiline('',size=(70,10), disabled=True, key = 'cv_results_dis', font=('DejaVu Sans Mono', 12), no_scrollbar=False, horizontal_scroll=True)],   
     [sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV'),sg.Button('Exit', key='exit')]
 ]
-cv_layout = [[sg.Column(cv_col1),sg.Column(cv_col2)]]
+cv_layout = [[sg.Column(cv_col1),sg.Column(cv_col2),sg.Column(cv_col3)]]
 
 # Generate layout for battery cycling tab.
 bat_col1=[[sg.Canvas(key='-CANVAS_bat-')]]
@@ -125,27 +129,35 @@ layout = sg.TabGroup([[sg.Tab('Cyclic Voltammetry', cv_layout, key='cv_layout_ke
 window = sg.Window('PySimpleCV', [[layout]], finalize=True, element_justification='center')
 # window.maximize()
 canvas_cv = window['-CANVAS_cv-'].tk_canvas
-canvas_diff = window['-CANVAS_diff-'].tk_canvas
+canvas_cv_D = window['-CANVAS_cv_D-'].tk_canvas
+canvas_cv_k = window['-CANVAS_cv_k-'].tk_canvas
 canvas_bat = window['-CANVAS_bat-'].tk_canvas
 canvas_eis = window['-CANVAS_eis-'].tk_canvas
 
 # Generate initial empty plot.
-fig_cv = Figure(figsize=(10,10))
+fig_cv = Figure(figsize=(9,9))
 ax_cv = fig_cv.add_subplot(111)
 ax_cv.set_xlabel("Voltage")
 ax_cv.set_ylabel("Current")
 ax_cv.grid()
 
-fig_diff = Figure(figsize=(5,5))
-ax_diff = fig_diff.add_subplot(111)
-ax_diff.set_xlabel("Scan rate 1/2")
-ax_diff.set_ylabel("Jp")
-ax_diff.grid()
+fig_cv_D = Figure(figsize=(4,4))
+ax_cv_D = fig_cv_D.add_subplot(111)
+ax_cv_D.set_xlabel("Scan rate 1/2")
+ax_cv_D.set_ylabel("Jp")
+ax_cv_D.grid()
+
+fig_cv_k = Figure(figsize=(4,4))
+ax_cv_k = fig_cv_k.add_subplot(111)
+ax_cv_k.set_xlabel("Ep - E0")
+ax_cv_k.set_ylabel("Jp")
+ax_cv_k.grid()
 
 # tight layout push away y label
 # fig_cv.tight_layout(pad=2)
 fig_agg_cv = draw_figure(canvas_cv, fig_cv)
-fig_agg_diff = draw_figure(canvas_diff, fig_diff)
+fig_agg_cv_D = draw_figure(canvas_cv_D, fig_cv_D)
+fig_agg_cv_k = draw_figure(canvas_cv_k, fig_cv_k)
 
 fig_bat = Figure(figsize=(10,10))
 ax_bat_volt = fig_bat.add_subplot(111)
@@ -284,7 +296,7 @@ while True:
         case 'About PySimpleCV':
             About_PySimpleCV()
             continue
-        case 'Add/Open CV File' | 'Delete CV File' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson' | 'idx_jsp0' | 'scan_rate':
+        case 'Add/Open CV File' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson' | 'idx_jsp0' | 'scan_rate':
             if event == 'Add/Open CV File':
                 cv_file_new = sg.popup_get_file('Choose CV file',multiple_files=True)
                 # If cancel, close the window, go back to beginning
@@ -599,19 +611,62 @@ while True:
             cv_results = cv_results.sort_index()
             window['cv_results_dis'].Update(cv_results.to_string(index=False))  
             
-            sqrt_scan_rate = cv_results.loc[:,'scanrate'].to_numpy()
-            sqrt_scan_rate = np.asarray(sqrt_scan_rate, dtype=float)
-            # print(sqrt_scan_rate)
-            sqrt_scan_rate = np.sqrt(sqrt_scan_rate)
-            jpc_diff = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
-            jpa_diff = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
-            # print(jpc_diff)
+            # Find Diffusion Coefficient ###########################################################################
+            scan_rate_arr = np.array([float(value) for value in cv_results['scanrate']])
+            scan_rate_arr = scan_rate_arr/1000 #convert mV to V
+            sqrt_scan_rate_arr = np.sqrt(scan_rate_arr)
+            jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
+            jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
             
-            ax_diff.cla()
-            ax_diff.plot(sqrt_scan_rate,jpc_diff,'-o',color='red')
-            ax_diff.plot(sqrt_scan_rate,jpa_diff,'-o',color='blue')
+            jpa_arr = jpa_arr/1000 #convert mA to A
+            jpc_arr = jpc_arr/1000 
             
-            fig_agg_diff.draw()
+            # Plot peak current vs scan rate^1/2 to find diffusion coefficient
+            ax_cv_D.cla()
+            try: 
+                jpa_arr_lnfit = np.polyfit(sqrt_scan_rate_arr,jpa_arr, 1)
+                jpc_arr_lnfit = np.polyfit(sqrt_scan_rate_arr,jpc_arr, 1)
+                jpa_arr_p1d = np.poly1d(jpa_arr_lnfit)
+                jpc_arr_p1d = np.poly1d(jpc_arr_lnfit)
+                ax_cv_D.plot(sqrt_scan_rate_arr,jpa_arr_p1d(sqrt_scan_rate_arr),'-',color='red')
+                ax_cv_D.plot(sqrt_scan_rate_arr,jpc_arr_p1d(sqrt_scan_rate_arr),'-',color='blue')
+                
+                jpa_slope = jpa_arr_lnfit[0]
+                jpc_slope = jpc_arr_lnfit[0]
+                D_jpa = (jpa_slope/(2.99*10**5*(0.5**0.5)*0.00005))**2        
+                D_jpc = (jpc_slope/(2.99*10**5*(0.5**0.5)*0.00005))**2
+                window['d_jpa'].Update(f"{D_jpa:e}")
+                window['d_jpc'].Update(f"{D_jpc:e}")
+            except SystemError:
+                pass
+            ax_cv_D.plot(sqrt_scan_rate_arr,jpa_arr,'o',color='red',label='Jpa')
+            ax_cv_D.plot(sqrt_scan_rate_arr,jpc_arr,'o',color='blue',label='Jpc')
+            
+            #Find k  ###########################################################################
+            # delta_e_arr = np.asarray(cv_results.loc[:,'ΔE\u209a'].to_numpy(), dtype=float)
+            delta_e_e0_arr = (np.array([float(value) for value in cv_results['ΔE\u209a']]))/2
+            try: 
+                jpa_arr_lnfit_e = np.polyfit(delta_e_e0_arr,jpa_arr, 1)
+                jpc_arr_lnfit_e = np.polyfit(delta_e_e0_arr,jpc_arr, 1)
+                jpa_arr_p1d_e = np.poly1d(jpa_arr_lnfit_e)
+                jpc_arr_p1d_e = np.poly1d(jpc_arr_lnfit_e)
+                
+                ax_cv_D.plot(delta_e_e0_arr,jpa_arr_p1d_e(sqrt_scan_rate_arr),'-',color='red')
+                ax_cv_D.plot(delta_e_e0_arr,jpc_arr_p1d_e(sqrt_scan_rate_arr),'-',color='blue')
+                
+                jpa_e_ints = jpa_arr_lnfit_e[1]
+                jpc_e_ints = jpc_arr_lnfit_e[1]
+                k_jpa = jpa_e_ints/(np.log(0.227)*96485.332123*0.00005)      
+                k_jpc = jpc_e_ints/(np.log(0.227)*96485.332123*0.00005)      
+                window['k_jpa'].Update(f"{k_jpa:e}")
+                window['k_jpc'].Update(f"{k_jpc:e}")
+            except SystemError:
+                pass            
+            
+            
+            
+            fig_cv_D.legend()
+            fig_agg_cv_D.draw()
             
         case 'Delete CV File':
             del current_lst[cv_name_idx]
