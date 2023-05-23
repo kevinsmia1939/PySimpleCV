@@ -282,8 +282,8 @@ volt_ir_lst = []
 cv_path_lst = []
 cv_name_lst = []
 cv_size_lst = []
-fitting_save_array = np.zeros((1,17))
-fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0,0,0,1,0,0,0,0]])
+fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0,0,0,1,0,0,0,0,0]])
+fitting_save_array = np.zeros((1,fitting_default.size))
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
 elec_area_old = 1
@@ -296,7 +296,7 @@ while True:
         case 'About PySimpleCV':
             About_PySimpleCV()
             continue
-        case 'Add/Open CV File' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson' | 'idx_jsp0' | 'scan_rate':
+        case 'Add/Open CV File' | 'cv_combo' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson' | 'idx_jsp0' | 'scan_rate':
             if event == 'Add/Open CV File':
                 cv_file_new = sg.popup_get_file('Choose CV file',multiple_files=True)
                 # If cancel, close the window, go back to beginning
@@ -418,6 +418,7 @@ while True:
                 inv_jpa_jpc_save = int(fitting_save_array[cv_name_idx+1,14])
                 inv_peak_save = int(fitting_save_array[cv_name_idx+1,15])
                 scan_rate_save = float(fitting_save_array[cv_name_idx+1,16])
+                nicholson_save = float(fitting_save_array[cv_name_idx+1,17])
 
                 # Put slider to previous position
                 window['sl_cutval_s'].Update(cutval_s_save)
@@ -437,6 +438,7 @@ while True:
                 window['inv_jpa_jpc'].Update(inv_jpa_jpc_save)
                 window['inv_peak'].Update(inv_peak_save)
                 window['scan_rate'].Update(scan_rate_save)
+                window['nicholson'].Update(nicholson_save)
                 # Assign the value from saved data
                 cutval_s = cutval_s_save
                 cutval_e = cutval_e_save
@@ -455,6 +457,7 @@ while True:
                 inv_jpa_jpc = inv_jpa_jpc_save
                 inv_peak = inv_peak_save
                 scan_rate = scan_rate_save
+                nicholson = nicholson_save
             elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
                 cutval_s = int(values['sl_cutval_s'])
                 cutval_e = int(values['sl_cutval_e'])
@@ -470,7 +473,7 @@ while True:
                 idx_jsp0 = int(values['idx_jsp0'])
                 inv_jpa_jpc = int(values['inv_jpa_jpc'])
                 inv_peak = int(values['inv_peak'])
-                
+                nicholson = int(values['nicholson'])
                 # Only accept float value from ir compensation
                 try:
                     ir_compen = float(values['ir_compen'])
@@ -488,7 +491,7 @@ while True:
                     elec_area = float(1)                  
             
                    
-                fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool,elec_area, idx_jsp0, inv_jpa_jpc, inv_peak, scan_rate]) 
+                fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool,elec_area, idx_jsp0, inv_jpa_jpc, inv_peak, scan_rate, nicholson]) 
                 fitting_save_array[cv_name_idx+1] = fitting_save
             
             if ir_compen != ir_compen_old:
@@ -607,7 +610,7 @@ while True:
             ax_cv.set_ylabel("Current")
             fig_agg_cv.draw()
 
-            cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa*1000, jpc*1000, peak_volt, trough_volt, jpa/jpc, E1_2, delta_e]
+            cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, peak_volt, trough_volt, jpa/jpc, E1_2, delta_e]
             cv_results = cv_results.sort_index()
             window['cv_results_dis'].Update(cv_results.to_string(index=False))  
             
@@ -619,8 +622,8 @@ while True:
                 jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
                 jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
                 
-                jpa_arr = jpa_arr/1000 #convert mA to A
-                jpc_arr = jpc_arr/1000 
+                # jpa_arr = jpa_arr/1000 #convert mA to A
+                # jpc_arr = jpc_arr/1000 
                 
                 # Plot peak current vs scan rate^1/2 to find diffusion coefficient
                 ax_cv_D.cla()

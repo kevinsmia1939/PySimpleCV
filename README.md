@@ -22,11 +22,16 @@ Modules used: Numpy, Matplotlib, PySimpleGUI, pandas, and impedance.py.
 License: GPLv3
 
 Future plans.
+* CV
+  * Estimate alpha (|Ep-Ep/2| = 48/an Ep/s is potential at half peak current)
+
 * More file format support, if you have example files of other format, create new issue to add support.
 * More flexible state recognition (C_CC, D_CC, R, etc)
 * Export plot with custom dpi
 * Plot EIS data, calculate parameters, and display circuit.
 * Generate Tafel plot
+
+
 
 The file PySimpleCV/PySimpleCV contain the main code responsible to produce GUI and plotting.
 PySimpleCV/PySimpleCV_main_func.py contain mathematical function for calculation.
