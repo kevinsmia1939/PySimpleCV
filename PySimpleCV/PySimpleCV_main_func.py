@@ -1,4 +1,5 @@
-import numpy as np 
+import numpy as np
+import numpy.polynomial.polynomial as poly
 import pandas as pd
 from scipy import linalg
 import re
@@ -325,63 +326,51 @@ def nicholson(jpc,jpa0,jsp0):
     jpa = jpc*((jpa0/jpc)+((0.485*jsp0)/jpc)+0.086)
     return jpa
 
-# def diffusion_k(cv_results):
-#     scan_rate_arr = np.array([float(value) for value in cv_results['scanrate']])
-#     scan_rate_arr = scan_rate_arr/1000 #convert mV to V
-#     sqrt_scan_rate_arr = np.sqrt(scan_rate_arr)
-#     jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
-#     jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
+# def diffusion(cv_results):
+def diffusion(scan,jp,alpha,conc_bulk,n):
+
+# For more info - Electrochemical Methods: Fundamentals and Applications, 3rd Edition Allen J. Bard, Larry R. Faulkner, Henry S. White
+# - Redox Flow Batteries: How to Determine Electrochemical Kinetic Parameters, Hao Wang et al.
     
-#     jpa_arr = jpa_arr/1000 #convert mA to A
-#     jpc_arr = jpc_arr/1000 
-    
-#     # Plot peak current vs scan rate^1/2 to find diffusion coefficient
-#     ax_cv_D.cla()
-#     try: 
-#         jpa_arr_lnfit = np.polyfit(sqrt_scan_rate_arr,jpa_arr, 1)
-#         jpc_arr_lnfit = np.polyfit(sqrt_scan_rate_arr,jpc_arr, 1)
-#         jpa_arr_p1d = np.poly1d(jpa_arr_lnfit)
-#         jpc_arr_p1d = np.poly1d(jpc_arr_lnfit)
-#         ax_cv_D.plot(sqrt_scan_rate_arr,jpa_arr_p1d(sqrt_scan_rate_arr),'-',color='red')
-#         ax_cv_D.plot(sqrt_scan_rate_arr,jpc_arr_p1d(sqrt_scan_rate_arr),'-',color='blue')
-        
-#         jpa_slope = jpa_arr_lnfit[0]
-#         jpc_slope = jpc_arr_lnfit[0]
-#         D_jpa = (jpa_slope/(2.99*10**5*(0.5**0.5)*0.00005))**2        
-#         D_jpc = (jpc_slope/(2.99*10**5*(0.5**0.5)*0.00005))**2
-#         window['d_jpa'].Update(f"{D_jpa:e}")
-#         window['d_jpc'].Update(f"{D_jpc:e}")
-#     except SystemError:
-#         pass
-#     ax_cv_D.plot(sqrt_scan_rate_arr,jpa_arr,'o',color='red',label='Jpa')
-#     ax_cv_D.plot(sqrt_scan_rate_arr,jpc_arr,'o',color='blue',label='Jpc')
-#     fig_cv_D.legend()
-#     fig_agg_cv_D.draw()
-#     #Find k  ###########################################################################
-#     # delta_e_arr = np.asarray(cv_results.loc[:,'ΔE\u209a'].to_numpy(), dtype=float)
-#     delta_e_e0_arr = (np.array([float(value) for value in cv_results['ΔE\u209a']]))/2
-    
-#     jpa_arr_ln = np.log(jpa_arr)
-#     jpc_arr_ln = np.log(jpc_arr)
-#     ax_cv_k.cla()
-#     try: 
-#         jpa_arr_lnfit_e = np.polyfit(delta_e_e0_arr,jpa_arr_ln, 1)
-#         jpc_arr_lnfit_e = np.polyfit(delta_e_e0_arr,jpc_arr_ln, 1)
-#         jpa_arr_p1d_e = np.poly1d(jpa_arr_lnfit_e)
-#         jpc_arr_p1d_e = np.poly1d(jpc_arr_lnfit_e)
-        
-#         ax_cv_k.plot(delta_e_e0_arr,jpa_arr_p1d_e(delta_e_e0_arr),'-',color='red')
-#         ax_cv_k.plot(delta_e_e0_arr,jpc_arr_p1d_e(delta_e_e0_arr),'-',color='blue')
-        
-#         jpa_b = jpa_arr_lnfit_e[1] # take intercept
-#         jpc_b = jpc_arr_lnfit_e[1]
-#         k_jpa = np.exp(jpa_b-np.log(0.227*96485.332*0.00005))
-#         k_jpc = np.exp(jpc_b-np.log(0.227*96485.332*0.00005))
-#         window['k_jpa'].Update(f"{k_jpa:e}")
-#         window['k_jpc'].Update(f"{k_jpc:e}")
-#     except SystemError:
-#         pass            
-#     ax_cv_k.plot(delta_e_e0_arr,jpa_arr_ln,'o',color='red',label='Jpa')
-#     ax_cv_k.plot(delta_e_e0_arr,jpc_arr_ln,'o',color='blue',label='Jpc')
-#     fig_cv_k.legend()
-#     fig_agg_cv_k.draw()
+# scan_rate_arr - scan rate,unit in volt
+# jp - peak current density, unit in A/cm2
+# alpha - charge-transfer coefficient, no unit
+# conc_bulk - Bulk concentration, unit in mol/cm3
+# n - number of electrons, no unit 
+    sqrt_scan = np.sqrt(scan)
+    try: 
+        jp_arr_lnfit, _ = poly.polyfit(sqrt_scan,jp,1,full=True)
+        jp_arr_poly = poly.Polynomial(jp_arr_lnfit)
+        jp_slope = jp_arr_lnfit[1] # take slope
+        D_rev = (jp_slope/(2.69*(10**5)*n**(3/2)*conc_bulk))**2 # reversible   
+        D_irr = (jp_slope/(2.99*(10**5)*n**(3/2)*(alpha**0.5)*conc_bulk))**2 # irreversible     
+    except SystemError:
+        pass  
+    # Calculate R2
+    jp_fit = jp_arr_poly(sqrt_scan)
+    residuals = jp - jp_fit
+    ssr = np.sum(residuals ** 2)
+    sst = np.sum((jp - np.mean(jp)) ** 2)
+    r2 = (1 - (ssr / sst))
+    return sqrt_scan, jp_fit ,D_irr ,D_rev ,r2
+
+def reaction_rate(peak_sep,jp,alpha,conc_bulk,n):
+    e_e0 = peak_sep/2
+    lnjp = np.log(jp)
+    try:     
+        lnjp_lnfit, _ = poly.polyfit(e_e0,lnjp,1,full=True)
+        lnjp_poly = poly.Polynomial(lnjp_lnfit)
+        lnjpa_b = lnjp_lnfit[0] # take intercept
+        slope = lnjp_lnfit[1]
+        F = 96485.332
+        alpha = -slope*8.314472*298.15/F
+        k0 = np.exp(lnjpa_b-np.log(0.227*F*n*conc_bulk))
+    except SystemError:
+        pass
+    # Calculate R2
+    lnjp_fit = lnjp_poly(e_e0)       
+    residuals = lnjp - lnjp_fit
+    ssr = np.sum(residuals ** 2)
+    sst = np.sum((lnjp - np.mean(lnjp)) ** 2)
+    r2 = (1 - (ssr / sst))
+    return lnjp, e_e0, lnjp_fit, k0, alpha, r2
