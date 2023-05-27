@@ -326,7 +326,6 @@ def nicholson(jpc,jpa0,jsp0):
     jpa = jpc*((jpa0/jpc)+((0.485*jsp0)/jpc)+0.086)
     return jpa
 
-# def diffusion(cv_results):
 def diffusion(scan,jp,alpha,conc_bulk,n):
 
 # For more info - Electrochemical Methods: Fundamentals and Applications, 3rd Edition Allen J. Bard, Larry R. Faulkner, Henry S. White
@@ -354,7 +353,7 @@ def diffusion(scan,jp,alpha,conc_bulk,n):
     r2 = (1 - (ssr / sst))
     return sqrt_scan, jp_fit ,D_irr ,D_rev ,r2
 
-def reaction_rate(peak_sep,jp,alpha,conc_bulk,n):
+def reaction_rate(peak_sep,jp,conc_bulk,n):
     e_e0 = peak_sep/2
     lnjp = np.log(jp)
     try:     
@@ -363,7 +362,8 @@ def reaction_rate(peak_sep,jp,alpha,conc_bulk,n):
         lnjpa_b = lnjp_lnfit[0] # take intercept
         slope = lnjp_lnfit[1]
         F = 96485.332
-        alpha = -slope*8.314472*298.15/F
+        alpha_cat = -slope*8.314472*298.15/F #cathodic where slope is negative
+        alpha_ano = 1 + alpha_cat #anodic where slope is positive
         k0 = np.exp(lnjpa_b-np.log(0.227*F*n*conc_bulk))
     except SystemError:
         pass
@@ -373,4 +373,4 @@ def reaction_rate(peak_sep,jp,alpha,conc_bulk,n):
     ssr = np.sum(residuals ** 2)
     sst = np.sum((lnjp - np.mean(lnjp)) ** 2)
     r2 = (1 - (ssr / sst))
-    return lnjp, e_e0, lnjp_fit, k0, alpha, r2
+    return lnjp, e_e0, lnjp_fit, k0, alpha_cat, alpha_ano, r2

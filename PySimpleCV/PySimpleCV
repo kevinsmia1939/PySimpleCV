@@ -57,10 +57,11 @@ sg.theme('DarkBlue')
 
 # Generate layout for CV tab
 cv_slider_size = (50,18)
-cv_col1=[[sg.Canvas(key='-CANVAS_cv-'),]]
-cv_col2=[[sg.Canvas(key='-CANVAS_cv_D-')],
-         [sg.Canvas(key='-CANVAS_cv_k-')]]
-cv_col3 = [
+cv_cv=[[sg.Canvas(key='-CANVAS_cv-')]]
+cv_diff=[[sg.Canvas(key='-CANVAS_cv_D-')]]
+cv_kin =[[sg.Canvas(key='-CANVAS_cv_k-')]]
+         
+cv_settings = [
     [sg.Button("Add/Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15)),sg.Button("Delete CV File", disabled=True)],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True),sg.Checkbox('Switch finding max and min peak', default=False, key='inv_peak', disabled=True, enable_events=True)],
@@ -77,13 +78,13 @@ cv_col3 = [
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos',  enable_events=True, disabled=False), sg.Checkbox('Deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
     [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson', enable_events=True, disabled=True)],
     [sg.Text('Switching potential current (jps0)'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='idx_jsp0', enable_events=True, disabled=True),sg.Text('', key='jsp0_volt')],
-    [sg.Checkbox('Plot Jp vs scanrate 1/2', default=False, key='enable_d', disabled=False, enable_events=True),sg.Text('D jpa'),sg.Text('', key='d_jpa'),sg.Text('D jpc'),sg.Text('', key='d_jpc')],
-    [sg.Checkbox('Plot Jp vs Ep-E0', default=False, key='enable_k', disabled=False, enable_events=True),sg.Text('k jpa'),sg.Text('', key='k_jpa'),sg.Text('k jpc'),sg.Text('', key='k_jpc')],
+    [sg.Checkbox('Plot Jp vs √scanrate', default=False, key='enable_d', disabled=False, enable_events=True),sg.Text('D Jpa'),sg.Text('', key='d_jpa'),sg.Text('D Jpc'),sg.Text('', key='d_jpc')],
+    [sg.Checkbox('Plot Jp vs Ep-E0', default=False, key='enable_k', disabled=False, enable_events=True),sg.Text('k Jpa'),sg.Text('', key='k_jpa'),sg.Text('k Jpc'),sg.Text('', key='k_jpc')],
     [sg.Text('Results')],
     [sg.Multiline('',size=(70,10), disabled=True, key = 'cv_results_dis', font=('DejaVu Sans Mono', 12), no_scrollbar=False, horizontal_scroll=True)],   
     [sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV'),sg.Button('Exit', key='exit')]
 ]
-cv_layout = [[sg.Column(cv_col1),sg.Column(cv_col2),sg.Column(cv_col3)]]
+cv_layout = [[sg.TabGroup([[sg.Tab('CV', cv_cv), sg.Tab('Diffusion', cv_diff),sg.Tab('Kinetics', cv_kin)]]),sg.Column(cv_settings)]]
 
 # Generate layout for battery cycling tab.
 bat_col1=[[sg.Canvas(key='-CANVAS_bat-')]]
@@ -141,14 +142,14 @@ ax_cv.set_xlabel("Voltage")
 ax_cv.set_ylabel("Current")
 ax_cv.grid()
 
-fig_cv_D = Figure(figsize=(4,4))
+fig_cv_D = Figure(figsize=(9,9))
 ax_cv_D = fig_cv_D.add_subplot(111)
 ax_cv_D.set_xlabel("Scan rate 1/2")
 ax_cv_D.set_ylabel("Jp")
 ax_cv_D.grid()
 
-fig_cv_k = Figure(figsize=(4,4))
-ax_cv_k = fig_cv_k.add_subplot(111)
+fig_cv_kin = Figure(figsize=(9,9))
+ax_cv_k = fig_cv_kin.add_subplot(111)
 ax_cv_k.set_xlabel("Ep - E0")
 ax_cv_k.set_ylabel("Jp")
 ax_cv_k.grid()
@@ -157,7 +158,7 @@ ax_cv_k.grid()
 # fig_cv.tight_layout(pad=2)
 fig_agg_cv = draw_figure(canvas_cv, fig_cv)
 fig_agg_cv_D = draw_figure(canvas_cv_D, fig_cv_D)
-fig_agg_cv_k = draw_figure(canvas_cv_k, fig_cv_k)
+fig_agg_cv_k = draw_figure(canvas_cv_k, fig_cv_kin)
 
 fig_bat = Figure(figsize=(10,10))
 ax_bat_volt = fig_bat.add_subplot(111)
@@ -614,17 +615,14 @@ while True:
             cv_results = cv_results.sort_index()
             window['cv_results_dis'].Update(cv_results.to_string(index=False))  
             
-            # Find Diffusion Coefficient ###########################################################################
+            # Find Diffusion Coefficient
             if values['enable_d'] == True:
                 scan_rate_arr = np.array([float(value) for value in cv_results['scanrate']])
                 scan_rate_arr = scan_rate_arr/1000 #convert mV to V
                 sqrt_scan_rate_arr = np.sqrt(scan_rate_arr)
                 jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
                 jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
-                
-                # jpa_arr = jpa_arr/1000 #convert mA to A
-                # jpc_arr = jpc_arr/1000 
-                
+
                 # Plot peak current vs scan rate^1/2 to find diffusion coefficient
                 ax_cv_D.cla()
                 try: 
@@ -647,10 +645,9 @@ while True:
                 ax_cv_D.plot(sqrt_scan_rate_arr,jpc_arr,'o',color='blue',label='Jpc')
                 fig_cv_D.legend()
                 fig_agg_cv_D.draw()
-                #Find k  ###########################################################################
-                # delta_e_arr = np.asarray(cv_results.loc[:,'ΔE\u209a'].to_numpy(), dtype=float)
+            #Find kinetic parameter
+            if values['enable_k'] == True:       
                 delta_e_e0_arr = (np.array([float(value) for value in cv_results['ΔE\u209a']]))/2
-                
                 jpa_arr_ln = np.log(jpa_arr)
                 jpc_arr_ln = np.log(jpc_arr)
                 ax_cv_k.cla()
@@ -673,7 +670,7 @@ while True:
                     pass            
                 ax_cv_k.plot(delta_e_e0_arr,jpa_arr_ln,'o',color='red',label='Jpa')
                 ax_cv_k.plot(delta_e_e0_arr,jpc_arr_ln,'o',color='blue',label='Jpc')
-                fig_cv_k.legend()
+                fig_cv_kin.legend()
                 fig_agg_cv_k.draw()
         case 'Delete CV File':
             del current_lst[cv_name_idx]
