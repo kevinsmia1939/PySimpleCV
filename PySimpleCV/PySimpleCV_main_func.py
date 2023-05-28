@@ -174,6 +174,10 @@ def get_CV_peak(inv_peak_trough,cv_size, volt, current, peak_range, peak_pos, tr
 
     jpa_lnfit_coef = np.polyfit(volt_jpa,current_jpa, 1) # 1 for linear fit
     jpc_lnfit_coef = np.polyfit(volt_jpc,current_jpc, 1)
+    
+    # jp_arr_lnfit, _ = poly.polyfit(sqrt_scan,jp,1,full=True)
+    # jp_arr_poly = poly.Polynomial(jp_arr_lnfit)
+    
     jpa_poly1d = np.poly1d(jpa_lnfit_coef)
     jpc_poly1d = np.poly1d(jpc_lnfit_coef)
     jpa = peak_curr - jpa_poly1d(peak_volt)
@@ -385,3 +389,27 @@ def deflection(cv_size,volt,current):
     idx_intc_peak = idx_intercept(0,diff1_curr)
     idx_intc_defl = idx_intercept(0,diff3_curr)
     return idx_intc_peak, idx_intc_defl 
+
+def alpha(volt_compen,current_den,jpa_lns,jpc_lns,peak_pos,trough_pos):
+    volt_eval_jpa = volt_compen[jpa_lns:peak_pos]
+    volt_eval_jpc = volt_compen[jpc_lns:trough_pos]
+    curr_eval_jpa = current_den[jpa_lns:peak_pos]
+    curr_eval_jpc = current_den[jpc_lns:trough_pos]
+    try: 
+        baseline_eval_jpa = np.linspace(jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(volt_compen[peak_pos]),volt_eval_jpa.size)
+        curr_baseline_jpa = curr_eval_jpa-baseline_eval_jpa
+        ep12_jpa_idx = (np.abs(curr_baseline_jpa-jpa/2)).argmin()
+        eq12_jpa = volt_eval_jpa[ep12_jpa_idx] #Potential at peak current 1/2 (Ep 1/2)
+        alpha_jpa = 1-((47.7/1000)/np.abs(peak_volt - eq12_jpa))
+        ax_cv.plot(eq12_jpa,curr_eval_jpa[ep12_jpa_idx],'x')
+    except (ValueError, IndexError):
+        ax_cv.plot(0,0,'')
+    try:
+        baseline_eval_jpc = np.linspace(jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(volt_compen[trough_pos]),volt_eval_jpc.size)
+        curr_baseline_jpc = curr_eval_jpc-baseline_eval_jpc
+        ep12_jpc_idx = (np.abs(curr_baseline_jpc+jpc/2)).argmin()
+        eq12_jpc = volt_eval_jpc[ep12_jpc_idx] #Potential at peak current 1/2 (Ep 1/2)
+        alpha_jpc = 1-((47.7/1000)/np.abs(trough_volt - eq12_jpc))
+        ax_cv.plot(eq12_jpc,curr_eval_jpc[ep12_jpc_idx],'x')
+    except (ValueError, IndexError):
+        ax_cv.plot(0,0,'')

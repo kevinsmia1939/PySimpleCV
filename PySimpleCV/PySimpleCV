@@ -65,8 +65,8 @@ cv_settings = [
     [sg.Button("Add/Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15)),sg.Button("Delete CV File", disabled=True)],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True),sg.Checkbox('Switch finding max and min peak', default=False, key='inv_peak', disabled=True, enable_events=True)],
-    [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(10,5),disabled=True, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'),sg.Input(default_text=('1'), key='elec_area',size=(10,5),disabled=True, enable_events=True),
-     sg.Text('Scan rate'),sg.Input(default_text=('0'), key='scan_rate',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(10,5),disabled=True, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'),sg.Input(default_text=('1'), key='elec_area',size=(10,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),
+     sg.Text('Scan rate'),sg.Input(default_text=('0'), key='scan_rate',size=(10,5),disabled=True, enable_events=True),sg.Text('mV')],
     [sg.Text('Trim CV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s', disable_number_display=True, enable_events=True, disabled=True)],
     [sg.Text('Trim CV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e', enable_events=True, disabled=True)],
     [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
@@ -78,7 +78,8 @@ cv_settings = [
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos',  enable_events=True, disabled=False), sg.Checkbox('Deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
     [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson', enable_events=True, disabled=True)],
     [sg.Text('Switching potential current (jps0)'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='idx_jsp0', enable_events=True, disabled=True),sg.Text('', key='jsp0_volt')],
-    [sg.Text('Bulk concentration'),sg.Input(default_text=('1'), key='bulk_conc',size=(10,5),disabled=True, enable_events=True),sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n',size=(10,5),disabled=True, enable_events=True),sg.Text('Charge-transfer coefficient (alpha)'),sg.Input(default_text=('0.5'), key='alpha',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Bulk concentration'),sg.Input(default_text=('1'), key='bulk_conc',size=(10,5),disabled=True, enable_events=True),sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Anodic alpha'),sg.Input(default_text=('0.5'), text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_jpa',size=(10,5),disabled=True, enable_events=True),sg.Text('Cathodic alpha'),sg.Input(default_text=('0.5'), text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_jpc',size=(10,5),disabled=True, enable_events=True)],
     [sg.Text('Anodic Diffusion Coefficient (D)'),sg.Text('', key='d_jpa'),sg.Text('Cathodic Diffusion Coefficient (D)'),sg.Text('', key='d_jpc')],
     [sg.Text('Anodic rate of reaction (k)'),sg.Text('', key='k_jpa'),sg.Text('Cathodic rate of reaction (k)'),sg.Text('', key='k_jpc')],
     [sg.Text('Results')],
@@ -302,7 +303,7 @@ fitting_save_array = np.zeros((1,fitting_default.size))
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
 elec_area_old = 1
-cv_results = pd.DataFrame(columns =  ["filename", "scanrate", "Jpa", "Jpc", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a"])
+cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_anodic", "alpha_cathodic"])
 while True:
     event, values = window.read()
     match event:
@@ -361,7 +362,7 @@ while True:
                         disable_slider(False)
                         cv_select = cv_name    
                         cv_name_idx = cv_name_lst.index(cv_select)
-                        cv_results.loc[cv_name_idx] = [cv_select, '0', '0', '0', '0', '0', '0', '0', '0']
+                        cv_results.loc[cv_name_idx] = [cv_select, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
                 except Exception as file_error:
                     sg.popup(file_error, keep_on_top=True)
                     continue
@@ -579,66 +580,31 @@ while True:
                 window['jsp0_volt'].Update(jsp0_volt)
             else:
                 low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d = get_CV_peak(inv_peak,cv_size, volt_compen, current_den, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool)
-                # Find alpha, must find Ep1/2
-                # jpa_half = jpa/2        
                 
+                # Find alpha, must find Ep1/2
                 volt_eval_jpa = volt_compen[jpa_lns:peak_pos]
                 volt_eval_jpc = volt_compen[jpc_lns:trough_pos]
                 curr_eval_jpa = current_den[jpa_lns:peak_pos]
                 curr_eval_jpc = current_den[jpc_lns:trough_pos]
-                # current_baseline_jpa = curr_eval_jpa - jpa/2
-                # current_baseline_jpc = curr_eval_jpc + jpc/2
-                # current_baseline_jpc = current_den[cutval_s:trough_pos] - jpc_poly1d(volt_compen[cutval_s:trough_pos])
-
-                
-                # ax_cv.plot(volt_eval_jpa,current_baseline_jpa,'r-')
-                # ax_cv.plot(volt_eval_jpc,current_baseline_jpc,'b-')
-                # np.arange(curr_eval_jpa[0],curr_eval_jpa[-1],curr_eval_jpa.size)
-                # ax_cv.plot(volt_eval_jpa,curr_eval_jpa-np.arange(curr_eval_jpa[0],curr_eval_jpa[-1],curr_eval_jpa.size),'r-')
                 try: 
                     baseline_eval_jpa = np.linspace(jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(volt_compen[peak_pos]),volt_eval_jpa.size)
-                    ax_cv.plot(volt_eval_jpa,curr_eval_jpa,'b-',linewidth=1)
-                    
                     curr_baseline_jpa = curr_eval_jpa-baseline_eval_jpa
-                    ax_cv.plot(volt_eval_jpa,curr_baseline_jpa-jpa/2,'r-',linewidth=3)
-                    
-
-                    # aabb = np.arange(curr_eval_jpa[0],curr_eval_jpa[-1],curr_eval_jpa.size)
-                    # ax_cv.plot(volt_eval_jpa,curr_eval_jpa-aabb,'r-')
-                    # ep12_jpa_idx = (np.abs(current_baseline_jpa-jpa/2)).argmin()
-                    # ep12_jpa_idx = np.abs(current_baseline_jpa).argmin()
-                    # jp12_jpa = current_baseline_jpa[ep12_jpa_idx]
-                    # ep12_cv_jpa_idx = np.abs(current_den - jp12_jpa).argmin()
-                    # ep12_jpa = volt_eval_jpa[ep12_jpa_idx]
-                    # ax_cv.plot(ep12_jpa,jp12_jpa,'*')
-                    # ax_cv.plot(ep12_jpa,curr_eval_jpa[ep12_jpa_idx],'D')
+                    ep12_jpa_idx = (np.abs(curr_baseline_jpa-jpa/2)).argmin()
+                    eq12_jpa = volt_eval_jpa[ep12_jpa_idx] #Potential at peak current 1/2 (Ep 1/2)
+                    alpha_jpa = 1-((47.7/1000)/np.abs(peak_volt - eq12_jpa))
+                    ax_cv.plot(eq12_jpa,curr_eval_jpa[ep12_jpa_idx],'x')
                 except (ValueError, IndexError):
                     ax_cv.plot(0,0,'')
-                # try:
-                #     ep12_jpc_idx = current_baseline_jpc.argmin()
-                #     jp12_jpc = current_baseline_jpc[ep12_jpc_idx]
-                #     ep12_cv_jpc_idx = np.abs(current_den - jp12_jpc).argmin()
-                #     ep12_jpc = volt_compen[ep12_cv_jpc_idx]
-                #     ax_cv.plot(ep12_jpc,jp12_jpc,'*')
-                # except ValueError:
-                #     ax_cv.plot(0,0,'')
-                    
-                # jp12_jpa = current_baseline_jpa[ep12_jpa_idx] #value of current where volt equal to E1/2 
-                # jp12_jpc = current_baseline_jpc[ep12_jpc_idx]
-                
-                # # ep12_cv_jpa_idx = np.abs(current_den - jp12_jpa).argmin()
-                # ep12_cv_jpc_idx = np.abs(current_den - jp12_jpc).argmin()
-                
-                # # ep12_jpa = volt_compen[ep12_cv_jpa_idx]
-                # ep12_jpc = volt_compen[ep12_cv_jpc_idx]
-                
-                # ax_cv.plot(volt_compen[cutval_s:peak_pos],aaaa,'b-')
-                # ax_cv.plot(ep12_jpa,jp12_jpa,'*')
-                # ax_cv.plot(ep12_jpc,jp12_jpc,'*')
+                try:
+                    baseline_eval_jpc = np.linspace(jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(volt_compen[trough_pos]),volt_eval_jpc.size)
+                    curr_baseline_jpc = curr_eval_jpc-baseline_eval_jpc
+                    ep12_jpc_idx = (np.abs(curr_baseline_jpc+jpc/2)).argmin()
+                    eq12_jpc = volt_eval_jpc[ep12_jpc_idx] #Potential at peak current 1/2 (Ep 1/2)
+                    alpha_jpc = 1-((47.7/1000)/np.abs(trough_volt - eq12_jpc))
+                    ax_cv.plot(eq12_jpc,curr_eval_jpc[ep12_jpc_idx],'x')
+                except (ValueError, IndexError):
+                    ax_cv.plot(0,0,'')
 
-                
-                
-                
                 # Find estimate standard electrode potential (E1/2~E0)
                 E1_2 = (trough_volt+peak_volt)/2
                 ax_cv.plot(E1_2,0,"D", markersize = 6)
@@ -657,6 +623,7 @@ while True:
             # invert jpa and jpc or not
             if values['inv_jpa_jpc'] == True:
                 jpa, jpc = jpc, jpa
+                alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa
 
             # Find peak-peak separation voltage
             delta_e = np.abs(trough_volt-peak_volt)
@@ -679,7 +646,7 @@ while True:
             ax_cv.set_ylabel("Current")
             fig_agg_cv.draw()
 
-            cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, peak_volt, trough_volt, jpa/jpc, E1_2, delta_e]
+            cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, peak_volt, trough_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
             cv_results = cv_results.sort_index()
             window['cv_results_dis'].Update(cv_results.to_string(index=False))  
             
