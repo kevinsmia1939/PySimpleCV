@@ -315,22 +315,20 @@ def idx_intercept(ynew,y):
         if y[i] < ynew and y[i-1] > ynew or y[i] > ynew and y[i-1] < ynew: #in negative
             new_x = interpolate.interp1d(y[i-1:i+1], [i-1,i])(ynew).item() #Give float value rather than np array
             idx_intc.append(new_x)
-    return idx_intc
+    return list(idx_intc)
 
 
-def nicholson(jpc,jpa0,jsp0):
-    # Nicholson, R. S. Semiempirical Procedure for Measuring with
-    # Stationary Electrode Polarography Rates of Chemical Reactions
-    # Involving the Product of Electron Transfer. Anal. Chem. 1966, 38
-    # (10), 1406.
-    jpa = jpc*((jpa0/jpc)+((0.485*jsp0)/jpc)+0.086)
-    return jpa
+# def nicholson_method(jpc,jpa0,jsp0):
+#     # Nicholson, R. S. Semiempirical Procedure for Measuring with
+#     # Stationary Electrode Polarography Rates of Chemical Reactions
+#     # Involving the Product of Electron Transfer. Anal. Chem. 1966, 38
+#     # (10), 1406.
+#     jpa = jpc*((jpa0/jpc)+((0.485*jsp0)/jpc)+0.086)
+#     return jpa
 
 def diffusion(scan,jp,alpha,conc_bulk,n):
-
 # For more info - Electrochemical Methods: Fundamentals and Applications, 3rd Edition Allen J. Bard, Larry R. Faulkner, Henry S. White
 # - Redox Flow Batteries: How to Determine Electrochemical Kinetic Parameters, Hao Wang et al.
-    
 # scan_rate_arr - scan rate,unit in volt
 # jp - peak current density, unit in A/cm2
 # alpha - charge-transfer coefficient, no unit
@@ -353,8 +351,8 @@ def diffusion(scan,jp,alpha,conc_bulk,n):
     r2 = (1 - (ssr / sst))
     return sqrt_scan, jp_fit ,D_irr ,D_rev ,r2
 
-def reaction_rate(peak_sep,jp,conc_bulk,n):
-    e_e0 = peak_sep/2
+def reaction_rate(e_e0,jp,conc_bulk,n):
+    # e_e0 = peak_sep/2
     lnjp = np.log(jp)
     try:     
         lnjp_lnfit, _ = poly.polyfit(e_e0,lnjp,1,full=True)
@@ -373,4 +371,17 @@ def reaction_rate(peak_sep,jp,conc_bulk,n):
     ssr = np.sum(residuals ** 2)
     sst = np.sum((lnjp - np.mean(lnjp)) ** 2)
     r2 = (1 - (ssr / sst))
-    return lnjp, e_e0, lnjp_fit, k0, alpha_cat, alpha_ano, r2
+    return lnjp, lnjp_fit, k0, alpha_cat, alpha_ano, r2
+
+def deflection(cv_size,volt,current):
+    # idx_intc_peak_defl_lst = []
+    idx_arr = np.arange(0,cv_size)
+    frac = 0.05
+    _,smh_curr = lowess(idx_arr,current,frac)
+    _,smh_volt = lowess(idx_arr,volt,frac)
+    diff1_curr = diff(smh_volt,smh_curr) #First diff, find peaks (slope = 0)
+    diff2_curr = lowess_diff(idx_arr,smh_volt,diff1_curr,0.05)
+    diff3_curr = lowess_diff(idx_arr,smh_volt,diff2_curr,0) #Detect deflection
+    idx_intc_peak = idx_intercept(0,diff1_curr)
+    idx_intc_defl = idx_intercept(0,diff3_curr)
+    return idx_intc_peak, idx_intc_defl 
