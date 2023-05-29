@@ -13,7 +13,7 @@ from impedance.models.circuits import Randles, CustomCircuit
 # from pathlib import Path
 # from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, lowess, diff, ir_compen_func, lowess_diff, idx_intercept, diffusion, reaction_rate, deflection
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha
 
 # ToDo
 # Optimize peak deflection regcognision
@@ -78,10 +78,11 @@ cv_settings = [
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos',  enable_events=True, disabled=False), sg.Checkbox('Deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
     [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson', enable_events=True, disabled=True)],
     [sg.Text('Switching potential current (jps0)'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='idx_jsp0', enable_events=True, disabled=True),sg.Text('', key='jsp0_volt')],
-    [sg.Text('Bulk concentration'),sg.Input(default_text=('1'), key='bulk_conc',size=(10,5),disabled=True, enable_events=True),sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n',size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Anodic alpha'),sg.Input(default_text=('0.5'), text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_jpa',size=(10,5),disabled=True, enable_events=True),sg.Text('Cathodic alpha'),sg.Input(default_text=('0.5'), text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_jpc',size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Anodic Diffusion Coefficient (D)'),sg.Text('', key='d_jpa'),sg.Text('Cathodic Diffusion Coefficient (D)'),sg.Text('', key='d_jpc')],
-    [sg.Text('Anodic rate of reaction (k)'),sg.Text('', key='k_jpa'),sg.Text('Cathodic rate of reaction (k)'),sg.Text('', key='k_jpc')],
+    [sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc',size=(10,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3'),sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Average anodic alpha'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_ano',size=(10,5),disabled=True, enable_events=True),sg.Text('Average cathodic alpha'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_cat',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Anodic reversible Diffusion Coefficient (cm\u00b2/s)'),sg.Input('', key='d_rev_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True),sg.Text('Cathodic reversible Diffusion Coefficient (cm\u00b2/s)'),sg.Input('', key='d_rev_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Anodic irreversible Diffusion Coefficient (cm\u00b2/s)'),sg.Input('', key='d_irr_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True),sg.Text('Cathodic irrversible Diffusion Coefficient (cm\u00b2/s)'),sg.Input('', key='d_irr_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Anodic rate of reaction (k)(cm/s)'),sg.Input('', key='k_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True),sg.Text('Cathodic rate of reaction (k)(cm/s)'),sg.Input('', key='k_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True)],
     [sg.Text('Results')],
     [sg.Multiline('',size=(70,10), disabled=True, key = 'cv_results_dis', font=('DejaVu Sans Mono', 12), no_scrollbar=False, horizontal_scroll=True)],   
     [sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV'),sg.Button('Exit', key='exit')]
@@ -303,7 +304,7 @@ fitting_save_array = np.zeros((1,fitting_default.size))
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
 elec_area_old = 1
-cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_anodic", "alpha_cathodic"])
+cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_ano", "alpha_cat"])
 while True:
     event, values = window.read()
     match event:
@@ -312,7 +313,7 @@ while True:
         case 'About PySimpleCV':
             About_PySimpleCV()
             continue
-        case 'Add/Open CV File' | 'cv_combo' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson' | 'idx_jsp0' | 'scan_rate':
+        case 'Add/Open CV File' | 'cv_combo' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson' | 'idx_jsp0' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k':
             if event == 'Add/Open CV File':
                 cv_file_new = sg.popup_get_file('Choose CV file',multiple_files=True)
                 # If cancel, close the window, go back to beginning
@@ -392,16 +393,6 @@ while True:
             window['peak_pos'].Update(range=(1, cv_size-1))
             window['trough_pos'].Update(range=(1, cv_size-1))
             window['idx_jsp0'].Update(range=(1, cv_size-1))
-            
-            try:
-                ir_compen = float(values['ir_compen'])
-            except ValueError:
-                ir_compen = float(0)
-                
-            try:
-                scan_rate = float(values['scan_rate'])
-            except ValueError:
-                scan_rate = float(0)               
 
             if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
                 cv_name_idx_old = cv_name_idx
@@ -424,7 +415,6 @@ while True:
                 inv_peak_save = int(fitting_save_array[cv_name_idx+1,15])
                 scan_rate_save = float(fitting_save_array[cv_name_idx+1,16])
                 nicholson_save = float(fitting_save_array[cv_name_idx+1,17])
-
                 # Put slider to previous position
                 window['sl_cutval_s'].Update(cutval_s_save)
                 window['sl_cutval_e'].Update(cutval_e_save)
@@ -493,8 +483,7 @@ while True:
                 try:
                     elec_area = float(values['elec_area'])
                 except ValueError:
-                    elec_area = float(1)                  
-            
+                    elec_area = float(1)
                    
                 fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool,elec_area, idx_jsp0, inv_jpa_jpc, inv_peak, scan_rate, nicholson]) 
                 fitting_save_array[cv_name_idx+1] = fitting_save
@@ -581,30 +570,11 @@ while True:
             else:
                 low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d = get_CV_peak(inv_peak,cv_size, volt_compen, current_den, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool)
                 
-                # Find alpha, must find Ep1/2
-                volt_eval_jpa = volt_compen[jpa_lns:peak_pos]
-                volt_eval_jpc = volt_compen[jpc_lns:trough_pos]
-                curr_eval_jpa = current_den[jpa_lns:peak_pos]
-                curr_eval_jpc = current_den[jpc_lns:trough_pos]
-                try: 
-                    baseline_eval_jpa = np.linspace(jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(volt_compen[peak_pos]),volt_eval_jpa.size)
-                    curr_baseline_jpa = curr_eval_jpa-baseline_eval_jpa
-                    ep12_jpa_idx = (np.abs(curr_baseline_jpa-jpa/2)).argmin()
-                    eq12_jpa = volt_eval_jpa[ep12_jpa_idx] #Potential at peak current 1/2 (Ep 1/2)
-                    alpha_jpa = 1-((47.7/1000)/np.abs(peak_volt - eq12_jpa))
-                    ax_cv.plot(eq12_jpa,curr_eval_jpa[ep12_jpa_idx],'x')
-                except (ValueError, IndexError):
-                    ax_cv.plot(0,0,'')
-                try:
-                    baseline_eval_jpc = np.linspace(jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(volt_compen[trough_pos]),volt_eval_jpc.size)
-                    curr_baseline_jpc = curr_eval_jpc-baseline_eval_jpc
-                    ep12_jpc_idx = (np.abs(curr_baseline_jpc+jpc/2)).argmin()
-                    eq12_jpc = volt_eval_jpc[ep12_jpc_idx] #Potential at peak current 1/2 (Ep 1/2)
-                    alpha_jpc = 1-((47.7/1000)/np.abs(trough_volt - eq12_jpc))
-                    ax_cv.plot(eq12_jpc,curr_eval_jpc[ep12_jpc_idx],'x')
-                except (ValueError, IndexError):
-                    ax_cv.plot(0,0,'')
-
+                # Find alpha
+                ep12_jpa, jp12_jpa, alpha_jpa, ep12_jpc, jp12_jpc, alpha_jpc = find_alpha(volt_compen,current_den,jpa_lns,jpc_lns,peak_pos,trough_pos,jpa_poly1d,jpc_poly1d,jpa,jpc,peak_volt,trough_volt)
+                ax_cv.plot(ep12_jpa,jp12_jpa,'x')
+                ax_cv.plot(ep12_jpc,jp12_jpc,'x')
+                
                 # Find estimate standard electrode potential (E1/2~E0)
                 E1_2 = (trough_volt+peak_volt)/2
                 ax_cv.plot(E1_2,0,"D", markersize = 6)
@@ -650,33 +620,40 @@ while True:
             cv_results = cv_results.sort_index()
             window['cv_results_dis'].Update(cv_results.to_string(index=False))  
             
+            # Read value from Input box, does not matter what CV it is.
             # Find Diffusion Coefficient
             try:
                 bulk_conc = float(values['bulk_conc'])
-                elec_n = float(values['elec_n'])
             except ValueError:
-                bulk_conc = float(0)
-                elec_n = float(1)
+                bulk_conc = float(0)             
+                
+            try:
+                elec_n = int(values['elec_n'])
+            except ValueError:
+                elec_n = int(1)
+                
+            alpha_ano = np.average(np.asarray(cv_results.loc[:,'alpha_ano'].to_numpy(), dtype=float))
+            alpha_cat = np.average(np.asarray(cv_results.loc[:,'alpha_cat'].to_numpy(), dtype=float))
+            window['alpha_ano'].Update(alpha_ano)
+            window['alpha_cat'].Update(alpha_cat)    
                 
             if values['enable_d'] == True:
-                scan = np.array([float(value) for value in cv_results['scanrate']])
+                scan = np.array([float(value) for value in cv_results['scan_rate']])
                 scan = scan/1000 #convert mV to V
-                # sqrt_scan_rate_arr = np.sqrt(scan_rate_arr)
                 jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
                 jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
 
                 # Plot peak current vs scan rate^1/2 to find diffusion coefficient
                 ax_cv_D.cla()
                 try:
-                    alpha = 0.5
-                    conc_bulk = 0.00005
-                    n = 1
-                    sqrt_scan, jpa_fit ,D_irr_a ,D_rev_a ,r2 = diffusion(scan,jpa_arr,alpha,conc_bulk,n)
-                    sqrt_scan, jpc_fit ,D_irr_c ,D_rev_c ,r2 = diffusion(scan,jpc_arr,alpha,conc_bulk,n)
+                    sqrt_scan, jpa_fit ,D_irr_a ,D_rev_a ,r2 = diffusion(scan,jpa_arr,alpha_ano,bulk_conc,elec_n)
+                    sqrt_scan, jpc_fit ,D_irr_c ,D_rev_c ,r2 = diffusion(scan,jpc_arr,alpha_cat,bulk_conc,elec_n)
                     ax_cv_D.plot(sqrt_scan,jpa_fit,'-',color='red')
                     ax_cv_D.plot(sqrt_scan,jpc_fit,'-',color='blue')
-                    window['d_jpa'].Update(f"{D_rev_a:e}")
-                    window['d_jpc'].Update(f"{D_rev_c:e}")
+                    window['d_rev_jpa'].Update(f"{D_rev_a:e}")
+                    window['d_rev_jpc'].Update(f"{D_rev_c:e}")
+                    window['d_irr_jpa'].Update(f"{D_irr_a:e}")
+                    window['d_irr_jpc'].Update(f"{D_irr_c:e}")
                 except SystemError:
                     pass
                 ax_cv_D.plot(sqrt_scan,jpa_arr,'o',color='red',label='Jpa')
@@ -688,12 +665,10 @@ while True:
             #Find kinetic parameter
             if values['enable_k'] == True:       
                 e_e0_arr = (np.array([float(value) for value in cv_results['ΔE\u209a']]))/2
-                conc_bulk = 0.00005
-                n = 1
                 ax_cv_kin.cla()
                 try: 
-                    lnjpa, lnjpa_fit, k0_a, alpha_cat_a, alpha_ano_a, r2_a = reaction_rate(e_e0_arr,jpa_arr,conc_bulk,n)
-                    lnjpc, lnjpc_fit, k0_c, alpha_cat_c, alpha_ano_c, r2_c = reaction_rate(e_e0_arr,jpc_arr,conc_bulk,n)
+                    lnjpa, lnjpa_fit, k0_a, alpha_cat_a, alpha_ano_a, r2_a = reaction_rate(e_e0_arr,jpa_arr,bulk_conc,elec_n)
+                    lnjpc, lnjpc_fit, k0_c, alpha_cat_c, alpha_ano_c, r2_c = reaction_rate(e_e0_arr,jpc_arr,bulk_conc,elec_n)
                     ax_cv_kin.plot(e_e0_arr,lnjpa_fit,'-',color='red')
                     ax_cv_kin.plot(e_e0_arr,lnjpc_fit,'-',color='blue')
                     window['k_jpa'].Update(f"{k0_a:e}")
@@ -712,11 +687,7 @@ while True:
             del cv_name_lst[cv_name_idx]
             del cv_path_lst[cv_name_idx]
             del cv_size_lst[cv_name_idx]
-            # del diff1_curr_lst[cv_name_idx]
-            # del diff2_curr_lst[cv_name_idx]
-            # del diff3_curr_lst[cv_name_idx]
             del idx_intc_defl_lst[cv_name_idx]
-            # del idx_intc_peak_lst[cv_name_idx]
             del smh_volt_lst[cv_name_idx]
             del smh_curr_lst[cv_name_idx]
             del volt_lst[cv_name_idx]

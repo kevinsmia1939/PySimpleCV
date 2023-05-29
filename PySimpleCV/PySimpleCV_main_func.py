@@ -119,6 +119,68 @@ def ir_compen_func(volt,current,ir_compen):
     volt_compen = volt - current*ir_compen
     return volt_compen
 
+# def get_CV_peak(inv_peak_trough,cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool):
+#     # If peak range is given as 0, then peak is just where peak position is
+#     trough_range = peak_range
+#     if peak_defl_bool == 1:
+#         peak_range = 0
+#         peak_curr = current[peak_pos]
+#         peak_volt = volt[peak_pos]   
+#         low_range_peak = peak_pos
+#         high_range_peak = peak_pos
+#     # Search for peak between peak_range.     
+#     else:
+#         high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
+#         low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
+#         peak_curr_range = current[low_range_peak:high_range_peak]
+#         if inv_peak_trough == False:
+#             peak_curr = max(peak_curr_range)
+#         else:
+#             peak_curr = min(peak_curr_range)
+#         peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))     
+#         peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
+        
+#     if trough_defl_bool == 1:
+#         trough_range = 0
+#         trough_curr = current[trough_pos]
+#         trough_volt = volt[trough_pos]
+#         high_range_trough = trough_pos
+#         low_range_trough = trough_pos      
+#     else:    
+#         high_range_trough = np.where((trough_pos+trough_range)>=(cv_size-1),(cv_size-1),trough_pos+trough_range)
+#         low_range_trough = np.where((trough_pos-trough_range)>=0,trough_pos-trough_range,0)
+#         trough_curr_range = current[low_range_trough:high_range_trough]
+#         if inv_peak_trough == False:
+#             trough_curr = min(trough_curr_range)
+#         else:
+#             trough_curr = max(trough_curr_range)
+#         trough_idx = np.argmin(np.abs(trough_curr_range-trough_curr))
+#         trough_volt = volt[low_range_trough:high_range_trough][trough_idx] 
+    
+#     # If the extrapolation coordinate overlapped, just give horizontal line
+#     if (volt[jpa_lns:jpa_lne]).size == 0:
+#         volt_jpa = np.array([0, 1])
+#         current_jpa = np.array([0, 0])
+#     else:
+#         volt_jpa = volt[jpa_lns:jpa_lne]
+#         current_jpa = current[jpa_lns:jpa_lne]
+        
+#     if (volt[jpc_lns:jpc_lne]).size == 0:
+#         volt_jpc = np.array([0, 1])
+#         current_jpc = np.array([0, 0])
+#     else:
+#         volt_jpc = volt[jpc_lns:jpc_lne]
+#         current_jpc = current[jpc_lns:jpc_lne]
+
+#     jpa_lnfit_coef = np.polyfit(volt_jpa,current_jpa, 1) # 1 for linear fit
+#     jpc_lnfit_coef = np.polyfit(volt_jpc,current_jpc, 1)
+
+#     jpa_poly1d = np.poly1d(jpa_lnfit_coef)
+#     jpc_poly1d = np.poly1d(jpc_lnfit_coef)
+#     jpa = peak_curr - jpa_poly1d(peak_volt)
+#     jpc = jpc_poly1d(trough_volt) - trough_curr
+#     return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d#, jpa_base, jpc_base
+
 def get_CV_peak(inv_peak_trough,cv_size, volt, current, peak_range, peak_pos, trough_pos, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_defl_bool, trough_defl_bool):
     # If peak range is given as 0, then peak is just where peak position is
     trough_range = peak_range
@@ -172,18 +234,16 @@ def get_CV_peak(inv_peak_trough,cv_size, volt, current, peak_range, peak_pos, tr
         volt_jpc = volt[jpc_lns:jpc_lne]
         current_jpc = current[jpc_lns:jpc_lne]
 
-    jpa_lnfit_coef = np.polyfit(volt_jpa,current_jpa, 1) # 1 for linear fit
-    jpc_lnfit_coef = np.polyfit(volt_jpc,current_jpc, 1)
+    jpa_lnfit_coef,_ = poly.polyfit(volt_jpa,current_jpa, 1, full=True) # 1 for linear fit
+    jpc_lnfit_coef,_ = poly.polyfit(volt_jpc,current_jpc, 1, full=True)
+      
+    jpa_poly1d = poly.Polynomial(jpa_lnfit_coef)
+    jpc_poly1d = poly.Polynomial(jpc_lnfit_coef)
     
-    # jp_arr_lnfit, _ = poly.polyfit(sqrt_scan,jp,1,full=True)
-    # jp_arr_poly = poly.Polynomial(jp_arr_lnfit)
-    
-    jpa_poly1d = np.poly1d(jpa_lnfit_coef)
-    jpc_poly1d = np.poly1d(jpc_lnfit_coef)
     jpa = peak_curr - jpa_poly1d(peak_volt)
     jpc = jpc_poly1d(trough_volt) - trough_curr
     return low_range_peak, high_range_peak, peak_volt, peak_curr, low_range_trough, high_range_trough, trough_volt, trough_curr, jpa, jpc, jpa_poly1d, jpc_poly1d#, jpa_base, jpc_base
- 
+
 def time2sec(time_raw,delim):
     # Take time format such as 1-12:05:24 and convert to seconds
     time_raw = str(time_raw)
@@ -390,7 +450,7 @@ def deflection(cv_size,volt,current):
     idx_intc_defl = idx_intercept(0,diff3_curr)
     return idx_intc_peak, idx_intc_defl 
 
-def alpha(volt_compen,current_den,jpa_lns,jpc_lns,peak_pos,trough_pos):
+def find_alpha(volt_compen,current_den,jpa_lns,jpc_lns,peak_pos,trough_pos,jpa_poly1d,jpc_poly1d,jpa,jpc,peak_volt,trough_volt):
     volt_eval_jpa = volt_compen[jpa_lns:peak_pos]
     volt_eval_jpc = volt_compen[jpc_lns:trough_pos]
     curr_eval_jpa = current_den[jpa_lns:peak_pos]
@@ -399,17 +459,25 @@ def alpha(volt_compen,current_den,jpa_lns,jpc_lns,peak_pos,trough_pos):
         baseline_eval_jpa = np.linspace(jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(volt_compen[peak_pos]),volt_eval_jpa.size)
         curr_baseline_jpa = curr_eval_jpa-baseline_eval_jpa
         ep12_jpa_idx = (np.abs(curr_baseline_jpa-jpa/2)).argmin()
-        eq12_jpa = volt_eval_jpa[ep12_jpa_idx] #Potential at peak current 1/2 (Ep 1/2)
-        alpha_jpa = 1-((47.7/1000)/np.abs(peak_volt - eq12_jpa))
-        ax_cv.plot(eq12_jpa,curr_eval_jpa[ep12_jpa_idx],'x')
+        ep12_jpa = volt_eval_jpa[ep12_jpa_idx] #Potential at peak current 1/2 (Ep 1/2)
+        jp12_jpa = curr_eval_jpa[ep12_jpa_idx]
+        alpha_jpa = 1-((47.7/1000)/np.abs(peak_volt - ep12_jpa))
+        # ax_cv.plot(ep12_jpa,jp12_jpa,'x')
     except (ValueError, IndexError):
-        ax_cv.plot(0,0,'')
+        # ax_cv.plot(0,0,'')
+        ep12_jpa = 0
+        jp12_jpa = 0
+        alpha_jpa = 0
     try:
         baseline_eval_jpc = np.linspace(jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(volt_compen[trough_pos]),volt_eval_jpc.size)
         curr_baseline_jpc = curr_eval_jpc-baseline_eval_jpc
         ep12_jpc_idx = (np.abs(curr_baseline_jpc+jpc/2)).argmin()
-        eq12_jpc = volt_eval_jpc[ep12_jpc_idx] #Potential at peak current 1/2 (Ep 1/2)
-        alpha_jpc = 1-((47.7/1000)/np.abs(trough_volt - eq12_jpc))
-        ax_cv.plot(eq12_jpc,curr_eval_jpc[ep12_jpc_idx],'x')
+        ep12_jpc = volt_eval_jpc[ep12_jpc_idx] #Potential at peak current 1/2 (Ep 1/2)
+        jp12_jpc = curr_eval_jpc[ep12_jpc_idx]
+        alpha_jpc = 1-((47.7/1000)/np.abs(trough_volt - ep12_jpc))
+        # ax_cv.plot(eq12_jpc,jp12_jpc,'x')
     except (ValueError, IndexError):
-        ax_cv.plot(0,0,'')
+        ep12_jpc = 0
+        jp12_jpc = 0
+        alpha_jpc = 0
+    return ep12_jpa, jp12_jpa, alpha_jpa, ep12_jpc, jp12_jpc, alpha_jpc
