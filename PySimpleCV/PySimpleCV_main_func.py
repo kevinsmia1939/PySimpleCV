@@ -29,21 +29,7 @@ def CV_file2df(CV_file):
         # Search for line match beginning and end of CV data and give ln number
         start_segment = search_string_in_file(CV_file, 'Definition=Segment')[0][0]
         end_segment = search_string_in_file(CV_file, '</Segment')[0][0]
-        
-        # # Search for scan rate value
-        # with open(CV_file, 'r') as file:
-        #     # Read the contents of the file
-        #     contents = file.read()
-        #     # Search for the pattern using regex
-        #     pattern = r'Scan Rate \(V/s\)=([\d.]+)'
-        #     match = re.search(pattern, contents)
 
-        #     if match:
-        #         # Extract the value from the matched pattern
-        #         file_scan_rate = match.group(1)
-        #     else:
-        #         file_scan_rate = 0
-                
         # Count file total line number
         with open(CV_file, 'r') as file:
             ln_count = sum(1 for _ in file)
@@ -348,15 +334,6 @@ def idx_intercept(ynew,y):
             idx_intc.append(new_x)
     return list(idx_intc)
 
-
-# def nicholson_method(jpc,jpa0,jsp0):
-#     # Nicholson, R. S. Semiempirical Procedure for Measuring with
-#     # Stationary Electrode Polarography Rates of Chemical Reactions
-#     # Involving the Product of Electron Transfer. Anal. Chem. 1966, 38
-#     # (10), 1406.
-#     jpa = jpc*((jpa0/jpc)+((0.485*jsp0)/jpc)+0.086)
-#     return jpa
-
 def diffusion(scan,jp,alpha,conc_bulk,n):
 # For more info - Electrochemical Methods: Fundamentals and Applications, 3rd Edition Allen J. Bard, Larry R. Faulkner, Henry S. White
 # - Redox Flow Batteries: How to Determine Electrochemical Kinetic Parameters, Hao Wang et al.
@@ -371,7 +348,7 @@ def diffusion(scan,jp,alpha,conc_bulk,n):
         jp_arr_poly = poly.Polynomial(jp_arr_lnfit)
         jp_slope = jp_arr_lnfit[1] # take slope
         D_rev = (jp_slope/(2.69*(10**5)*n**(3/2)*conc_bulk))**2 # reversible   
-        D_irr = (jp_slope/(2.99*(10**5)*n**(3/2)*(alpha**0.5)*conc_bulk))**2 # irreversible     
+        D_irr = (jp_slope/(2.99*(10**5)*n**(3/2)*(alpha**0.5)*conc_bulk))**2 # irreversible  
     except SystemError:
         pass  
     # Calculate R2
@@ -383,7 +360,6 @@ def diffusion(scan,jp,alpha,conc_bulk,n):
     return sqrt_scan, jp_fit ,D_irr ,D_rev ,r2
 
 def reaction_rate(e_e0,jp,conc_bulk,n):
-    # e_e0 = peak_sep/2
     lnjp = np.log(jp)
     try:     
         lnjp_lnfit, _ = poly.polyfit(e_e0,lnjp,1,full=True)
@@ -405,7 +381,6 @@ def reaction_rate(e_e0,jp,conc_bulk,n):
     return lnjp, lnjp_fit, k0, alpha_cat, alpha_ano, r2
 
 def deflection(cv_size,volt,current):
-    # idx_intc_peak_defl_lst = []
     idx_arr = np.arange(0,cv_size)
     frac = 0.05
     _,smh_curr = lowess(idx_arr,current,frac)
@@ -429,9 +404,7 @@ def find_alpha(volt_compen,current_den,jpa_lns,jpc_lns,peak_pos,trough_pos,jpa_p
         ep12_jpa = volt_eval_jpa[ep12_jpa_idx] #Potential at peak current 1/2 (Ep 1/2)
         jp12_jpa = curr_eval_jpa[ep12_jpa_idx]
         alpha_jpa = 1-((47.7/1000)/np.abs(peak_volt - ep12_jpa))
-        # ax_cv.plot(ep12_jpa,jp12_jpa,'x')
     except (ValueError, IndexError):
-        # ax_cv.plot(0,0,'')
         ep12_jpa = 0
         jp12_jpa = 0
         alpha_jpa = 0
@@ -442,7 +415,6 @@ def find_alpha(volt_compen,current_den,jpa_lns,jpc_lns,peak_pos,trough_pos,jpa_p
         ep12_jpc = volt_eval_jpc[ep12_jpc_idx] #Potential at peak current 1/2 (Ep 1/2)
         jp12_jpc = curr_eval_jpc[ep12_jpc_idx]
         alpha_jpc = 1-((47.7/1000)/np.abs(trough_volt - ep12_jpc))
-        # ax_cv.plot(eq12_jpc,jp12_jpc,'x')
     except (ValueError, IndexError):
         ep12_jpc = 0
         jp12_jpc = 0

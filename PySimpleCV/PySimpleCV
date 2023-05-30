@@ -65,8 +65,8 @@ cv_settings = [
     [sg.Button("Add/Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15)),sg.Button("Delete CV File", disabled=True)],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True),sg.Checkbox('Switch finding max and min peak', default=False, key='inv_peak', disabled=True, enable_events=True)],
-    [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(10,5),disabled=True, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'),sg.Input(default_text=('1'), key='elec_area',size=(10,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),
-     sg.Text('Scan rate'),sg.Input(default_text=('0'), key='scan_rate',size=(10,5),disabled=True, enable_events=True),sg.Text('mV')],
+    [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(15,5),disabled=True, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'),sg.Input(default_text=('1'), key='elec_area',size=(15,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),
+     sg.Text('Scan rate'),sg.Input(default_text=('0'), key='scan_rate',size=(15,5),disabled=True, enable_events=True),sg.Text('V')],
     [sg.Text('Trim CV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s', disable_number_display=True, enable_events=True, disabled=True)],
     [sg.Text('Trim CV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e', enable_events=True, disabled=True)],
     [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True)],
@@ -78,20 +78,21 @@ cv_settings = [
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos',  enable_events=True, disabled=False), sg.Checkbox('Deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
     [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson', enable_events=True, disabled=True)],
     [sg.Text('Switching potential current (jps0)'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='idx_jsp0', enable_events=True, disabled=True),sg.Text('', key='jsp0_volt')],
-    [sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc',size=(10,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3'),sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n',size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Average anodic alpha'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_ano',size=(10,5),disabled=True, enable_events=True),sg.Text('Average cathodic alpha'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_cat',size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Anodic reversible Diffusion Coefficient (cm\u00b2/s)'),sg.Input('', key='d_rev_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True),sg.Text('Cathodic reversible Diffusion Coefficient (cm\u00b2/s)'),sg.Input('', key='d_rev_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Anodic irreversible Diffusion Coefficient (cm\u00b2/s)'),sg.Input('', key='d_irr_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True),sg.Text('Cathodic irrversible Diffusion Coefficient (cm\u00b2/s)'),sg.Input('', key='d_irr_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Anodic rate of reaction (k)(cm/s)'),sg.Input('', key='k_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True),sg.Text('Cathodic rate of reaction (k)(cm/s)'),sg.Input('', key='k_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Results')],
-    [sg.Multiline('',size=(70,10), disabled=True, key = 'cv_results_dis', font=('DejaVu Sans Mono', 12), no_scrollbar=False, horizontal_scroll=True)],   
+    [sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc',size=(15,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3'),sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n',size=(15,5),disabled=True, enable_events=True)],
+    [sg.Text('Average anodic alpha'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_ano',size=(15,5),disabled=True, enable_events=True),sg.Text('Average cathodic alpha'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_cat',size=(15,5),disabled=True, enable_events=True)],
+    [sg.Text('Ano rev D (cm\u00b2/s)'),sg.Input('', key='d_rev_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat rev D (cm\u00b2/s)'),sg.Input('', key='d_rev_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
+    [sg.Text('Ano irr D (cm\u00b2/s)'),sg.Input('', key='d_irr_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat irr D (cm\u00b2/s)'),sg.Input('', key='d_irr_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
+    [sg.Text('Ano k (cm/s)'),sg.Input('', key='k_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat k (cm/s)'),sg.Input('', key='k_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
+ 
     [sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV'),sg.Button('Exit', key='exit')]
 ]
 cv_D_k_tab = sg.TabGroup([[sg.Tab('CV', cv_cv), sg.Tab('Diffusion', cv_diff),sg.Tab('Kinetics', cv_kin)]])
              
 cv_layout = [
             [sg.Checkbox('Plot Jp vs √scanrate for diffusion', default=False, key='enable_d', disabled=False, enable_events=True),sg.Checkbox('Plot Jp vs Ep-E0 for kinetic', default=False, key='enable_k', disabled=False, enable_events=True)],
-            [cv_D_k_tab,sg.Column(cv_settings)]]
+            [cv_D_k_tab,sg.Column(cv_settings)],
+            [sg.Multiline('',size=(130,8), disabled=True, key = 'cv_results_dis', font=('DejaVu Sans Mono', 12), no_scrollbar=False, horizontal_scroll=True)],  
+            ]
 
 # Generate layout for battery cycling tab.
 bat_col1=[[sg.Canvas(key='-CANVAS_bat-')]]
@@ -284,15 +285,7 @@ randles_select = True
 volt_lst = []
 smh_volt_lst = []
 smh_curr_lst = []
-# diff1_curr_lst = []
-# diff2_curr_lst = []
-# diff3_curr_lst = []
-# idx_intc_peak_lst = []
-# idx_intc_deflection_lst = []
-# idx_intc_peak_defl_lst = []
-# idx_intc_peak_lst = []
 idx_intc_defl_lst = []
-# idx_intc_peak_defl_lst = []
 current_lst = []
 current_den_lst = []
 volt_ir_lst = []
@@ -641,7 +634,7 @@ while True:
                 
             if values['enable_d'] == True:
                 scan = np.array([float(value) for value in cv_results['scan_rate']])
-                scan = scan/1000 #convert mV to V
+                # scan = scan/1000 #convert mV to V
                 jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
                 jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
 
