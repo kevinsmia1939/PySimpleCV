@@ -299,7 +299,7 @@ volt_ir_lst = []
 cv_path_lst = []
 cv_name_lst = []
 cv_size_lst = []
-fitting_default = np.array([[0,0,0,0,0,0,1,1,1,0,0,0,1,0,0,0,0,0]])
+fitting_default = np.array([[0.,0.,0.,0.,0.,0.,1.,1.,1.,0.,0.,0.,1.,0.,0.,0.,0.,0.]])
 fitting_save_array = np.zeros((1,fitting_default.size))
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
@@ -325,7 +325,7 @@ while True:
                     cv_file_multiple = cv_file_new     
                     for cv_file in cv_file_multiple.split(';'):      
                         cv_name = os.path.basename(cv_file) #Get file name
-                        df_CV = CV_file2df(cv_file)       
+                        df_CV, file_scan_rate = CV_file2df(cv_file)       
                         cv_size, volt, current = get_CV_init(df_CV) # Only need the cv_size so set to [0]
                         
                         window['sl_cutval_s'].Update(range=(0,cv_size-1))
@@ -351,11 +351,13 @@ while True:
                         # deflection and Peak detection
                         _, idx_intc_defl = deflection(cv_size,volt,current)
                         idx_intc_defl_lst.append(idx_intc_defl)
-
-                        # Add new default save data array
-                        # But instead of 0 in fitting_default, change to cv_size
+                        
+                        ###############################################################################
+                        # Add new value from the CV file to save data array
                         fitting_default[:,1] = cv_size 
+                        fitting_default[:,16] = file_scan_rate
                         fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
+                        ###############################################################################
                         
                         window['cv_combo'].Update(values=cv_name_lst) # Update combo list of CVs
                         window['cv_combo'].Update(cv_name) # Update default combo display
@@ -363,7 +365,7 @@ while True:
                         disable_slider(False)
                         cv_select = cv_name    
                         cv_name_idx = cv_name_lst.index(cv_select)
-                        cv_results.loc[cv_name_idx] = [cv_select, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
+                        cv_results.loc[cv_name_idx] = [cv_select, file_scan_rate, '0', '0', '0', '0', '0', '0', '0', '0', '0']
                 except Exception as file_error:
                     sg.popup(file_error, keep_on_top=True)
                     continue

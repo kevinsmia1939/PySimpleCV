@@ -29,15 +29,44 @@ def CV_file2df(CV_file):
         # Search for line match beginning and end of CV data and give ln number
         start_segment = search_string_in_file(CV_file, 'Definition=Segment')[0][0]
         end_segment = search_string_in_file(CV_file, '</Segment')[0][0]
+        
+        # # Search for scan rate value
+        # with open(CV_file, 'r') as file:
+        #     # Read the contents of the file
+        #     contents = file.read()
+        #     # Search for the pattern using regex
+        #     pattern = r'Scan Rate \(V/s\)=([\d.]+)'
+        #     match = re.search(pattern, contents)
+
+        #     if match:
+        #         # Extract the value from the matched pattern
+        #         file_scan_rate = match.group(1)
+        #     else:
+        #         file_scan_rate = 0
+                
         # Count file total line number
-        with open(CV_file) as f:
-            ln_count = sum(1 for _ in f)
+        with open(CV_file, 'r') as file:
+            ln_count = sum(1 for _ in file)
+            
+        with open(CV_file, 'r') as file:
+            # Search for scan rate value
+            # Read the contents of the file
+            contents = file.read()
+            # Search for the pattern using regex
+            pattern = r'Scan Rate \(V/s\)=([\d.]+)'
+            match = re.search(pattern, contents)
+            if match:
+                # Extract the value from the matched pattern
+                file_scan_rate = float(match.group(1))
+            else:
+                file_scan_rate = float(0)
+        
         footer = ln_count-end_segment
         df_CV = pd.read_csv(CV_file,skiprows=start_segment, skipfooter=footer,usecols=[2,3],engine='python')
         df_CV = np.array(df_CV)
     else:
         raise Exception("Unknown file type, please choose .csv, .par")
-    return df_CV
+    return df_CV, file_scan_rate
 
 def battery_xls2df(bat_file):
     if bat_file.lower().endswith(".xls"):
