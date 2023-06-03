@@ -76,14 +76,20 @@ cv_settings = [
     [sg.Text('Peak search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=False)],
     [sg.Text('Top peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=False), sg.Checkbox('Deflection', default=False, key='peak_defl_bool', disabled=True, enable_events=True)],
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos',  enable_events=True, disabled=False), sg.Checkbox('Deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
+    
+    [sg.Frame('Nicholson Method',[   
     [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson', enable_events=True, disabled=True)],
     [sg.Text('Switching potential current (jps0)'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='idx_jsp0', enable_events=True, disabled=True),sg.Text('', key='jsp0_volt')],
+    ], key='-frame_nicholson-')],
+    
+    [sg.Frame('Diffusion Coefficienct and rate of reaction',[   
     [sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc',size=(15,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3'),sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n',size=(15,5),disabled=True, enable_events=True)],
     [sg.Text('Average anodic alpha'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_ano',size=(15,5),disabled=True, enable_events=True),sg.Text('Average cathodic alpha'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_cat',size=(15,5),disabled=True, enable_events=True)],
     [sg.Text('Ano rev D (cm\u00b2/s)'),sg.Input('', key='d_rev_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat rev D (cm\u00b2/s)'),sg.Input('', key='d_rev_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
     [sg.Text('Ano irr D (cm\u00b2/s)'),sg.Input('', key='d_irr_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat irr D (cm\u00b2/s)'),sg.Input('', key='d_irr_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
     [sg.Text('Ano k (cm/s)'),sg.Input('', key='k_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat k (cm/s)'),sg.Input('', key='k_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
- 
+    ], key='-frame_D_k-')],
+    
     [sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV'),sg.Button('Exit', key='exit')]
 ]
 cv_D_k_tab = sg.TabGroup([[sg.Tab('CV', cv_cv), sg.Tab('Diffusion', cv_diff),sg.Tab('Kinetics', cv_kin)]])
@@ -127,6 +133,10 @@ eis_col2=[[sg.Button("Open EIS File", key = 'open_eis_file'), sg.Button("Plot", 
       [sg.Radio('Custom circuit', "rad_eis_circuit", default=False, enable_events=True, k='custom_select_circuit')],
       [sg.Text('Custom circuit scheme')],
       [sg.Input(default_text=('R0-p(R1-Wo1,CPE1)'), key='custom_circuit',size=(50,5),disabled=True)],
+      
+      [sg.Text('R0'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='R0', enable_events=True, disabled=False)],
+      [sg.Text('R1'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='R1', enable_events=True, disabled=False)],
+      
       [sg.Multiline('',size=(50,20), disabled=True, key = 'circuit_output')],
       [sg.Button('Clear plot', key='eis_clear'),sg.Button('Exit', key='exit'),sg.Button('Save plot', key='save_eis')],
       [sg.Text('Visit https://impedancepy.readthedocs.io/en/latest/ for help')],
@@ -362,7 +372,7 @@ while True:
                 except Exception as file_error:
                     sg.popup(file_error, keep_on_top=True)
                     continue
-            ax_cv.cla()
+            
             cv_select = values['cv_combo']
             
             if values['cv_combo'] == '': #Prevent error when combo box value is empty
@@ -518,7 +528,9 @@ while True:
                 trough_pos = int(trough_pos)
             else:
                 trough_defl_bool = 0
-
+                
+            ax_cv.cla() ###### Clear plot before redraw
+            
             if nicholson == True:
                 if values['inv_jpa_jpc'] == True: 
                     jp1_text = 'jpc'
@@ -887,16 +899,16 @@ while True:
             ax_bat_cap.set_ylim(min(charge_cap_arr[cycle_start:cycle_end]), max(charge_cap_arr[cycle_start:cycle_end]))
             
             fig_agg_bat.draw()
-        case "bat_clear":
+        case 'bat_clear':
             clear_battery_plot()
-        case "save_bat":
+        case 'save_bat':
             save_bat_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
             if save_bat_loc is None:
                 continue
             elif save_bat_loc == '':
                 continue
             fig_cv.savefig(save_bat_loc)            
-        case "open_eis_file":
+        case 'open_eis_file':
             eis_file_new = sg.popup_get_file('Choose EIS file')
             if eis_file_new is None:
                 continue
@@ -904,7 +916,23 @@ while True:
                 continue
             eis_file = eis_file_new
             window['eis_file_use'].Update(eis_file)
-        case "plot_eis": # case "plot_eis" | "eis_file_type_select" | "ign_neg_img" | "randles_cpe":
+            
+        case 'R0' | 'R1':
+            R0 = int(values['R0'])
+            R1 = int(values['R1'])      
+            # window['R0_val'].Update(R0)
+            randles = Randles(initial_guess=[R0, R1, .001, 200, .1])
+            
+            f_pred = np.logspace(5,-2)           
+            sim_Z= randles.predict(f_pred)
+            
+            ax_eis.cla()
+            ax_eis.plot(np.real(sim_Z), -np.imag(sim_Z),'--')   
+            ax_eis.set_aspect('equal', 'box')
+            ax_eis.axis('equal')
+            fig_agg_eis.draw()
+            print(randles)
+        case 'plot_eis': # case "plot_eis" | "eis_file_type_select" | "ign_neg_img" | "randles_cpe":
             print('CPE',values['randles_cpe'])
             eis_choose_file_type = values['eis_file_type_select']
             try:
