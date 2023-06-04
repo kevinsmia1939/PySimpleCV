@@ -10,10 +10,10 @@ from matplotlib.lines import Line2D
 import pandas as pd
 from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
-# from pathlib import Path
+# import tarfile
 # from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, save2tar, opentar
 
 # ToDo
 # Optimize peak deflection regcognision
@@ -62,7 +62,7 @@ cv_diff=[[sg.Canvas(key='-CANVAS_cv_D-')]]
 cv_kin =[[sg.Canvas(key='-CANVAS_cv_k-')]]
          
 cv_settings = [
-    [sg.Button("Add/Open CV File"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15)),sg.Button("Delete CV File", disabled=True)],
+    [sg.Button("Add/Open CV File"),sg.Button("Load saved CV files"),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo', enable_events=True, size=(30,15)),sg.Button("Delete CV File", disabled=True)],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True),sg.Checkbox('Switch finding max and min peak', default=False, key='inv_peak', disabled=True, enable_events=True)],
     [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(15,5),disabled=True, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'),sg.Input(default_text=('1'), key='elec_area',size=(15,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),
@@ -78,7 +78,7 @@ cv_settings = [
     [sg.Text('Bottom peak position'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trough_pos',  enable_events=True, disabled=False), sg.Checkbox('Deflection', default=False, key='trough_defl_bool', disabled=True, enable_events=True)],
     
     [sg.Frame('Nicholson Method',[   
-    [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson', enable_events=True, disabled=True)],
+    [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson_cb', enable_events=True, disabled=True)],
     [sg.Text('Switching potential current (jps0)'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='idx_jsp0', enable_events=True, disabled=True),sg.Text('', key='jsp0_volt')],
     ], key='-frame_nicholson-')],
     
@@ -90,7 +90,7 @@ cv_settings = [
     [sg.Text('Ano k (cm/s)'),sg.Input('', key='k_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat k (cm/s)'),sg.Input('', key='k_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
     ], key='-frame_D_k-')],
     
-    [sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV'),sg.Button('Exit', key='exit')]
+    [sg.Button('Save parameters', key='save_cv_param'),sg.Button('Save plot', key='save_cv'),sg.Button('About PySimpleCV'),sg.Button('Exit', key='exit')]
 ]
 cv_D_k_tab = sg.TabGroup([[sg.Tab('CV', cv_cv), sg.Tab('Diffusion', cv_diff),sg.Tab('Kinetics', cv_kin)]])
              
@@ -282,7 +282,7 @@ def disable_slider(bool):
     window['inv_peak'].Update(disabled=bool)
     window['peak_defl_bool'].Update(disabled=bool)
     window['trough_defl_bool'].Update(disabled=bool)
-    window['nicholson'].Update(disabled=bool)
+    window['nicholson_cb'].Update(disabled=bool)
     window['idx_jsp0'].Update(disabled=bool)
     window['Delete CV File'].Update(disabled=bool)
     window['ir_compen'].Update(disabled=bool)
@@ -316,9 +316,20 @@ while True:
         case 'About PySimpleCV':
             About_PySimpleCV()
             continue
-        case 'Add/Open CV File' | 'cv_combo' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson' | 'idx_jsp0' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k':
+        case 'Load saved CV files':
+            load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
+            # print(load_cv_dir)
+            # fitting_save_array = np.loadtxt(fitting_save_array_dir, delimiter=",")
+            # print(fitting_save_array)
+            
+            cv_param, volt, current = opentar(load_cv_dir)
+            # print(cv_param)
+            print(volt)
+            # print(current)
+        case 'Add/Open CV File' | 'cv_combo' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson_cb' | 'idx_jsp0' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k':
             if event == 'Add/Open CV File':
                 cv_file_new = sg.popup_get_file('Choose CV file',multiple_files=True)
+                print(cv_file_new)
                 # If cancel, close the window, go back to beginning
                 if cv_file_new is None:
                     continue
@@ -419,7 +430,7 @@ while True:
                 inv_jpa_jpc_save = int(fitting_save_array[cv_name_idx+1,14])
                 inv_peak_save = int(fitting_save_array[cv_name_idx+1,15])
                 scan_rate_save = float(fitting_save_array[cv_name_idx+1,16])
-                nicholson_save = float(fitting_save_array[cv_name_idx+1,17])
+                nicholson_cb_save = float(fitting_save_array[cv_name_idx+1,17])
                 # Put slider to previous position
                 window['sl_cutval_s'].Update(cutval_s_save)
                 window['sl_cutval_e'].Update(cutval_e_save)
@@ -438,7 +449,7 @@ while True:
                 window['inv_jpa_jpc'].Update(inv_jpa_jpc_save)
                 window['inv_peak'].Update(inv_peak_save)
                 window['scan_rate'].Update(scan_rate_save)
-                window['nicholson'].Update(nicholson_save)
+                window['nicholson_cb'].Update(nicholson_cb_save)
                 # Assign the value from saved data
                 cutval_s = cutval_s_save
                 cutval_e = cutval_e_save
@@ -457,7 +468,7 @@ while True:
                 inv_jpa_jpc = inv_jpa_jpc_save
                 inv_peak = inv_peak_save
                 scan_rate = scan_rate_save
-                nicholson = nicholson_save
+                nicholson_cb = nicholson_cb_save
             elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
                 cutval_s = int(values['sl_cutval_s'])
                 cutval_e = int(values['sl_cutval_e'])
@@ -473,7 +484,7 @@ while True:
                 idx_jsp0 = int(values['idx_jsp0'])
                 inv_jpa_jpc = int(values['inv_jpa_jpc'])
                 inv_peak = int(values['inv_peak'])
-                nicholson = int(values['nicholson'])
+                nicholson_cb = int(values['nicholson_cb'])
                 # Only accept float value from ir compensation
                 try:
                     ir_compen = float(values['ir_compen'])
@@ -490,7 +501,7 @@ while True:
                 except ValueError:
                     elec_area = float(1)
                    
-                fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool,elec_area, idx_jsp0, inv_jpa_jpc, inv_peak, scan_rate, nicholson]) 
+                fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trough_pos, peak_range, ir_compen, peak_defl_bool, trough_defl_bool,elec_area, idx_jsp0, inv_jpa_jpc, inv_peak, scan_rate, nicholson_cb]) 
                 fitting_save_array[cv_name_idx+1] = fitting_save
             
             if ir_compen != ir_compen_old:
@@ -531,7 +542,7 @@ while True:
                 
             ax_cv.cla() ###### Clear plot before redraw
             
-            if nicholson == True:
+            if nicholson_cb == True:
                 if values['inv_jpa_jpc'] == True: 
                     jp1_text = 'jpc'
                     jp2_text = 'jpa0'
@@ -688,6 +699,19 @@ while True:
                 ax_cv_kin.set_ylabel("Jp")
                 fig_cv_kin.legend()
                 fig_agg_cv_k.draw()
+        case 'save_cv_param':
+            save_cv_dir = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
+            if save_cv_dir is None:
+                continue
+            elif save_cv_dir == '':
+                continue
+            elif save_cv_dir == ():
+                continue       
+            # print(save_cv_dir)
+            # array_lst = (fitting_save_array,np.array(volt_lst).T,np.array(current_lst).T)
+            print(cv_path_lst)
+            save2tar(save_cv_dir,fitting_save_array,cv_path_lst)
+        
         case 'Delete CV File':
             del current_lst[cv_name_idx]
             del current_den_lst[cv_name_idx]

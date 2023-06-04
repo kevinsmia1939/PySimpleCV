@@ -7,6 +7,9 @@ from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
 import statsmodels.api as sm
 from scipy import interpolate
+import tarfile
+import io
+import os
 
 def search_string_in_file(file_name, string_to_search):
     line_number = 0
@@ -323,14 +326,14 @@ def lowess_diff(x_idx,x,y,frac):
     smh_diff_y = diff(x,smh_y)
     return smh_diff_y
 
-def idx_intercept(ynew,y):
+def idx_intercept(yint,y):
     idx_intc = []
     y = np.squeeze(y)
     for i in np.arange(1,y.size):
-        if y[i] == ynew:
+        if y[i] == yint:
             idx_intc.append(i)
-        if y[i] < ynew and y[i-1] > ynew or y[i] > ynew and y[i-1] < ynew: #in negative
-            new_x = interpolate.interp1d(y[i-1:i+1], [i-1,i])(ynew).item() #Give float value rather than np array
+        if y[i] < yint and y[i-1] > yint or y[i] > yint and y[i-1] < yint: #in negative
+            new_x = interpolate.interp1d(y[i-1:i+1], [i-1,i])(yint).item() #Give float value rather than np array
             idx_intc.append(new_x)
     return list(idx_intc)
 
@@ -420,3 +423,46 @@ def find_alpha(volt_compen,current_den,jpa_lns,jpc_lns,peak_pos,trough_pos,jpa_p
         jp12_jpc = 0
         alpha_jpc = 0
     return ep12_jpa, jp12_jpa, alpha_jpa, ep12_jpc, jp12_jpc, alpha_jpc
+
+# def save2tar(save_dir,array_lst):
+#     save_name_lst = ('cv_param','volt','current')
+#     name_idx = 0
+#     with tarfile.open(save_dir, 'w') as tar:
+#         for i in array_lst:
+#             csv_buffer = io.BytesIO()
+#             np.savetxt(csv_buffer, i, delimiter=',')
+#             csv_buffer.seek(0)
+#             tarinfo = tarfile.TarInfo(save_name_lst[name_idx]+'.csv')
+#             tarinfo.size = len(csv_buffer.getvalue())
+#             tar.addfile(tarinfo, fileobj=csv_buffer)
+#             name_idx += 1
+            
+def save2tar(save_dir,fitting_save_array,cv_path_lst):
+    with tarfile.open(save_dir, 'w') as tar:
+        csv_buffer = io.BytesIO()
+        np.savetxt(csv_buffer, fitting_save_array, delimiter=',')
+        csv_buffer.seek(0)
+        tarinfo = tarfile.TarInfo('cv_param'+'.csv')
+        tarinfo.size = len(csv_buffer.getvalue())
+        tar.addfile(tarinfo, fileobj=csv_buffer)
+        for cv_file in cv_path_lst:
+            arcname = os.path.basename(cv_file)
+            tar.add(cv_file, arcname=arcname)
+    tar.close()
+            
+def opentar(tar_dir):
+    with tarfile.open(tar_dir, 'r') as tar:
+        # cv_param = tar.extract('cv_param.csv')
+        # volt = tar.extract('volt.csv')
+        # current = tar.extract('current.csv')     
+        
+        cv_param_np = np.loadtxt('cv_param.csv', delimiter=',')
+        volt_np = np.loadtxt('volt.csv', delimiter=',')
+        current_np = np.loadtxt('current.csv', delimiter=',')
+        
+        # file_list = tar.getnames()
+        # print(file_list)
+        # cv_param = tar.extractfile('cv_param.csv').read()
+        # volt = tar.extractfile('volt.csv').read()
+        # current = tar.extractfile('current.csv').read()
+    return cv_param_np, volt_np, current_np
