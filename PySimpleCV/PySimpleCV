@@ -12,6 +12,7 @@ import pandas as pd
 from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
 import tarfile
+import shutil
 # from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
 from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, save2tar, opentar
@@ -144,7 +145,7 @@ eis_col2=[[sg.Button("Open EIS File", key = 'open_eis_file'), sg.Button("Plot", 
       ]
 eis_layout = [[sg.Column(eis_col1),sg.Column(eis_col2)]]
 
-layout = sg.TabGroup([[sg.Tab('Cyclic Voltammetry', cv_layout, key='cv_layout_key'),sg.Tab('Battery Cycling', bat_layout, key='bat_layout_key'),sg.Tab('EIS', eis_layout, key='eis_layout_key')]], enable_events=True, expand_x=True, expand_y=True)
+layout = sg.TabGroup([[sg.Tab('Cyclic Voltammetry', cv_layout, key='cv_layout_key'),sg.Tab('Battery Cycling', bat_layout, key='bat_layout_key'),sg.Tab('EIS (Not implement)', eis_layout, key='eis_layout_key')]], enable_events=True, expand_x=True, expand_y=True)
           
 window = sg.Window('PySimpleCV', [[layout]], finalize=True, element_justification='center')
 
@@ -312,42 +313,34 @@ cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "E
 while True:
     event, values = window.read()
     match event:
-        case sg.WIN_CLOSED | 'exit' | 'exit_2':
-            break
         case 'About PySimpleCV':
             About_PySimpleCV()
             continue
-        # case 'Load saved CV files':
-        #     load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
-        #     # print(load_cv_dir)
-        #     # fitting_save_array = np.loadtxt(fitting_save_array_dir, delimiter=",")
-        #     # print(fitting_save_array)
-            
-        #     cv_param, volt, current = opentar(load_cv_dir)
-        #     # print(cv_param)
-        #     print(volt)
-        #     # print(current)
         case 'Add/Open CV File' | 'Load saved CV files' | 'cv_combo' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson_cb' | 'idx_jsp0' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k':
-            
-            
             if event == 'Add/Open CV File'  or event == 'Load saved CV files':
                 if event == 'Load saved CV files':
                     load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
+                    if load_cv_dir is None or load_cv_dir == '' or load_cv_dir == ():
+                        continue
                     temp_path = os.path.splitext(load_cv_dir)[0]+'_temp_pysimplecv'
                     with tarfile.open(load_cv_dir, 'r') as tar:
                         tar.extractall(temp_path)
-                    fitting_save_array = np.loadtxt(temp_path+'/cv_param.csv', delimiter=',')
-                    cv_file_temp = temp_path+'/cv'
-                    cv_file_temp_list = os.listdir(cv_file_temp)
-                    cv_file_temp_path = [os.path.join(cv_file_temp, file) for file in cv_file_temp_list]
-                    cv_file_new = ';'.join(cv_file_temp_path)
+                    try:
+                        fitting_save_array = np.loadtxt(temp_path+'/cv_param.csv', delimiter=',')
+                        cv_file_temp = temp_path+'/cv'
+                        cv_file_temp_list = os.listdir(cv_file_temp)
+                        cv_file_temp_path = [os.path.join(cv_file_temp, file) for file in cv_file_temp_list]
+                        cv_file_new = ';'.join(cv_file_temp_path)
+                    except FileNotFoundError as file_not_found_error:
+                        sg.popup('CV file not found, maybe missing file in TAR archive',file_not_found_error, keep_on_top=True)
+                        
+                        # except Exception as file_error:
+                        #     sg.popup(file_error, keep_on_top=True)
+                        continue
                 if event == 'Add/Open CV File':
                     cv_file_new = sg.popup_get_file('Choose CV file',multiple_files=True)
-                # print(cv_file_new)
                 # If cancel, close the window, go back to beginning
-                if cv_file_new is None:
-                    continue
-                elif cv_file_new == '':
+                if cv_file_new is None or cv_file_new == '' or cv_file_new == ():
                     continue
                 try:
                     cv_file_multiple = cv_file_new     
@@ -715,12 +708,8 @@ while True:
                 fig_agg_cv_k.draw()
         case 'save_cv_param':
             save_cv_dir = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
-            if save_cv_dir is None:
+            if save_cv_dir is None or save_cv_dir == '' or save_cv_dir == ():
                 continue
-            elif save_cv_dir == '':
-                continue
-            elif save_cv_dir == ():
-                continue       
             with tarfile.open(save_cv_dir, 'w') as tar:
                 csv_buffer = io.BytesIO()
                 np.savetxt(csv_buffer, fitting_save_array, delimiter=',')
@@ -773,18 +762,14 @@ while True:
                 values['cv_combo'] = cv_select
         case 'save_cv':
             save_cv_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
-            if save_cv_loc is None:
-                continue
-            elif save_cv_loc == '':
+            if save_cv_loc is None or save_cv_loc == '' or save_cv_loc == ():
                 continue
             fig_cv.savefig(save_cv_loc)
         case 'Open Battery File':
             bat_file_new = sg.popup_get_file('Choose battery cycle file (.xls)')
             # If cancel, close the window, go back to beginning
             # If empty, use old file
-            if bat_file_new is None:
-                continue
-            elif bat_file_new == '':
+            if bat_file_new is None or bat_file_new == '' or bat_file_new == ():
                 continue
             try:
                 clear_battery_plot()
@@ -954,9 +939,7 @@ while True:
             fig_cv.savefig(save_bat_loc)            
         case 'open_eis_file':
             eis_file_new = sg.popup_get_file('Choose EIS file')
-            if eis_file_new is None:
-                continue
-            elif eis_file_new == '':
+            if eis_file_new is None or eis_file_new == '' or eis_file_new == ():
                 continue
             eis_file = eis_file_new
             window['eis_file_use'].Update(eis_file)
@@ -1025,4 +1008,10 @@ while True:
             window['custom_circuit'].Update(disabled=False)
         case "eis_clear":
             clear_eis_plot()
+        case sg.WIN_CLOSED | 'exit' | 'exit_2':
+            try:
+                shutil.rmtree(temp_path) # Delete temporary files from loading CV tar file.
+            except NameError:
+                pass
+            break
 window.close()
