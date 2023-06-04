@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os
+import io
 import sys
 import numpy as np 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg 
@@ -10,7 +11,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 from impedance import preprocessing
 from impedance.models.circuits import Randles, CustomCircuit
-# import tarfile
+import tarfile
 # from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
 from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, eis_fit, eis_read_file, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, save2tar, opentar
@@ -316,20 +317,33 @@ while True:
         case 'About PySimpleCV':
             About_PySimpleCV()
             continue
-        case 'Load saved CV files':
-            load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
-            # print(load_cv_dir)
-            # fitting_save_array = np.loadtxt(fitting_save_array_dir, delimiter=",")
-            # print(fitting_save_array)
+        # case 'Load saved CV files':
+        #     load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
+        #     # print(load_cv_dir)
+        #     # fitting_save_array = np.loadtxt(fitting_save_array_dir, delimiter=",")
+        #     # print(fitting_save_array)
             
-            cv_param, volt, current = opentar(load_cv_dir)
-            # print(cv_param)
-            print(volt)
-            # print(current)
-        case 'Add/Open CV File' | 'cv_combo' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson_cb' | 'idx_jsp0' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k':
-            if event == 'Add/Open CV File':
-                cv_file_new = sg.popup_get_file('Choose CV file',multiple_files=True)
-                print(cv_file_new)
+        #     cv_param, volt, current = opentar(load_cv_dir)
+        #     # print(cv_param)
+        #     print(volt)
+        #     # print(current)
+        case 'Add/Open CV File' | 'Load saved CV files' | 'cv_combo' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson_cb' | 'idx_jsp0' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k':
+            
+            
+            if event == 'Add/Open CV File'  or event == 'Load saved CV files':
+                if event == 'Load saved CV files':
+                    load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
+                    temp_path = os.path.splitext(load_cv_dir)[0]+'_temp_pysimplecv'
+                    with tarfile.open(load_cv_dir, 'r') as tar:
+                        tar.extractall(temp_path)
+                    fitting_save_array = np.loadtxt(temp_path+'/cv_param.csv', delimiter=',')
+                    cv_file_temp = temp_path+'/cv'
+                    cv_file_temp_list = os.listdir(cv_file_temp)
+                    cv_file_temp_path = [os.path.join(cv_file_temp, file) for file in cv_file_temp_list]
+                    cv_file_new = ';'.join(cv_file_temp_path)
+                if event == 'Add/Open CV File':
+                    cv_file_new = sg.popup_get_file('Choose CV file',multiple_files=True)
+                # print(cv_file_new)
                 # If cancel, close the window, go back to beginning
                 if cv_file_new is None:
                     continue
@@ -707,11 +721,17 @@ while True:
                 continue
             elif save_cv_dir == ():
                 continue       
-            # print(save_cv_dir)
-            # array_lst = (fitting_save_array,np.array(volt_lst).T,np.array(current_lst).T)
-            print(cv_path_lst)
-            save2tar(save_cv_dir,fitting_save_array,cv_path_lst)
-        
+            with tarfile.open(save_cv_dir, 'w') as tar:
+                csv_buffer = io.BytesIO()
+                np.savetxt(csv_buffer, fitting_save_array, delimiter=',')
+                csv_buffer.seek(0)
+                tarinfo = tarfile.TarInfo('cv_param'+'.csv')
+                tarinfo.size = len(csv_buffer.getvalue())
+                tar.addfile(tarinfo, fileobj=csv_buffer)
+                for cv_file in cv_path_lst:
+                    arcname = os.path.basename(cv_file)
+                    tar.add(cv_file, arcname='cv/'+str(arcname))
+            tar.close()
         case 'Delete CV File':
             del current_lst[cv_name_idx]
             del current_den_lst[cv_name_idx]
