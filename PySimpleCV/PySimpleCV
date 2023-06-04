@@ -9,8 +9,8 @@ import PySimpleGUI as sg
 import matplotlib 
 from matplotlib.lines import Line2D
 import pandas as pd
-from impedance import preprocessing
-from impedance.models.circuits import Randles, CustomCircuit
+# from impedance import preprocessing
+# from impedance.models.circuits import Randles, CustomCircuit
 import tarfile
 import shutil
 # from impedance.visualization import plot_nyquist
