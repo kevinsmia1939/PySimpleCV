@@ -630,7 +630,7 @@ while True:
                 ax_cv.plot(np.array(volt_ir_lst[j][cutval_s_all:cutval_e_all]).T, np.array(current_den_lst[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=0.8)
             
             if peak_defl_bool == 1 or trough_defl_bool == 1:
-                clip_defl = idx_defl_points[(idx_defl_points >= cutval_s_all) & (idx_defl_points <= cutval_e_all)]
+                clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
                 volt_defl = np.interp([clip_defl], idx_arr, volt_compen)
                 curr_defl = np.interp([clip_defl], idx_arr, current_den)
                 
