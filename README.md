@@ -2,6 +2,8 @@
 Graphical user interface for plotting the cyclic voltammogram and calculating jpa, jpc, and reversibility.
 PySimpleCV also plots battery cycles and calculates efficiencies. Written in pure Python.
 
+Please cite: https://doi.org/10.5281/zenodo.8019091
+
 **Cyclic voltammetry**
 
 Currently supports VersaStudio (.par),.csv, and.txt.
