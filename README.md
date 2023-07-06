@@ -19,7 +19,7 @@ CE - Coulombic Efficiency
 EE - Energy Efficiency
 
 Requires Python 3.10 and above.
-Modules used: Numpy, Matplotlib, PySimpleGUI, pandas, scipy, stasmodels, and impedance.py.
+Modules used: Numpy, Matplotlib, PySimpleGUI, pandas, scipy, stasmodels.
 
 License: GPLv3
 
