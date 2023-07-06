@@ -4,8 +4,8 @@ import pandas as pd
 import re
 import statsmodels.api as sm
 from scipy import interpolate
-from impedance import preprocessing
-from impedance.models.circuits import Randles, CustomCircuit
+# from impedance import preprocessing
+# from impedance.models.circuits import Randles, CustomCircuit
 
 def search_string_in_file(file_name, string_to_search):
     line_number = 0
@@ -269,44 +269,44 @@ def cy_idx_state_range(state_df, cycle_start, cycle_end, charge_seq, discharge_s
     cycle_idx_range = [cycle_idx_start, cycle_idx_end]
     return cycle_idx_range
 
-def eis_read_file(eis_file,eis_choose_file_type):
-    if eis_choose_file_type == 'CSV (.csv)':
-        frequencies, z = preprocessing.readFile(eis_file)
-    elif eis_choose_file_type == 'Gamry (.dta)':
-        frequencies, z = preprocessing.readFile(eis_file,instrument='gamry')
-    elif eis_choose_file_type == 'zplot (.z)':
-        frequencies, z = preprocessing.readFile(eis_file,instrument='zplot')
-    elif eis_choose_file_type == 'Versastudio (.par)':
-        frequencies, z = preprocessing.readFile(eis_file,instrument='versastudio')
-    elif eis_choose_file_type == 'biologic (.mpt)': #.mpt
-        frequencies, z = preprocessing.readFile(eis_file,instrument='biologic')
-    elif eis_choose_file_type == 'Autolab (.txt)':
-        frequencies, z = preprocessing.readFile(eis_file,instrument='autolab')
-    elif eis_choose_file_type == 'Parstat (.txt)':
-        frequencies, z = preprocessing.readFile(eis_file,instrument='parstat')
-    elif eis_choose_file_type == 'PowerSuite (.txt)':
-        frequencies, z = preprocessing.readFile(eis_file,instrument='powersuite')
-    elif eis_choose_file_type == 'CHInstruments':
-        frequencies, z = preprocessing.readFile(eis_file,instrument='chinstruments')
-    else:
-        raise Exception("EIS file type not support")
-    return frequencies, z
+# def eis_read_file(eis_file,eis_choose_file_type):
+#     if eis_choose_file_type == 'CSV (.csv)':
+#         frequencies, z = preprocessing.readFile(eis_file)
+#     elif eis_choose_file_type == 'Gamry (.dta)':
+#         frequencies, z = preprocessing.readFile(eis_file,instrument='gamry')
+#     elif eis_choose_file_type == 'zplot (.z)':
+#         frequencies, z = preprocessing.readFile(eis_file,instrument='zplot')
+#     elif eis_choose_file_type == 'Versastudio (.par)':
+#         frequencies, z = preprocessing.readFile(eis_file,instrument='versastudio')
+#     elif eis_choose_file_type == 'biologic (.mpt)': #.mpt
+#         frequencies, z = preprocessing.readFile(eis_file,instrument='biologic')
+#     elif eis_choose_file_type == 'Autolab (.txt)':
+#         frequencies, z = preprocessing.readFile(eis_file,instrument='autolab')
+#     elif eis_choose_file_type == 'Parstat (.txt)':
+#         frequencies, z = preprocessing.readFile(eis_file,instrument='parstat')
+#     elif eis_choose_file_type == 'PowerSuite (.txt)':
+#         frequencies, z = preprocessing.readFile(eis_file,instrument='powersuite')
+#     elif eis_choose_file_type == 'CHInstruments':
+#         frequencies, z = preprocessing.readFile(eis_file,instrument='chinstruments')
+#     else:
+#         raise Exception("EIS file type not support")
+#     return frequencies, z
 
-def eis_fit(eis_file,freqmin,freqmax,cir_scheme, rm_im_R, initial_guess, CPE_bool):
-    if eis_file.lower().endswith('.csv'):
-        frequencies, z = preprocessing.readFile(eis_file)
-    elif eis_file.lower().endswith('.par'):
-        frequencies, z = preprocessing.readFile(eis_file,instrument='versastudio')
-    else:
-        print("EIS file format not support")
+# def eis_fit(eis_file,freqmin,freqmax,cir_scheme, rm_im_R, initial_guess, CPE_bool):
+#     if eis_file.lower().endswith('.csv'):
+#         frequencies, z = preprocessing.readFile(eis_file)
+#     elif eis_file.lower().endswith('.par'):
+#         frequencies, z = preprocessing.readFile(eis_file,instrument='versastudio')
+#     else:
+#         print("EIS file format not support")
         
-    frequencies, z = preprocessing.cropFrequencies(frequencies, z, freqmin=freqmin, freqmax=freqmax)
-    if rm_im_R == True:
-        frequencies, z = preprocessing.ignoreBelowX(frequencies, z)
-    circuit = Randles(initial_guess=initial_guess, CPE=CPE_bool)
-    circuit.fit(frequencies, z)
-    z_fit = circuit.predict(frequencies)
-    return frequencies, z, z_fit, circuit
+#     frequencies, z = preprocessing.cropFrequencies(frequencies, z, freqmin=freqmin, freqmax=freqmax)
+#     if rm_im_R == True:
+#         frequencies, z = preprocessing.ignoreBelowX(frequencies, z)
+#     circuit = Randles(initial_guess=initial_guess, CPE=CPE_bool)
+#     circuit.fit(frequencies, z)
+#     z_fit = circuit.predict(frequencies)
+#     return frequencies, z, z_fit, circuit
 
 def lowess(x,y,frac):
     lowess = sm.nonparametric.lowess(y, x, frac=frac)
