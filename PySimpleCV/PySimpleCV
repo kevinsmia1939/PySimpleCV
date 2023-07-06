@@ -9,11 +9,8 @@ import PySimpleGUI as sg
 import matplotlib 
 from matplotlib.lines import Line2D
 import pandas as pd
-# from impedance import preprocessing
-# from impedance.models.circuits import Randles, CustomCircuit
 import tarfile
 import shutil
-# from impedance.visualization import plot_nyquist
 matplotlib.use('TkAgg')
 from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha
 
@@ -260,15 +257,6 @@ def clear_battery_plot():
     ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg],ncol=5, bbox_to_anchor=(0.5,-0.25),loc='lower center')
     ax_bat_cycle.grid()
     fig_agg_bat.draw()
-    
-def clear_eis_plot():
-    ax_eis.cla()
-    ax_eis.set_xlabel("Z'(w)[Ohms]")
-    ax_eis.set_ylabel('-Z"(w)[Ohms]')
-    ax_eis.set_aspect('equal', 'box')
-    ax_eis.axis('equal')
-    ax_eis.grid()
-    fig_agg_eis.draw()
     
 def disable_slider(bool):
     window['sl_cutval_s'].Update(disabled=bool)
@@ -937,77 +925,6 @@ while True:
             elif save_bat_loc == '':
                 continue
             fig_cv.savefig(save_bat_loc)            
-        # case 'open_eis_file':
-        #     eis_file_new = sg.popup_get_file('Choose EIS file')
-        #     if eis_file_new is None or eis_file_new == '' or eis_file_new == ():
-        #         continue
-        #     eis_file = eis_file_new
-        #     window['eis_file_use'].Update(eis_file)
-            
-        # case 'R0' | 'R1':
-        #     R0 = int(values['R0'])
-        #     R1 = int(values['R1'])      
-        #     # window['R0_val'].Update(R0)
-        #     randles = Randles(initial_guess=[R0, R1, .001, 200, .1])
-            
-        #     f_pred = np.logspace(5,-2)           
-        #     sim_Z= randles.predict(f_pred)
-            
-        #     ax_eis.cla()
-        #     ax_eis.plot(np.real(sim_Z), -np.imag(sim_Z),'--')   
-        #     ax_eis.set_aspect('equal', 'box')
-        #     ax_eis.axis('equal')
-        #     fig_agg_eis.draw()
-        #     print(randles)
-        # case 'plot_eis': # case "plot_eis" | "eis_file_type_select" | "ign_neg_img" | "randles_cpe":
-        #     print('CPE',values['randles_cpe'])
-        #     eis_choose_file_type = values['eis_file_type_select']
-        #     try:
-        #         frequencies, z = eis_read_file(eis_file,eis_choose_file_type)
-        #     except Exception as file_error:
-        #         sg.popup(file_error, keep_on_top=True)
-        #         sg.popup("Probably wrong file type chosen, choose a new file type.")
-        #         continue
-        #     try:    
-        #         if values['ign_neg_img'] == True:
-        #             frequencies, z = preprocessing.ignoreBelowX(frequencies, z)
-        #             print("preprocessing")
-                    
-        #         initial_guess = [float(i) for i in values['initial_guess'].split(',')]    
-        #         # if randles selected
-        #         if values['randles_select_circuit'] == True:
-        #             try:
-        #                 circuit = Randles(initial_guess=initial_guess, CPE=values['randles_cpe'])
-        #             except:
-        #                 sg.popup("Need initial guess or number of guesses do not match the circuit (could be CPE?)", keep_on_top=True)
-        #                 continue
-                
-        #         # custom circuit enabled
-        #         if values['custom_select_circuit'] == True:
-        #             circuit_scheme = values['custom_circuit']
-        #             print(circuit_scheme)
-        #             circuit = CustomCircuit(initial_guess=initial_guess, circuit=circuit_scheme)
-                    
-        #         circuit.fit(frequencies, z)
-        #         z_fit = circuit.predict(frequencies)
-        #     except Exception as file_error:
-        #         sg.popup(file_error, keep_on_top=True)  
-                
-        #     ax_eis.plot(np.real(z_fit), -np.imag(z_fit),'--')
-        #     ax_eis.plot(np.real(z), -np.imag(z),':')
-
-        #     ax_eis.set_aspect('equal', 'box')
-        #     ax_eis.axis('equal')
-        #     fig_agg_eis.draw()
-        #     window['circuit_output'].Update(circuit)
-        # case "randles_select_circuit":
-        #     window['randles_cpe'].Update(disabled=False)
-        #     window['custom_circuit'].Update(disabled=True)
-        # case "custom_select_circuit":
-        #     window['randles_cpe'].Update(disabled=True)
-        #     window['custom_circuit'].Update(disabled=False)
-        # case "eis_clear":
-        #     clear_eis_plot()
         case sg.WIN_CLOSED | 'exit' | 'exit_2':
             try:
                 shutil.rmtree(temp_path) # Delete temporary files from loading CV tar file.
