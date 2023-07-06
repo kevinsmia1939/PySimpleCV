@@ -24,13 +24,12 @@ Modules used: Numpy, Matplotlib, PySimpleGUI, pandas, scipy, stasmodels, and imp
 License: GPLv3
 
 Future plans.
-* CV
-  * Estimate alpha (|Ep-Ep/2| = 48/an Ep/s is potential at half peak current)
-
+* Rotating disc electrode
+* Area under CV for gas absorption
 * More file format support, if you have example files of other format, create new issue to add support.
 * More flexible state recognition (C_CC, D_CC, R, etc)
 * Export plot with custom dpi
-* Plot EIS data, calculate parameters, and display circuit.
+* Plot EIS data, calculate parameters, and display circuit. (Note: This might be out of the scope)
 * Generate Tafel plot
 
 
