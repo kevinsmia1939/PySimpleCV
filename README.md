@@ -3,6 +3,7 @@ Graphical user interface for plotting the cyclic voltammogram and calculating jp
 PySimpleCV also plots battery cycles and calculates efficiencies. Written in pure Python.
 
 Please cite: https://doi.org/10.5281/zenodo.8019091
+License: GPLv3
 
 **Cyclic voltammetry**
 
@@ -21,9 +22,9 @@ EE - Energy Efficiency
 Requires Python 3.10 and above.
 Modules used: Numpy, Matplotlib, PySimpleGUI, pandas, scipy, stasmodels.
 
-License: GPLv3
 
-Future plans.
+
+**Future plans**
 * Rotating disc electrode
 * Area under CV for gas absorption
 * More file format support, if you have example files of other format, create new issue to add support.
@@ -31,8 +32,7 @@ Future plans.
 * Export plot with custom dpi
 * Plot EIS data, calculate parameters, and display circuit. (Note: This might be out of the scope)
 * Generate Tafel plot
-
-
+* Slider with double handle for selecting range
 
 The file PySimpleCV/PySimpleCV contain the main code responsible to produce GUI and plotting.
 PySimpleCV/PySimpleCV_main_func.py contain mathematical function for calculation.
