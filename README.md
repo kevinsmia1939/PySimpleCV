@@ -33,6 +33,7 @@ Modules used: Numpy, Matplotlib, PySimpleGUI, pandas, scipy, stasmodels.
 * Plot EIS data, calculate parameters, and display circuit. (Note: This might be out of the scope)
 * Generate Tafel plot
 * Slider with double handle for selecting range
+* Convert between reference voltage (eg, Ag/AgCl to SHE)
 
 The file PySimpleCV/PySimpleCV contain the main code responsible to produce GUI and plotting.
 PySimpleCV/PySimpleCV_main_func.py contain mathematical function for calculation.
