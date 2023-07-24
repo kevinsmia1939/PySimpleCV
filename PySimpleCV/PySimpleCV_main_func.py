@@ -8,21 +8,24 @@ from scipy import interpolate
 def search_string_in_file(file_name, string_to_search):
     line_number = 0
     list_of_results = []
-    with open(file_name, 'r') as read_obj:
-        for line in read_obj:
+    with open(file_name, 'r') as read_file:
+        for line in read_file:
             line_number += 1
             if string_to_search in line:
                 list_of_results.append((line_number, line.rstrip()))
     return list_of_results
 
-def CV_file2df(CV_file):
-    if CV_file.lower().endswith(".csv"):
+def CV_file2df(CV_file,cv_format):
+    # match cv_format:
+    if cv_format == "CSV":
         df_CV = pd.read_csv(CV_file,usecols=[0,1])
+        file_scan_rate = float(0)
         df_CV = np.array(df_CV)
-    elif CV_file.lower().endswith(".txt"):
+    elif cv_format == "text":
         df_CV = pd.read_table(CV_file, sep='\t', header=None, usecols=[0,1])
+        file_scan_rate = float(0)
         df_CV = np.array(df_CV)
-    elif CV_file.lower().endswith(".par"):
+    elif cv_format == "VersaSTAT":
         # Search for line match beginning and end of CV data and give ln number
         start_segment = search_string_in_file(CV_file, 'Definition=Segment')[0][0]
         end_segment = search_string_in_file(CV_file, '</Segment')[0][0]
@@ -30,25 +33,38 @@ def CV_file2df(CV_file):
         # Count file total line number
         with open(CV_file, 'r') as file:
             ln_count = sum(1 for _ in file)
-            
         with open(CV_file, 'r') as file:
             # Search for scan rate value
-            # Read the contents of the file
-            contents = file.read()
             # Search for the pattern using regex
-            pattern = r'Scan Rate \(V/s\)=([\d.]+)'
-            match = re.search(pattern, contents)
+            match = re.search(r'Scan Rate \(V/s\)=([\d.]+)', file.read())
             if match:
                 # Extract the value from the matched pattern
                 file_scan_rate = float(match.group(1))
             else:
                 file_scan_rate = float(0)
-        
         footer = ln_count-end_segment
-        df_CV = pd.read_csv(CV_file,skiprows=start_segment, skipfooter=footer,usecols=[2,3],engine='python')
-        df_CV = np.array(df_CV)
+        df_CV = pd.read_csv(CV_file, skiprows=start_segment, skipfooter=footer, usecols=[2,3], header=None, engine='python')
+        # volt = df_CV[:,0]
+    elif cv_format == "CorrWare":
+        start_segment = search_string_in_file(CV_file, 'End Comments')[0][0]
+
+        with open(CV_file, 'r') as file:
+            # Search for scan rate value
+            # Search for the pattern using regex
+            match = re.search(r'Scan Rate:\s+(\d+)', file.read())
+            if match:
+                # Extract the value from the matched pattern
+                # print(match)
+                file_scan_rate = float(match.group(1))
+            else:
+                file_scan_rate = float(0)    
+        footer = 0
+        df_CV = pd.read_csv(CV_file,sep='\t',skiprows=start_segment, skipfooter=footer, usecols=[0,1], header=None, engine='python')
     else:
-        raise Exception("Unknown file type, please choose .csv, .par")
+        raise Exception("Unknown file type, please choose . cor, .csv, .par, .txt")
+    # Remove NaN
+    df_CV = df_CV.dropna()
+    df_CV = np.array(df_CV)
     return df_CV, file_scan_rate
 
 def battery_xls2df(bat_file):
@@ -118,6 +134,7 @@ def search_pattern(lst, pattern):
     return indices
 
 def get_CV_init(df_CV):
+    # print(df_CV)
     # cv_size = df_CV.shape[0]
     volt = df_CV[:,0]
     current = df_CV[:,1]
@@ -378,3 +395,15 @@ def find_alpha(volt_compen,current_den,jpa_lns,jpc_lns,peak_pos,trough_pos,jpa_p
         jp12_jpc = 0
         alpha_jpc = 0
     return ep12_jpa, jp12_jpa, alpha_jpa, ep12_jpc, jp12_jpc, alpha_jpc
+
+def convert_ref_elec():
+    ref_she = 0
+    ref_sce_sat = 0.241 #Saturated calomel electrode
+    ref_cse = 0.314
+    ref_agcl_sat = 0.197 # saturated
+    ref_agcl_3molkg = 0.210 # 3 mol KCl/kg
+    ref_agcl_3moll = 0. # 3.0 mol KCl/L
+    ref_hg2so4_sat = 0.64 # saturated k2so4
+    ref_hg2so4_05 = 0.68 # 0.5 M H2SO4
+    return 0
+    
