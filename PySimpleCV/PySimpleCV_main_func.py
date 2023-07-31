@@ -161,6 +161,7 @@ def get_CV_peak(inv_peak_trough,cv_size, volt, current, peak_range, peak_pos, tr
     else:
         high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
         low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
+        # print(low_range_peak,high_range_peak)
         peak_curr_range = current[low_range_peak:high_range_peak]
         if inv_peak_trough == False:
             peak_curr = max(peak_curr_range)
@@ -407,3 +408,24 @@ def convert_ref_elec():
     ref_hg2so4_05 = 0.68 # 0.5 M H2SO4
     return 0
     
+def min_max_peak(search_mode,cv_size, volt, current, peak_range, peak_pos):
+    high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
+    low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
+    peak_curr_range = current[low_range_peak:high_range_peak]
+    
+    if search_mode == 'max':
+        peak_curr = max(peak_curr_range)
+        peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))
+        peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
+    elif search_mode == 'min':
+        peak_curr = min(peak_curr_range)
+        peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))
+        peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
+    elif search_mode == 'none':
+        peak_curr = current[peak_pos]
+        # peak_idx = peak_pos
+        peak_volt = volt[peak_pos]
+    peak_real_idx = int(peak_pos-peak_range+peak_idx)
+    # peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))     
+    # peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
+    return high_range_peak, low_range_peak, peak_volt, peak_curr, peak_real_idx
