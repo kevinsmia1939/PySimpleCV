@@ -429,3 +429,4 @@ def min_max_peak(search_mode,cv_size, volt, current, peak_range, peak_pos):
     # peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))     
     # peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
     return high_range_peak, low_range_peak, peak_volt, peak_curr, peak_real_idx
+
