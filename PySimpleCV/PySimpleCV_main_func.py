@@ -430,3 +430,15 @@ def min_max_peak(search_mode,cv_size, volt, current, peak_range, peak_pos):
     # peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
     return high_range_peak, low_range_peak, peak_volt, peak_curr, peak_real_idx
 
+def check_val(val, val_type, err_val):
+    if val_type == "int":
+        try:
+            value = int(val)
+        except ValueError:
+            value = int(err_val)
+    elif val_type == "float":
+        try:
+            value = float(val)
+        except ValueError:
+            value = float(err_val)
+    return value

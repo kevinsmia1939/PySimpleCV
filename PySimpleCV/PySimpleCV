@@ -12,8 +12,8 @@ import pandas as pd
 import tarfile
 import shutil
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak
-
+# from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_CV_peak, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val
+from PySimpleCV_main_func import *
 # ToDo
 # Optimize peak deflection regcognision
 # Add option to change electrode area and current unit
@@ -107,10 +107,10 @@ cv_ecsa2 = [
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen_ecsa',size=(15,5),disabled=True, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'), sg.Input(default_text=('1'), key='elec_area_ecsa',size=(15,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),
      sg.Text('Scan rate'),sg.Input(default_text=('0'), key='scan_rate_ecsa',size=(15,5),disabled=True, enable_events=True),sg.Text('V')],
-    [sg.Text('Trim CV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s_ecsa', disable_number_display=True, enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='cutval_s_ecsa_pos',size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Trim CV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e_ecsa', enable_events=True, disabled=True)],
-    [sg.Text('Vertical Line'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_v_ln_ecsa', enable_events=True, disabled=True)],
-    [sg.Text('Horizontal Line'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_h_ln_ecsa', enable_events=True, disabled=True)],
+    [sg.Text('Trim CV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s_ecsa', disable_number_display=True, enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_cutval_s_ecsa_pos',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Trim CV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e_ecsa', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_cutval_e_ecsa_pos',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Vertical Line'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_v_ln_ecsa', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_v_ln_ecsa_pos',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Horizontal Line'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_h_ln_ecsa', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_h_ln_ecsa_pos',size=(10,5),disabled=True, enable_events=True)],
     [sg.Text('Peak search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range_ecsa', enable_events=True, disabled=False)],
     [sg.Text('Area: voltage x current'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='VA_ecsa',size=(15,5),disabled=True, enable_events=True)]
     ]
@@ -276,12 +276,16 @@ def disable_slider(bool):
     window['elec_n'].Update(disabled=bool)
     
     window['sl_cutval_s_ecsa'].Update(disabled=bool)
-    window['cutval_s_ecsa_pos'].Update(disabled=bool)
+    
     window['sl_cutval_e_ecsa'].Update(disabled=bool)    
     window['sl_v_ln_ecsa'].Update(disabled=bool)
     window['sl_h_ln_ecsa'].Update(disabled=bool)
     window['peak_range_ecsa'].Update(disabled=bool)
     window['ir_compen_ecsa'].Update(disabled=bool)
+    window['sl_cutval_s_ecsa_pos'].Update(disabled=bool)
+    window['sl_cutval_e_ecsa_pos'].Update(disabled=bool)
+    window['sl_v_ln_ecsa_pos'].Update(disabled=bool)
+    window['sl_h_ln_ecsa_pos'].Update(disabled=bool)
 
 randles_select = True
 volt_lst = []
@@ -308,7 +312,7 @@ while True:
         case 'About PySimpleCV':
             About_PySimpleCV()
             continue
-        case 'cv_open_menu' | 'cv_load_cv' | 'cv_combo_cv' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson_cb' | 'idx_jsp0' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k' | 'peak_defl_bool' | 'trough_defl_bool' | 'cv_open_menu_ecsa' | 'cv_load_ecsa' | 'cv_combo_ecsa' | 'sl_v_ln_ecsa' | 'sl_h_ln_ecsa' | 'sl_cutval_s_ecsa' | 'cutval_s_ecsa_pos' | 'sl_cutval_e_ecsa' | 'peak_range_ecsa' | 'ir_compen_ecsa':
+        case 'cv_open_menu' | 'cv_load_cv' | 'cv_combo_cv' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trough_pos' | 'nicholson_cb' | 'idx_jsp0' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k' | 'peak_defl_bool' | 'trough_defl_bool' | 'cv_open_menu_ecsa' | 'cv_load_ecsa' | 'cv_combo_ecsa' | 'sl_v_ln_ecsa' | 'sl_h_ln_ecsa' | 'sl_cutval_s_ecsa' | 'sl_cutval_e_ecsa' | 'peak_range_ecsa' | 'ir_compen_ecsa' | 'sl_cutval_s_ecsa_pos' | 'sl_cutval_e_ecsa_pos' | 'sl_v_ln_ecsa_pos' | 'sl_h_ln_ecsa_pos':
             if event == 'cv_open_menu' or event == 'cv_load_cv' or event == 'cv_open_menu_ecsa' or event == 'cv_load_ecsa':
                 if event == 'cv_load_cv' or event == 'cv_load_ecsa':
                     load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
@@ -362,7 +366,6 @@ while True:
                         window['idx_jsp0'].Update(range=(0, cv_size-1))
                         
                         window['sl_cutval_s_ecsa'].Update(range=(0,cv_size-1))
-                        # window['cutval_s_ecsa_pos'].Update(0)
                         window['sl_v_ln_ecsa'].Update(range=(0,cv_size-1))
                         window['sl_h_ln_ecsa'].Update(range=(0,cv_size-1))
                         window['peak_range_ecsa'].Update(range=(1,100))
@@ -438,7 +441,6 @@ while True:
             window['trough_pos'].Update(range=(1, cv_size-1))
             window['idx_jsp0'].Update(range=(1, cv_size-1))
             window['sl_cutval_s_ecsa'].Update(range=(0,cv_size-1))
-            # window['cutval_s_ecsa_pos'].Update(0)
             window['sl_cutval_e_ecsa'].Update(range=(0,cv_size-1))
             window['sl_v_ln_ecsa'].Update(range=(0,cv_size-1))
             window['sl_h_ln_ecsa'].Update(range=(0,cv_size-1))
@@ -492,11 +494,14 @@ while True:
                 window['nicholson_cb'].Update(nicholson_cb_save)
                 
                 window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_save)
-                window['cutval_s_ecsa_pos'].Update(cutval_s_ecsa_save)
                 window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_save)
                 window['sl_v_ln_ecsa'].Update(v_ln_ecsa_save)
                 window['sl_h_ln_ecsa'].Update(h_ln_ecsa_save)
-                window['peak_range_ecsa'].Update(peak_range_ecsa_save)
+                window['peak_range_ecsa'].Update(peak_range_ecsa_save)  
+                window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa_save)
+                window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa_save)
+                window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa_save)                   
+                window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa_save)
                 # Assign the value from saved data
                 cutval_s = cutval_s_save
                 cutval_e = cutval_e_save
@@ -520,7 +525,13 @@ while True:
                 cutval_e_ecsa = cutval_e_ecsa_save
                 v_ln_ecsa = v_ln_ecsa_save
                 h_ln_ecsa = h_ln_ecsa_save
+                cutval_s_ecsa_pos = cutval_s_ecsa_save
+                cutval_e_ecsa_pos = cutval_e_ecsa_save
+                v_ln_ecsa_pos = v_ln_ecsa_save
+                h_ln_ecsa_pos = h_ln_ecsa_save
                 peak_range_ecsa = peak_range_ecsa_save
+                
+                
             elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
                 cutval_s = int(values['sl_cutval_s'])
                 cutval_e = int(values['sl_cutval_e'])
@@ -559,18 +570,25 @@ while True:
                     elec_area = float(values['elec_area'])
                 except ValueError:
                     elec_area = float(1)
+                
                     
-                try:
-                    cutval_s_ecsa_pos = int(values['cutval_s_ecsa_pos'])
-                except ValueError:
-                    cutval_s_ecsa_pos = int(1)    
+                ir_compen = check_val(values['ir_compen'], "float", 0)
+                scan_rate = check_val(values['scan_rate'], "float", 0)
+                elec_area = check_val(values['elec_area'], "float", 1)
                     
+                    
+                sl_cutval_s_ecsa_pos = check_val(values['sl_cutval_s_ecsa_pos'], "int", 1)
+                sl_cutval_e_ecsa_pos = check_val(values['sl_cutval_e_ecsa_pos'], "int", 1)    
+                sl_v_ln_ecsa_pos = check_val(values['sl_v_ln_ecsa_pos'], "int", 1)
+                sl_h_ln_ecsa_pos = check_val(values['sl_h_ln_ecsa_pos'], "int", 1)   
+
+                # Update slider when slider position box change
                 if values[1] == 'cv_ecsa_layout_key':
                     if event == 'sl_cutval_s_ecsa':
-                        window['cutval_s_ecsa_pos'].Update(cutval_s_ecsa)
-                    elif event == 'cutval_s_ecsa_pos':
-                        window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_pos)
-                        cutval_s_ecsa = cutval_s_ecsa_pos
+                        window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa)
+                    elif event == 'sl_cutval_s_ecsa_pos':
+                        window['sl_cutval_s_ecsa'].Update(sl_cutval_s_ecsa_pos)
+                        cutval_s_ecsa = sl_cutval_s_ecsa_pos
                     
                 # print(cutval_e) 
                 # print(cutval_e_ecsa,h_ln_ecsa) 
