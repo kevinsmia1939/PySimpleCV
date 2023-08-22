@@ -718,12 +718,6 @@ while True:
                 window['cv_results_dis'].Update(cv_results.to_string(index=False))
                 
             if values[1] == 'cv_ecsa_layout_key':
-                # if event == 'sl_cutval_s_ecsa':
-                #     window['cutval_s_ecsa_pos'].Update(cutval_s_ecsa)
-                # elif event == 'cutval_s_ecsa_pos':
-                #     window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_pos)   
-                
-                
                 ax_cv_ecsa.cla() ###### Clear plot before redraw
                 volt_lst_len = len(volt_lst)
                 for j in np.arange(0,volt_lst_len):
@@ -731,7 +725,7 @@ while True:
                     cutval_e_ecsa_all = int(fitting_save_array[j+1,19])
                     ax_cv_ecsa.plot(np.array(volt_ir_lst[j][cutval_s_ecsa_all:cutval_e_ecsa_all]).T, np.array(current_den_lst[j][cutval_s_ecsa_all:cutval_e_ecsa_all]).T, '-', color='black',linewidth=0.8)
                 
-                search_mode = 'max'
+                search_mode = 'max' ######### Need new setting
                 high_range_peak, low_range_peak, peak_volt, peak_curr, peak_real_idx = min_max_peak(search_mode, cv_size, volt, current, peak_range_ecsa, v_ln_ecsa)
                 
                 ax_cv_ecsa.plot((volt_compen[low_range_peak],volt_compen[high_range_peak]),(current_den[low_range_peak],current_den[high_range_peak]),"|", markersize = 10)
@@ -761,12 +755,7 @@ while True:
                 sq_area = (current_den[h_ln_ecsa]) * abs(volt_compen[h_ln_ecsa]-peak_volt)
                 VA_area = abs(cv_ecsa_area-sq_area)
                 window['VA_ecsa'].Update(f"{VA_area:e}")
-                
-                if event == 'sl_cutval_s_ecsa':
-                    window['cutval_s_ecsa_pos'].Update(cutval_s_ecsa)
-                elif event == 'cutval_s_ecsa_pos':
-                    window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_pos)                   
-                
+
             # Read value from Input box, does not matter what CV it is.
             # Find Diffusion Coefficient
             try:
