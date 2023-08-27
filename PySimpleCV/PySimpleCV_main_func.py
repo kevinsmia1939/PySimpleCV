@@ -442,3 +442,10 @@ def check_val(val, val_type, err_val):
         except ValueError:
             value = float(err_val)
     return value
+
+def switch_val(a,b):
+    if a >= b:
+        b_old = b
+        b = a
+        a = b_old
+    return a,b
