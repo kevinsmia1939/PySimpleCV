@@ -66,8 +66,8 @@ cv_settings = [
     [sg.ButtonMenu("Add/Open CV file",cv_open_menu,key='cv_open_menu'),sg.Button("Load saved CV files", key='cv_load_cv'),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo_cv', enable_events=True, size=(30,15)),sg.Button("Delete CV File", disabled=True)],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Checkbox('Switch anodic and cathodic current', default=False, key='inv_jpa_jpc', disabled=True, enable_events=True)],
-    [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(15,5),disabled=True, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'),sg.Input(default_text=('1'), key='elec_area',size=(15,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),
-     sg.Text('Scan rate'),sg.Input(default_text=('0'), key='scan_rate',size=(15,5),disabled=True, enable_events=True),sg.Text('V')],
+    [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen',size=(8,5),disabled=True, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'),sg.Input(default_text=('1'), key='elec_area',size=(8,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),
+     sg.Text('Scan rate'),sg.Input(default_text=('0'), key='scan_rate',size=(8,5),disabled=True, enable_events=True),sg.Text('V/s')],
     [sg.Text('Trim CV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s', disable_number_display=True, enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_cutval_s_pos',size=(6,5),disabled=True, enable_events=True)],
     [sg.Text('Trim CV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_cutval_e_pos',size=(6,5),disabled=True, enable_events=True)],
     [sg.Text('Start 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpa_lns', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_jpa_lns_pos',size=(6,5),disabled=True, enable_events=True)],
@@ -103,6 +103,7 @@ cv_layout = [
 
 cv_ecsa1 =[[sg.Canvas(key='-CANVAS_cv_ecsa-')]]
 cv_ecsa2 = [
+    [sg.Text('Create a rectangle area under the CV plot to calculate the electrochemical active surface area (ECSA) with gas absorption')],
     [sg.ButtonMenu("Add/Open CV file",cv_open_menu,key='cv_open_menu_ecsa'),sg.Button("Load saved CV files", key='cv_load_ecsa'),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo_ecsa', enable_events=True, size=(30,15)),sg.Button("Delete CV File", disabled=True)],
     [sg.Text('.csv file with voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen_ecsa',size=(15,5),disabled=True, enable_events=True),sg.Text('Ω'),sg.Text('Electrode area'), sg.Input(default_text=('1'), key='elec_area_ecsa',size=(15,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),

@@ -12,9 +12,9 @@
      PySimpleCV also plots battery cycles and calculates efficiencies. Written in pure Python.
      Currently supports VersaStudio (.par),.csv, and .txt.
      For.csv and.txt, the first column must be voltage and the second column is current.
-     Battery cycling support .xls files with state (C_CC, D_CC, R) columns.
+     Battery cycling currently only support .xls files with state (C_CC, D_CC, R) columns from LANHE.
      Support copy-paste battery efficiency.
-     Modules used: Numpy, Matplotlib, PySimpleGUI, and pandas
+     Modules used: Numpy, Matplotlib, PySimpleGUI, pandas, and statsmodel
      License: GPLv3
    </p>
  </description>
@@ -32,6 +32,7 @@
  <url type="bugtracker">https://github.com/kevinsmia1939/PySimpleCV/issues</url>
  <content_rating type="oars-1.1"/>
  <releases>
+     <release version="v1.0.6" date="2023-08-31"/>
      <release version="v1.0.5" date="2023-07-25"/>
      <release version="v1.0.4" date="2023-07-06"/>
      <release version="v1.0.3" date="2023-06-09"/>
