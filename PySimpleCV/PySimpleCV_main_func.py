@@ -133,7 +133,7 @@ def search_pattern(lst, pattern):
             indices.append(i)
     return indices
 
-def get_CV_init(df_CV):
+def get_CV_init(df_CV,start,end):
     # print(df_CV)
     # cv_size = df_CV.shape[0]
     volt = df_CV[:,0]
@@ -141,6 +141,8 @@ def get_CV_init(df_CV):
     
     volt = volt[~np.isnan(volt)]
     current = current[~np.isnan(current)]
+    volt = volt[start:end]
+    current = current[start:end]
     cv_size = len(volt) # cv_size = df_CV.shape[0], not reliable, might contain NaN
     return cv_size, volt, current
 
