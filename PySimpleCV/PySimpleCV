@@ -61,6 +61,7 @@ cv_diff=[[sg.Canvas(key='-CANVAS_cv_D-')]]
 cv_kin =[[sg.Canvas(key='-CANVAS_cv_k-')]]
 
 cv_open_menu = ["Menu",["VersaSTAT4 (.par)", "CorrWare (.cor)", "CSV (.csv)", "text (.txt)"]]
+cv_peak_mode = ["max","min","deflection"]
          
 cv_settings = [
     [sg.ButtonMenu("Add/Open CV file",cv_open_menu,key='cv_open_menu'),sg.Button("Load saved CV files", key='cv_load_cv'),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo_cv', enable_events=True, size=(30,15)),sg.Button("Delete CV File", disabled=True)],
@@ -75,8 +76,8 @@ cv_settings = [
     [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_jpc_lns_pos',size=(6,5),disabled=True, enable_events=True)],
     [sg.Text('End 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_jpc_lne_pos',size=(6,5),disabled=True, enable_events=True)],
     [sg.Text('Search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='peak_range_pos',size=(6,5),disabled=True, enable_events=True)],
-    [sg.Text('Peak position 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=True), sg.Checkbox('Deflection', default=False, key='peak_defl_bool', disabled=True, enable_events=True),sg.Text('position'), sg.Input(default_text=('0'), key='peak_pos_pos',size=(6,5),disabled=True, enable_events=True)],
-    [sg.Text('Peak position 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trou_pos',  enable_events=True, disabled=True), sg.Checkbox('Deflection', default=False, key='trou_defl_bool', disabled=True, enable_events=True),sg.Text('position'), sg.Input(default_text=('0'), key='trou_pos_pos',size=(6,5),disabled=True, enable_events=True)],
+    [sg.Text('Peak position 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=True), sg.Combo(values=('max','min','deflection'), default_value='max', readonly=False, key='peak_mode_1', enable_events=True, size=(7,15)),sg.Text('position'), sg.Input(default_text=('0'), key='peak_pos_pos',size=(6,5),disabled=True, enable_events=True)],
+    [sg.Text('Peak position 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trou_pos', enable_events=True, disabled=True), sg.Combo(values=('max','min','deflection'), default_value='min', readonly=False, key='peak_mode_2', enable_events=True, size=(7,15)),sg.Text('position'), sg.Input(default_text=('0'), key='trou_pos_pos',size=(6,5),disabled=True, enable_events=True)],
     
     [sg.Frame('Nicholson Method',[   
     [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson_cb', enable_events=True, disabled=True)],
@@ -264,8 +265,8 @@ def disable_slider(bool):
     window['peak_pos'].Update(disabled=bool)
     window['trou_pos'].Update(disabled=bool)
     window['inv_jpa_jpc'].Update(disabled=bool)
-    window['peak_defl_bool'].Update(disabled=bool)
-    window['trou_defl_bool'].Update(disabled=bool)
+    window['peak_mode_1'].Update(disabled=bool)
+    window['peak_mode_2'].Update(disabled=bool)
     window['nicholson_cb'].Update(disabled=bool)
     window['idx_jsp0'].Update(disabled=bool)
     window['Delete CV File'].Update(disabled=bool)
@@ -308,8 +309,8 @@ volt_ir_lst = []
 cv_path_lst = []
 cv_name_lst = []
 cv_size_lst = []
-fitting_default = np.array([[0.,0.,0.,0.,0.,0.,1.,1.,1.,0.,0.,0.,1.,0.,0.,0.,0.,0.,0.,0.,0.,0.,1.]])
-fitting_save_array = np.zeros((1,fitting_default.size))
+fitting_default = np.array([[0.,0.,0.,0.,0.,0.,1.,1.,1.,0.,"max","min",1.,0.,0.,0.,0.,0.,0.,0.,0.,1.]], dtype=object)
+fitting_save_array = np.zeros((1,fitting_default.size), dtype=object)
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
 elec_area_old = 1
@@ -323,7 +324,7 @@ while True:
             About_PySimpleCV()
             continue
         
-        case 'cv_open_menu' | 'cv_load_cv' | 'cv_combo_cv' | 'inv_jpa_jpc' | 'inv_peak' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trou_pos' | 'sl_cutval_s_pos' | 'sl_cutval_e_pos' | 'sl_jpa_lns_pos' | 'sl_jpa_lne_pos' |  'sl_jpc_lns_pos' | 'sl_jpc_lne_pos' | 'peak_range_pos' | 'peak_pos_pos' | 'trou_pos_pos'| 'nicholson_cb' | 'idx_jsp0' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k' | 'peak_defl_bool' | 'trou_defl_bool' | 'cv_open_menu_ecsa' | 'cv_load_ecsa' | 'cv_combo_ecsa' | 'sl_v_ln_ecsa' | 'sl_h_ln_ecsa' | 'sl_cutval_s_ecsa' | 'sl_cutval_e_ecsa' | 'peak_range_ecsa' | 'ir_compen_ecsa' | 'sl_cutval_s_ecsa_pos' | 'sl_cutval_e_ecsa_pos' | 'sl_v_ln_ecsa_pos' | 'sl_h_ln_ecsa_pos' | 'peak_range_ecsa_pos' :
+        case 'cv_open_menu' | 'cv_load_cv' | 'cv_combo_cv' | 'inv_jpa_jpc' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trou_pos' | 'sl_cutval_s_pos' | 'sl_cutval_e_pos' | 'sl_jpa_lns_pos' | 'sl_jpa_lne_pos' |  'sl_jpc_lns_pos' | 'sl_jpc_lne_pos' | 'peak_range_pos' | 'peak_pos_pos' | 'trou_pos_pos'| 'nicholson_cb' | 'idx_jsp0' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k' | 'peak_mode_1' | 'peak_mode_2' | 'cv_open_menu_ecsa' | 'cv_load_ecsa' | 'cv_combo_ecsa' | 'sl_v_ln_ecsa' | 'sl_h_ln_ecsa' | 'sl_cutval_s_ecsa' | 'sl_cutval_e_ecsa' | 'peak_range_ecsa' | 'ir_compen_ecsa' | 'sl_cutval_s_ecsa_pos' | 'sl_cutval_e_ecsa_pos' | 'sl_v_ln_ecsa_pos' | 'sl_h_ln_ecsa_pos' | 'peak_range_ecsa_pos' :
             if event == 'cv_open_menu' or event == 'cv_load_cv' or event == 'cv_open_menu_ecsa' or event == 'cv_load_ecsa':
                 if event == 'cv_load_cv' or event == 'cv_load_ecsa':
                     load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
@@ -380,7 +381,7 @@ while True:
                         # Add new value from the CV file to save data array
                         fitting_default[:,1] = cv_size
                         fitting_default[:,19] = cv_size 
-                        fitting_default[:,16] = file_scan_rate
+                        fitting_default[:,15] = file_scan_rate
                         fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
                         ###############################################################################
                         
@@ -436,6 +437,8 @@ while True:
 
             if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
                 cv_name_idx_old = cv_name_idx
+                
+                
                 # Restore saved values
                 cutval_s_save = int(fitting_save_array[cv_name_idx+1,0])
                 cutval_e_save = int(fitting_save_array[cv_name_idx+1,1])
@@ -447,20 +450,19 @@ while True:
                 trou_pos_save = int(fitting_save_array[cv_name_idx+1,7])
                 peak_range_save = int(fitting_save_array[cv_name_idx+1,8])
                 ir_compen_save = float(fitting_save_array[cv_name_idx+1,9])
-                peak_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,10])
-                trou_defl_bool_save = bool(fitting_save_array[cv_name_idx+1,11])
+                peak_mode_1_save = str(fitting_save_array[cv_name_idx+1,10])
+                peak_mode_2_save = str(fitting_save_array[cv_name_idx+1,11])
                 elec_area_save = int(fitting_save_array[cv_name_idx+1,12])
                 idx_jsp0_save = int(fitting_save_array[cv_name_idx+1,13])
                 inv_jpa_jpc_save = int(fitting_save_array[cv_name_idx+1,14])
-                inv_peak_save = int(fitting_save_array[cv_name_idx+1,15])
-                scan_rate_save = float(fitting_save_array[cv_name_idx+1,16])
-                nicholson_cb_save = float(fitting_save_array[cv_name_idx+1,17])
+                scan_rate_save = float(fitting_save_array[cv_name_idx+1,15])
+                nicholson_cb_save = float(fitting_save_array[cv_name_idx+1,16])
 
-                cutval_s_ecsa_save = int(fitting_save_array[cv_name_idx+1,18])
-                cutval_e_ecsa_save = int(fitting_save_array[cv_name_idx+1,19])               
-                v_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,20])
-                h_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,21])
-                peak_range_ecsa_save = int(fitting_save_array[cv_name_idx+1,22])
+                cutval_s_ecsa_save = int(fitting_save_array[cv_name_idx+1,17])
+                cutval_e_ecsa_save = int(fitting_save_array[cv_name_idx+1,18])               
+                v_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,19])
+                h_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,20])
+                peak_range_ecsa_save = int(fitting_save_array[cv_name_idx+1,21])
                 # Put slider to previous position
                 window['sl_cutval_s'].Update(cutval_s_save)
                 window['sl_cutval_e'].Update(cutval_e_save)
@@ -472,12 +474,11 @@ while True:
                 window['trou_pos'].Update(trou_pos_save)
                 window['peak_range'].Update(peak_range_save)
                 window['ir_compen'].Update(ir_compen_save)
-                window['peak_defl_bool'].Update(peak_defl_bool_save)
-                window['trou_defl_bool'].Update(trou_defl_bool_save)
+                window['peak_mode_1'].Update(peak_mode_1_save)
+                window['peak_mode_2'].Update(peak_mode_2_save)
                 window['elec_area'].Update(elec_area_save)
                 window['idx_jsp0'].Update(idx_jsp0_save)
                 window['inv_jpa_jpc'].Update(inv_jpa_jpc_save)
-                window['inv_peak'].Update(inv_peak_save)
                 window['scan_rate'].Update(scan_rate_save)
                 window['nicholson_cb'].Update(nicholson_cb_save)
                 
@@ -503,12 +504,11 @@ while True:
                 trou_pos = trou_pos_save
                 peak_range = peak_range_save
                 ir_compen = ir_compen_save
-                peak_defl_bool = peak_defl_bool_save
-                trou_defl_bool = trou_defl_bool_save
+                peak_mode_1 = peak_mode_1_save
+                peak_mode_2 = peak_mode_2_save
                 elec_area = elec_area_save
                 idx_jsp0 = idx_jsp0_save
                 inv_jpa_jpc = inv_jpa_jpc_save
-                inv_peak = inv_peak_save
                 scan_rate = scan_rate_save
                 nicholson_cb = nicholson_cb_save
                 cutval_s_ecsa = cutval_s_ecsa_save
@@ -532,11 +532,13 @@ while True:
                 peak_pos = int(values['peak_pos'])
                 trou_pos = int(values['trou_pos'])
                 peak_range = int(values['peak_range'])
-                peak_defl_bool = int(values['peak_defl_bool'])
-                trou_defl_bool = int(values['trou_defl_bool'])
+                
+                
+                
+                peak_mode_1 = str(values['peak_mode_1'])
+                peak_mode_2 = str(values['peak_mode_2'])
                 idx_jsp0 = int(values['idx_jsp0'])
                 inv_jpa_jpc = int(values['inv_jpa_jpc'])
-                inv_peak = int(values['inv_peak'])
                 nicholson_cb = int(values['nicholson_cb'])
                 
                 cutval_s_ecsa = int(values['sl_cutval_s_ecsa'])
@@ -663,7 +665,7 @@ while True:
                 jpc_lns,jpc_lne = switch_val(jpc_lns,jpc_lne)
                 cutval_s_ecsa,cutval_e_ecsa = switch_val(cutval_s_ecsa,cutval_e_ecsa)
 
-                fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_defl_bool, trou_defl_bool,elec_area, idx_jsp0, inv_jpa_jpc, inv_peak, scan_rate, nicholson_cb, cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa]) 
+                fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb, cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa], dtype=object) 
                 fitting_save_array[cv_name_idx+1] = fitting_save
             
             if ir_compen != ir_compen_old:
@@ -682,16 +684,12 @@ while True:
             else:
                 current_den = current_den_lst[cv_name_idx]
             
-            if peak_defl_bool == 1:
+            if peak_mode_1 == 'deflection':
                 peak_pos = idx_defl_points[np.abs(idx_defl_points - peak_pos).argmin()]
                 peak_pos = int(peak_pos)
-            else:
-                peak_defl_bool = 0
-            if trou_defl_bool == 1:
+            if peak_mode_2 == 'deflection':
                 trou_pos = idx_defl_points[np.abs(idx_defl_points - trou_pos).argmin()]
                 trou_pos = int(trou_pos)
-            else:
-                trou_defl_bool = 0
                 
             if values[1] == 'cv_layout_key':
                 ax_cv.cla() ###### Clear plot before redraw
@@ -704,15 +702,14 @@ while True:
                         jp2_text = 'jpc0'
                     jpc0_lns = jpa_lns
                     jpc0_lne = jpa_lne
-                    # low_range_a, high_range_a, peak_volt, peak_curr_a, low_range_c, high_range_c, trou_volt, peak_curr_c, jpa, jpc0, jpa_poly1d, _ = get_CV_peak(inv_peak, cv_size, volt_compen, current_den, peak_range, peak_pos, trou_pos, jpa_lns, jpa_lne, jpc0_lns, jpc0_lne, peak_defl_bool, trou_defl_bool)
-                    
-
-                    low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV("max",cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne, peak_defl_bool)
-                    low_range_c, high_range_c, trou_volt, peak_curr_c, jpc0, _ = get_peak_CV("min",cv_size, volt, current, peak_range, trou_pos, jpc_lns, jpc_lne, trou_defl_bool)
-                    
+                    print(peak_mode_1)
+                    low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne, peak_mode_1)
+                    low_range_c, high_range_c, trou_volt, peak_curr_c, jpc0, _ = get_peak_CV(peak_mode_2,cv_size, volt, current, peak_range, trou_pos, jpc_lns, jpc_lne, peak_mode_2)
                     
                     # Find estimate standard electrode potential (E1/2~E0)
                     E1_2 = (peak_volt+trou_volt)/2
+                    # Find peak-peak separation voltage
+                    delta_e = np.abs(trou_volt-peak_volt)
                     ax_cv.plot(E1_2,0,"D", markersize = 6)
                 
                     ax_cv.plot((volt_compen[low_range_a],volt_compen[high_range_a]),(current_den[low_range_a],current_den[high_range_a]),"|", markersize = 10)
@@ -744,8 +741,8 @@ while True:
                         
                     window['jsp0_volt'].Update(jsp0_volt)
                 elif nicholson_cb == False:
-                    low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV("max",cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne, peak_defl_bool)
-                    low_range_c, high_range_c, trou_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV("min",cv_size, volt, current, peak_range, trou_pos, jpc_lns, jpc_lne, trou_defl_bool)                
+                    low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne)
+                    low_range_c, high_range_c, trou_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, volt, current, peak_range, trou_pos, jpc_lns, jpc_lne)                
                     
                     # Find alpha
                     ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen,current_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_volt)
@@ -756,6 +753,9 @@ while True:
                     
                     # Find estimate standard electrode potential (E1/2~E0)
                     E1_2 = (trou_volt+peak_volt)/2
+                    # Find peak-peak separation voltage
+                    delta_e = np.abs(trou_volt-peak_volt)
+                    
                     ax_cv.plot(E1_2,0,"D", markersize = 6)
                     
                     
@@ -775,8 +775,7 @@ while True:
                     jpa, jpc = jpc, jpa
                     alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa
                     
-                # Find peak-peak separation voltage
-                delta_e = np.abs(trou_volt-peak_volt)
+
                 # Start plotting
                 volt_lst_len = len(volt_lst)
                 for j in np.arange(0,volt_lst_len):
@@ -784,7 +783,7 @@ while True:
                     cutval_e_all = int(fitting_save_array[j+1,1])
                     ax_cv.plot(np.array(volt_ir_lst[j][cutval_s_all:cutval_e_all]).T, np.array(current_den_lst[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=0.8)
                 
-                if peak_defl_bool == 1 or trou_defl_bool == 1:
+                if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
                     clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
                     volt_defl = np.interp([clip_defl], idx_arr, volt_compen)
                     curr_defl = np.interp([clip_defl], idx_arr, current_den)

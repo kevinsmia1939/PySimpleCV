@@ -143,9 +143,9 @@ def ir_compen_func(volt,current,ir_compen):
     volt_compen = volt - current*ir_compen
     return volt_compen
 
-def get_peak_CV(search_mode,cv_size, volt, current, peak_range, peak_pos, jp_lns, jp_lne, peak_defl_bool):
+def get_peak_CV(peak_mode,cv_size, volt, current, peak_range, peak_pos, jp_lns, jp_lne):
     # If peak range is given as 0, then peak is just where peak position is
-    if peak_defl_bool == 1:
+    if peak_mode == "deflection":
         peak_range = 0
         peak_curr = current[peak_pos]
         peak_volt = volt[peak_pos]   
@@ -158,9 +158,9 @@ def get_peak_CV(search_mode,cv_size, volt, current, peak_range, peak_pos, jp_lns
         # print(low_range_peak,high_range_peak)
         peak_curr_range = current[low_range_peak:high_range_peak]
      
-        if search_mode == "max":
+        if peak_mode == "max":
             peak_curr = max(peak_curr_range)
-        elif search_mode == "min":
+        elif peak_mode == "min":
             peak_curr = min(peak_curr_range)
             
         peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))     
@@ -362,20 +362,20 @@ def convert_ref_elec():
     ref_hg2so4_05 = 0.68 # 0.5 M H2SO4
     return 0
     
-def min_max_peak(search_mode,cv_size, volt, current, peak_range, peak_pos):
+def min_max_peak(peak_mode,cv_size, volt, current, peak_range, peak_pos):
     high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
     low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
     peak_curr_range = current[low_range_peak:high_range_peak]
     
-    if search_mode == 'max':
+    if peak_mode == 'max':
         peak_curr = max(peak_curr_range)
         peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))
         peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
-    elif search_mode == 'min':
+    elif peak_mode == 'min':
         peak_curr = min(peak_curr_range)
         peak_idx = np.argmin(np.abs(peak_curr_range-peak_curr))
         peak_volt = volt[low_range_peak:high_range_peak][peak_idx]
-    elif search_mode == 'none':
+    elif peak_mode == 'none':
         peak_curr = current[peak_pos]
         peak_volt = volt[peak_pos]
     peak_real_idx = int(peak_pos-peak_range+peak_idx)
