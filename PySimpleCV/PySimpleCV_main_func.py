@@ -52,7 +52,6 @@ def CV_file2df(CV_file,cv_format):
             match = re.search(r'Scan Rate:\s+(\d+)', file.read())
             if match:
                 # Extract the value from the matched pattern
-                # print(match)
                 file_scan_rate = float(match.group(1))
             else:
                 file_scan_rate = float(0)    
@@ -155,7 +154,6 @@ def get_peak_CV(peak_mode,cv_size, volt, current, peak_range, peak_pos, jp_lns, 
     else:
         high_range_peak = np.where((peak_pos+peak_range)>=(cv_size-1),(cv_size-1),peak_pos+peak_range)
         low_range_peak = np.where((peak_pos-peak_range)>=0,peak_pos-peak_range,0)
-        # print(low_range_peak,high_range_peak)
         peak_curr_range = current[low_range_peak:high_range_peak]
      
         if peak_mode == "max":
@@ -237,7 +235,6 @@ def get_battery_eff(row_size, time_df, volt_df, current_df, capacity_df, state_d
     VE_arr = np.array(VE_lst) * 100 # convert to %
     CE_arr = np.array(CE_lst) * 100
     EE_arr = (VE_arr/100 * CE_arr/100)*100
-    # print(charge_cap_lst)
     charge_cap_arr = np.array(charge_cap_lst)
     discharge_cap_arr = np.array(discharge_cap_lst)
     return VE_arr, CE_arr, EE_arr, charge_cap_arr, discharge_cap_arr, cycle_end
@@ -252,19 +249,38 @@ def cy_idx_state_range(state_df, cycle_start, cycle_end, charge_seq, discharge_s
     cycle_idx_range = [cycle_idx_start, cycle_idx_end]
     return cycle_idx_range
 
-def lowess(x,y,frac):
+def lowess_func(x,y,frac):
+    # print(len(x),len(y))
     lowess = sm.nonparametric.lowess(y, x, frac=frac)
     smh_x = lowess[:, 0]
     smh_y = lowess[:, 1]
     return smh_x, smh_y
 
 def diff(x,y):
-    return np.gradient(y,x) #This is y
+    diff_y = np.gradient(y,x)
+    # Find indices where x is not NaN
+    valid_indices = ~np.isnan(diff_y)
+    # Use boolean indexing to select values in y corresponding to valid x values
+    x = x[valid_indices]
+    return x, diff_y #This is y
 
 def lowess_diff(x_idx,x,y,frac):
-    _, smh_y = lowess(x_idx,y,frac)
-    smh_diff_y = diff(x,smh_y)
-    return smh_diff_y
+    smh_x, smh_y = lowess_func(x_idx,y,frac)
+    # print(len(smh_x),len(smh_y))
+    smh_x,smh_diff_y = diff(smh_x,smh_y)
+    return smh_x, smh_diff_y
+
+def deflection(cv_size,volt,current):
+    idx_arr = np.arange(0,cv_size)
+    frac = 0.05
+    _,smh_curr = lowess_func(idx_arr,current,frac)
+    _,smh_volt = lowess_func(idx_arr,volt,frac)
+    diff1_curr = diff(smh_volt,smh_curr) #First diff, find peaks (slope = 0)
+    diff2_curr = lowess_diff(idx_arr,smh_volt,diff1_curr,0.05)
+    diff3_curr = lowess_diff(idx_arr,smh_volt,diff2_curr,0) #Detect deflection
+    idx_intc_peak = idx_intercept(0,diff1_curr)
+    idx_intc_defl = idx_intercept(0,diff3_curr)
+    return idx_intc_peak, idx_intc_defl 
 
 def idx_intercept(yint,y):
     idx_intc = []
@@ -322,18 +338,6 @@ def reaction_rate(e_e0,jp,conc_bulk,n):
     sst = np.sum((lnjp - np.mean(lnjp)) ** 2)
     r2 = (1 - (ssr / sst))
     return lnjp, lnjp_fit, k0, alpha_cat, alpha_ano, r2
-
-def deflection(cv_size,volt,current):
-    idx_arr = np.arange(0,cv_size)
-    frac = 0.05
-    _,smh_curr = lowess(idx_arr,current,frac)
-    _,smh_volt = lowess(idx_arr,volt,frac)
-    diff1_curr = diff(smh_volt,smh_curr) #First diff, find peaks (slope = 0)
-    diff2_curr = lowess_diff(idx_arr,smh_volt,diff1_curr,0.05)
-    diff3_curr = lowess_diff(idx_arr,smh_volt,diff2_curr,0) #Detect deflection
-    idx_intc_peak = idx_intercept(0,diff1_curr)
-    idx_intc_defl = idx_intercept(0,diff3_curr)
-    return idx_intc_peak, idx_intc_defl 
 
 def find_alpha(volt,curr,jp_lns,peak_pos,jp_poly1d,jp,peak_volt):
     volt_eval_jp = volt[jp_lns:peak_pos]
