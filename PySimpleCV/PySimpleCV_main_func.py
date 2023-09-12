@@ -250,7 +250,6 @@ def cy_idx_state_range(state_df, cycle_start, cycle_end, charge_seq, discharge_s
     return cycle_idx_range
 
 def lowess_func(x,y,frac):
-    # print(len(x),len(y))
     lowess = sm.nonparametric.lowess(y, x, frac=frac)
     smh_x = lowess[:, 0]
     smh_y = lowess[:, 1]
@@ -267,7 +266,6 @@ def diff(x,y):
 
 def lowess_diff(x,y,frac):
     smh_x, smh_y = lowess_func(x,y,frac)
-    # print(len(smh_x),len(smh_y))
     smh_x,smh_diff_y = diff(smh_x,smh_y)
     return smh_x, smh_diff_y
 
