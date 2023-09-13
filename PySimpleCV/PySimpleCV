@@ -73,8 +73,8 @@ cv_settings = [
     [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_jpc_lns_pos',size=(6,5),disabled=True, enable_events=True)],
     [sg.Text('End 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_jpc_lne_pos',size=(6,5),disabled=True, enable_events=True)],
     [sg.Text('Search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='peak_range_pos',size=(6,5),disabled=True, enable_events=True)],
-    [sg.Text('Peak position 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=True), sg.Combo(values=('max','min','deflection'), default_value='max', readonly=False, key='peak_mode_1', enable_events=True, size=(7,15)),sg.Text('position'), sg.Input(default_text=('0'), key='peak_pos_pos',size=(6,5),disabled=True, enable_events=True)],
-    [sg.Text('Peak position 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trou_pos', enable_events=True, disabled=True), sg.Combo(values=('max','min','deflection'), default_value='min', readonly=False, key='peak_mode_2', enable_events=True, size=(7,15)),sg.Text('position'), sg.Input(default_text=('0'), key='trou_pos_pos',size=(6,5),disabled=True, enable_events=True)],
+    [sg.Text('Peak position 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=True), sg.Combo(values=('max','min','exact','deflection'), default_value='max', readonly=False, key='peak_mode_1', enable_events=True, size=(7,15)),sg.Text('position'), sg.Input(default_text=('0'), key='peak_pos_pos',size=(6,5),disabled=True, enable_events=True)],
+    [sg.Text('Peak position 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trou_pos', enable_events=True, disabled=True), sg.Combo(values=('max','min','exact','deflection'), default_value='min', readonly=False, key='peak_mode_2', enable_events=True, size=(7,15)),sg.Text('position'), sg.Input(default_text=('0'), key='trou_pos_pos',size=(6,5),disabled=True, enable_events=True)],
     
     [sg.Frame('Nicholson Method',[   
     [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson_cb', enable_events=True, disabled=True)],
@@ -313,11 +313,11 @@ fitting_save_array = np.zeros((1,fitting_default.size), dtype=object)
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
 elec_area_old = 1
-cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_ano", "alpha_cat"])
+cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "Jpc0", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_ano", "alpha_cat"])
 while True:
     event, values = window.read()
-    print(event)
-    print(values)
+    # print(event)
+    # print(values)
     # print(values[1]) #This print active tab
     if event in (sg.WIN_CLOSED,'exit','exit_2'):
         try:
@@ -400,7 +400,7 @@ while True:
                 disable_slider(False)
                 cv_select = cv_name    
                 cv_name_idx = cv_name_lst.index(cv_select)
-                cv_results.loc[cv_name_idx] = [cv_select, file_scan_rate, '0', '0', '0', '0', '0', '0', '0', '0', '0']
+                cv_results.loc[cv_name_idx] = [cv_select, file_scan_rate, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
                 
             volt = volt_lst[cv_name_idx]
             current = current_lst[cv_name_idx]
@@ -461,7 +461,7 @@ while True:
             ir_compen_save = float(fitting_save_array[cv_name_idx+1,9])
             peak_mode_1_save = str(fitting_save_array[cv_name_idx+1,10])
             peak_mode_2_save = str(fitting_save_array[cv_name_idx+1,11])
-            elec_area_save = int(fitting_save_array[cv_name_idx+1,12])
+            elec_area_save = float(fitting_save_array[cv_name_idx+1,12])
             idx_jsp0_save = int(fitting_save_array[cv_name_idx+1,13])
             inv_jpa_jpc_save = int(fitting_save_array[cv_name_idx+1,14])
             scan_rate_save = float(fitting_save_array[cv_name_idx+1,15])
@@ -504,7 +504,7 @@ while True:
             nicholson_cb = nicholson_cb_save
             
         # elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
-    if event in ('inv_jpa_jpc', 'ir_compen', 'elec_area', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc', 'elec_n', 'enable_d', 'enable_k', 'peak_mode_1', 'peak_mode_2'):      
+    if event in ('ir_compen', 'elec_area','inv_jpa_jpc', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc', 'elec_n', 'enable_d', 'enable_k','peak_mode_1', 'peak_mode_2'):      
         cutval_s = int(values['sl_cutval_s'])
         cutval_e = int(values['sl_cutval_e'])
         jpa_lns = int(values['sl_jpa_lns'])
@@ -600,354 +600,408 @@ while True:
         
         fitting_save_cv = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb])
         fitting_save_array[cv_name_idx+1][0:17] = fitting_save_cv
-
-    if event in ('cv_open_menu_ecsa', 'cv_load_ecsa','cv_combo_ecsa'):
-        cv_select = values['cv_combo_ecsa']
-        if values['cv_combo_ecsa'] == '': #Prevent error when combo box value is empty
-            cv_name_idx = 0
+      
+    # if event in ('ir_compen', 'elec_area'):
+    if ir_compen != ir_compen_old:
+        ir_compen_old = ir_compen
+        volt_compen = ir_compen_func(volt,current,ir_compen)
+        # Overwrite volt and curr with ir compen
+        volt_ir_lst[cv_name_idx] = volt_compen
+    else:
+        volt_compen = volt_ir_lst[cv_name_idx]
+    
+    if elec_area != elec_area_old:
+        elec_area_old = elec_area
+        current_den = current/elec_area
+        # Overwrite current with current density
+        current_den_lst[cv_name_idx] = current_den
+    else:
+        current_den = current_den_lst[cv_name_idx]
+    
+# if event in ('peak_mode_1', 'peak_mode_2'):   
+    if peak_mode_1 == 'deflection':
+        peak_pos = idx_defl_points[np.abs(idx_defl_points - peak_pos).argmin()]
+        peak_pos = int(peak_pos)
+    if peak_mode_2 == 'deflection':
+        trou_pos = idx_defl_points[np.abs(idx_defl_points - trou_pos).argmin()]
+        trou_pos = int(trou_pos)
+            
+    # if values[1] == 'cv_layout_key':
+    ax_cv.cla() ###### Clear plot before redraw
+    
+    if nicholson_cb == False:
+        low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne)
+        low_range_c, high_range_c, trou_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, volt, current, peak_range, trou_pos, jpc_lns, jpc_lne)                
+        
+        # Find alpha
+        ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen,current_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_volt)
+        ep12_jpc, jp12_jpc, alpha_jpc = find_alpha(volt_compen,current_den,jpc_lns,trou_pos,jpc_poly1d,jpc,trou_volt)
+        
+        ax_cv.plot(ep12_jpa,jp12_jpa,'x')
+        ax_cv.plot(ep12_jpc,jp12_jpc,'x')
+        
+        # Find estimate standard electrode potential (E1/2~E0)
+        E1_2 = (trou_volt+peak_volt)/2
+        # Find peak-peak separation voltage
+        delta_e = np.abs(trou_volt-peak_volt)
+        
+        ax_cv.plot(E1_2,0,"D", markersize = 6)
+        
+        
+        ax_cv.plot((volt_compen[low_range_a],volt_compen[high_range_a]),(current_den[low_range_a],current_den[high_range_a]),"|", markersize = 10)
+        ax_cv.plot((volt_compen[low_range_c],volt_compen[high_range_c]),(current_den[low_range_c],current_den[high_range_c]),"|", markersize = 10)
+    
+        ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='red')
+        ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='r', length_includes_head=True)
+        ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--', color='red')
+        
+        ax_cv.plot(volt_compen[jpc_lns:jpc_lne],current_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
+        ax_cv.arrow(trou_volt,jpc_poly1d(trou_volt),0,jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
+        ax_cv.plot(np.array([volt_compen[jpc_lns],trou_volt]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(trou_volt)]),'--', color='blue')
+        jpc0 = 0 #Only with Nicholson method
+    elif nicholson_cb == True:
+        if values['inv_jpa_jpc'] == True: 
+            jp1_text = 'jpc'
+            jp2_text = 'jpa0'
         else:
-            cv_name_idx = cv_name_lst.index(cv_select)
-        volt = volt_lst[cv_name_idx]
-        current = current_lst[cv_name_idx]
-        cv_size = cv_size_lst[cv_name_idx]
-        idx_arr = np.arange(0,cv_size)
-        idx_defl_points = np.array(idx_intc_defl_lst[cv_name_idx]) 
-        window['sl_cutval_s_ecsa'].Update(range=(0,cv_size-1))
-        window['sl_cutval_e_ecsa'].Update(range=(0,cv_size-1))
-        window['sl_v_ln_ecsa'].Update(range=(0,cv_size-1))
-        window['sl_h_ln_ecsa'].Update(range=(0,cv_size-1))
-        window['peak_range_ecsa'].Update(range=(1,100))  
+            jp1_text = 'jpa'
+            jp2_text = 'jpc0'
+        jpc0_lns = jpa_lns
+        jpc0_lne = jpa_lne
         
-        if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
-            cv_name_idx_old = cv_name_idx                    
-            # Restore saved values        
-            cutval_s_ecsa_save = int(fitting_save_array[cv_name_idx+1,17])
-            cutval_e_ecsa_save = int(fitting_save_array[cv_name_idx+1,18])               
-            v_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,19])
-            h_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,20])
-            peak_range_ecsa_save = int(fitting_save_array[cv_name_idx+1,21])
-            # Put slider to previous position
-            window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_save)
-            window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_save)
-            window['sl_v_ln_ecsa'].Update(v_ln_ecsa_save)
-            window['sl_h_ln_ecsa'].Update(h_ln_ecsa_save)
-            window['peak_range_ecsa'].Update(peak_range_ecsa_save)  
-            window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa_save)
-            window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa_save)
-            window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa_save)                   
-            window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa_save)
-            window['peak_range_ecsa_pos'].Update(h_ln_ecsa_save)
-            # Assign the value from saved data
-            cutval_s_ecsa = cutval_s_ecsa_save
-            cutval_e_ecsa = cutval_e_ecsa_save
-            v_ln_ecsa = v_ln_ecsa_save
-            h_ln_ecsa = h_ln_ecsa_save
-            cutval_s_ecsa_pos = cutval_s_ecsa_save
-            cutval_e_ecsa_pos = cutval_e_ecsa_save
-            v_ln_ecsa_pos = v_ln_ecsa_save
-            h_ln_ecsa_pos = h_ln_ecsa_save
-            peak_range_ecsa = peak_range_ecsa_save
-        # elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
+        low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne)
+        low_range_c, high_range_c, trou_volt, peak_curr_c, jpc0, _ = get_peak_CV(peak_mode_2,cv_size, volt, current, peak_range, trou_pos, jpa_lns, jpa_lne)
+        print(jpc0)
+        # Find estimate standard electrode potential (E1/2~E0)
+        E1_2 = (peak_volt+trou_volt)/2
+        # Find peak-peak separation voltage
+        delta_e = np.abs(trou_volt-peak_volt)
+        ax_cv.plot(E1_2,0,"D", markersize = 6)
+    
+        ax_cv.plot((volt_compen[low_range_a],volt_compen[high_range_a]),(current_den[low_range_a],current_den[high_range_a]),"|", markersize = 10)
+        ax_cv.plot((volt_compen[low_range_c],volt_compen[high_range_c]),(current_den[low_range_c],current_den[high_range_c]),"|", markersize = 10)
+    
+        ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--', color='green') #Peak
+        ax_cv.plot(np.array([volt_compen[jpa_lns],trou_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(trou_volt)]),'--', color='green') #Peak    
+        ax_cv.arrow(trou_volt,jpa_poly1d(trou_volt),0,jpc0,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='green', length_includes_head=True) #jpc0 
+        ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003, color='black', length_includes_head=True) #jpa
+
+        jsp0_volt = volt_compen[idx_jsp0]
+        jsp0 = current_den[idx_jsp0]-jpa_poly1d(jsp0_volt)
+        ax_cv.plot(np.array([volt_compen[jpa_lns],volt_compen[idx_jsp0]]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(jsp0_volt)]),'--', color='green') #jsp0
+        ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=3,linestyle='-', color='blue')
+        ax_cv.arrow(volt_compen[idx_jsp0],jpa_poly1d(jsp0_volt),0,jsp0,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True) #jsp0
         
-    if event in ('sl_v_ln_ecsa', 'sl_h_ln_ecsa', 'sl_cutval_s_ecsa', 'sl_cutval_e_ecsa', 'peak_range_ecsa', 'ir_compen_ecsa', 'sl_cutval_s_ecsa_pos', 'sl_cutval_e_ecsa_pos', 'sl_v_ln_ecsa_pos', 'sl_h_ln_ecsa_pos', 'peak_range_ecsa_pos'):
-        cutval_s_ecsa = int(values['sl_cutval_s_ecsa'])
-        cutval_e_ecsa = int(values['sl_cutval_e_ecsa'])
-        v_ln_ecsa = int(values['sl_v_ln_ecsa'])
-        h_ln_ecsa = int(values['sl_h_ln_ecsa'])
-        peak_range_ecsa = int(values['peak_range_ecsa'])
-        # Make sure that proper number format is used
-        ir_compen = check_val(values['ir_compen'], "float", 0)
-        scan_rate = check_val(values['scan_rate'], "float", 0)
-        elec_area = check_val(values['elec_area'], "float", 1)
+        ax_cv.text(peak_volt,jpa_poly1d(peak_volt), jp1_text, fontsize=10)
+        ax_cv.text(trou_volt,jpa_poly1d(trou_volt), jp2_text, fontsize=10)
+        ax_cv.text(volt_compen[idx_jsp0],jpa_poly1d(jsp0_volt), 'jsp0', fontsize=10)
         
-        cutval_s_ecsa_pos = check_val(values['sl_cutval_s_ecsa_pos'], "int", 1)
-        cutval_e_ecsa_pos = check_val(values['sl_cutval_e_ecsa_pos'], "int", 1)    
-        v_ln_ecsa_pos = check_val(values['sl_v_ln_ecsa_pos'], "int", 1)
-        h_ln_ecsa_pos = check_val(values['sl_h_ln_ecsa_pos'], "int", 1)   
-        peak_range_ecsa_pos = check_val(values['peak_range_ecsa_pos'], "int", 1)
+        jpa = np.abs(jpa)
+        jpc0 = np.abs(jpc0)
+        jsp0 = np.abs(jsp0)
+        # Nicholson, R. S. Semiempirical Procedure for Measuring with
+        # Stationary Electrode Polarography Rates of Chemical Reactions
+        # Involving the Product of Electron Transfer. Anal. Chem. 1966, 38
+        # (10), 1406.
+        jpc = jpa*((jpc0/jpa)+((0.485*np.abs(jsp0))/jpa)+0.086)
             
-        if event == 'sl_cutval_s_ecsa':
-            window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa)
-        elif event == 'sl_cutval_s_ecsa_pos':
-            window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_pos)
-            cutval_s_ecsa = cutval_s_ecsa_pos
+        window['jsp0_volt'].Update(jsp0_volt)            
+        # invert jpa and jpc or not
+    if values['inv_jpa_jpc'] == True:
+        jpa, jpc = jpc, jpa
+        alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa
             
-        elif event == 'sl_cutval_e_ecsa':
-            window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa)
-        elif event == 'sl_cutval_e_ecsa_pos':
-            window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_pos)
-            cutval_e_ecsa = cutval_e_ecsa_pos
+    # Plot lines
+    volt_lst_len = len(volt_lst)
+    for j in np.arange(0,volt_lst_len):
+        cutval_s_all = int(fitting_save_array[j+1,0])
+        cutval_e_all = int(fitting_save_array[j+1,1])
+        ax_cv.plot(np.array(volt_ir_lst[j][cutval_s_all:cutval_e_all]).T, np.array(current_den_lst[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=0.8)
+    
+    if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
+        clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
+        volt_defl = np.interp([clip_defl], idx_arr, volt_compen)
+        curr_defl = np.interp([clip_defl], idx_arr, current_den)
+  
+        ax_cv.plot(volt_defl,curr_defl,'.',color='green')
+    ax_cv.grid()
+    ax_cv.set_xlabel("Voltage")
+    ax_cv.set_ylabel("Current")  
+    
+    fig_agg_cv.draw()
+    cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, jpc0, peak_volt, trou_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
+    cv_results = cv_results.sort_index()
+    window['cv_results_dis'].Update(cv_results.to_string(index=False))
+
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+
+    # if event in ('cv_open_menu_ecsa', 'cv_load_ecsa','cv_combo_ecsa'):
+    #     cv_select = values['cv_combo_ecsa']
+    #     if values['cv_combo_ecsa'] == '': #Prevent error when combo box value is empty
+    #         cv_name_idx = 0
+    #     else:
+    #         cv_name_idx = cv_name_lst.index(cv_select)
+    #     volt = volt_lst[cv_name_idx]
+    #     current = current_lst[cv_name_idx]
+    #     cv_size = cv_size_lst[cv_name_idx]
+    #     idx_arr = np.arange(0,cv_size)
+    #     idx_defl_points = np.array(idx_intc_defl_lst[cv_name_idx]) 
+    #     window['sl_cutval_s_ecsa'].Update(range=(0,cv_size-1))
+    #     window['sl_cutval_e_ecsa'].Update(range=(0,cv_size-1))
+    #     window['sl_v_ln_ecsa'].Update(range=(0,cv_size-1))
+    #     window['sl_h_ln_ecsa'].Update(range=(0,cv_size-1))
+    #     window['peak_range_ecsa'].Update(range=(1,100))  
         
-        elif event == 'sl_v_ln_ecsa':
-            window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa)
-        elif event == 'sl_v_ln_ecsa_pos':
-            window['sl_v_ln_ecsa'].Update(v_ln_ecsa_pos)
-            v_ln_ecsa = v_ln_ecsa_pos
+    #     if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
+    #         cv_name_idx_old = cv_name_idx                    
+    #         # Restore saved values        
+    #         cutval_s_ecsa_save = int(fitting_save_array[cv_name_idx+1,17])
+    #         cutval_e_ecsa_save = int(fitting_save_array[cv_name_idx+1,18])               
+    #         v_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,19])
+    #         h_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,20])
+    #         peak_range_ecsa_save = int(fitting_save_array[cv_name_idx+1,21])
+    #         # Put slider to previous position
+    #         window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_save)
+    #         window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_save)
+    #         window['sl_v_ln_ecsa'].Update(v_ln_ecsa_save)
+    #         window['sl_h_ln_ecsa'].Update(h_ln_ecsa_save)
+    #         window['peak_range_ecsa'].Update(peak_range_ecsa_save)  
+    #         window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa_save)
+    #         window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa_save)
+    #         window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa_save)                   
+    #         window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa_save)
+    #         window['peak_range_ecsa_pos'].Update(h_ln_ecsa_save)
+    #         # Assign the value from saved data
+    #         cutval_s_ecsa = cutval_s_ecsa_save
+    #         cutval_e_ecsa = cutval_e_ecsa_save
+    #         v_ln_ecsa = v_ln_ecsa_save
+    #         h_ln_ecsa = h_ln_ecsa_save
+    #         cutval_s_ecsa_pos = cutval_s_ecsa_save
+    #         cutval_e_ecsa_pos = cutval_e_ecsa_save
+    #         v_ln_ecsa_pos = v_ln_ecsa_save
+    #         h_ln_ecsa_pos = h_ln_ecsa_save
+    #         peak_range_ecsa = peak_range_ecsa_save
+        
+    # if event in ('sl_v_ln_ecsa', 'sl_h_ln_ecsa', 'sl_cutval_s_ecsa', 'sl_cutval_e_ecsa', 'peak_range_ecsa', 'ir_compen_ecsa', 'sl_cutval_s_ecsa_pos', 'sl_cutval_e_ecsa_pos', 'sl_v_ln_ecsa_pos', 'sl_h_ln_ecsa_pos', 'peak_range_ecsa_pos'):
+    #     cutval_s_ecsa = int(values['sl_cutval_s_ecsa'])
+    #     cutval_e_ecsa = int(values['sl_cutval_e_ecsa'])
+    #     v_ln_ecsa = int(values['sl_v_ln_ecsa'])
+    #     h_ln_ecsa = int(values['sl_h_ln_ecsa'])
+    #     peak_range_ecsa = int(values['peak_range_ecsa'])
+    #     # Make sure that proper number format is used
+    #     ir_compen = check_val(values['ir_compen'], "float", 0)
+    #     scan_rate = check_val(values['scan_rate'], "float", 0)
+    #     elec_area = check_val(values['elec_area'], "float", 1)
+        
+    #     cutval_s_ecsa_pos = check_val(values['sl_cutval_s_ecsa_pos'], "int", 1)
+    #     cutval_e_ecsa_pos = check_val(values['sl_cutval_e_ecsa_pos'], "int", 1)    
+    #     v_ln_ecsa_pos = check_val(values['sl_v_ln_ecsa_pos'], "int", 1)
+    #     h_ln_ecsa_pos = check_val(values['sl_h_ln_ecsa_pos'], "int", 1)   
+    #     peak_range_ecsa_pos = check_val(values['peak_range_ecsa_pos'], "int", 1)
             
-        elif event == 'sl_h_ln_ecsa':
-            window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa)
-        elif event == 'sl_h_ln_ecsa_pos':
-            window['sl_h_ln_ecsa'].Update(h_ln_ecsa_pos)
-            h_ln_ecsa = h_ln_ecsa_pos  
+    #     if event == 'sl_cutval_s_ecsa':
+    #         window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa)
+    #     elif event == 'sl_cutval_s_ecsa_pos':
+    #         window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_pos)
+    #         cutval_s_ecsa = cutval_s_ecsa_pos
             
-        elif event == 'peak_range_ecsa':
-            window['peak_range_ecsa_pos'].Update(peak_range_ecsa)
-        elif event == 'peak_range_ecsa_pos':
-            window['peak_range_ecsa'].Update(peak_range_ecsa_pos)
-            peak_range_ecsa = peak_range_ecsa_pos           
+    #     elif event == 'sl_cutval_e_ecsa':
+    #         window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa)
+    #     elif event == 'sl_cutval_e_ecsa_pos':
+    #         window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_pos)
+    #         cutval_e_ecsa = cutval_e_ecsa_pos
+        
+    #     elif event == 'sl_v_ln_ecsa':
+    #         window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa)
+    #     elif event == 'sl_v_ln_ecsa_pos':
+    #         window['sl_v_ln_ecsa'].Update(v_ln_ecsa_pos)
+    #         v_ln_ecsa = v_ln_ecsa_pos
+            
+    #     elif event == 'sl_h_ln_ecsa':
+    #         window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa)
+    #     elif event == 'sl_h_ln_ecsa_pos':
+    #         window['sl_h_ln_ecsa'].Update(h_ln_ecsa_pos)
+    #         h_ln_ecsa = h_ln_ecsa_pos  
+            
+    #     elif event == 'peak_range_ecsa':
+    #         window['peak_range_ecsa_pos'].Update(peak_range_ecsa)
+    #     elif event == 'peak_range_ecsa_pos':
+    #         window['peak_range_ecsa'].Update(peak_range_ecsa_pos)
+    #         peak_range_ecsa = peak_range_ecsa_pos           
                       
-        cutval_s_ecsa,cutval_e_ecsa = switch_val(cutval_s_ecsa,cutval_e_ecsa)
-        fitting_save_ecsa = np.array([cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa], dtype=object) 
-        fitting_save_array[cv_name_idx+1][17:23] = fitting_save_ecsa    
+    #     cutval_s_ecsa,cutval_e_ecsa = switch_val(cutval_s_ecsa,cutval_e_ecsa)
         
+    #     fitting_save_ecsa = np.array([cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa], dtype=object) 
+    #     fitting_save_array[cv_name_idx+1][17:23] = fitting_save_ecsa
+        
+    #     if ir_compen != ir_compen_old:
+    #         ir_compen_old = ir_compen
+    #         volt_compen = ir_compen_func(volt,current,ir_compen)
+    #         # Overwrite volt and curr with ir compen
+    #         volt_ir_lst[cv_name_idx] = volt_compen
+    #     else:
+    #         volt_compen = volt_ir_lst[cv_name_idx]
+        
+    #     if elec_area != elec_area_old:
+    #         elec_area_old = elec_area
+    #         current_den = current/elec_area
+    #         # Overwrite current with current density
+    #         current_den_lst[cv_name_idx] = current_den
+    #     else:
+    #         current_den = current_den_lst[cv_name_idx]
+    
+
+    
+    
     # if event in ('inv_jpa_jpc', 'ir_compen', 'elec_area', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos',| 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc', 'elec_n', 'enable_d', 'enable_k', 'peak_mode_1', 'peak_mode_2')
-    # print(cv_name_idx,cv_name_idx_old)       
+    # print(cv_name_idx,cv_name_idx_old)    
     match event:      
         case 'cv_open_menu' | 'cv_load_cv' | 'cv_combo_cv' | 'inv_jpa_jpc' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trou_pos' | 'sl_cutval_s_pos' | 'sl_cutval_e_pos' | 'sl_jpa_lns_pos' | 'sl_jpa_lne_pos' |  'sl_jpc_lns_pos' | 'sl_jpc_lne_pos' | 'peak_range_pos' | 'peak_pos_pos' | 'trou_pos_pos'| 'nicholson_cb' | 'idx_jsp0' | 'idx_jsp0_pos' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k' | 'peak_mode_1' | 'peak_mode_2' | 'cv_open_menu_ecsa' | 'cv_load_ecsa' | 'cv_combo_ecsa' | 'sl_v_ln_ecsa' | 'sl_h_ln_ecsa' | 'sl_cutval_s_ecsa' | 'sl_cutval_e_ecsa' | 'peak_range_ecsa' | 'ir_compen_ecsa' | 'sl_cutval_s_ecsa_pos' | 'sl_cutval_e_ecsa_pos' | 'sl_v_ln_ecsa_pos' | 'sl_h_ln_ecsa_pos' | 'peak_range_ecsa_pos' :
 
+            
+            # if ir_compen != ir_compen_old:
+            #     ir_compen_old = ir_compen
+            #     volt_compen = ir_compen_func(volt,current,ir_compen)
+            #     # Overwrite volt and curr with ir compen
+            #     volt_ir_lst[cv_name_idx] = volt_compen
+            # else:
+            #     volt_compen = volt_ir_lst[cv_name_idx]
+            
+            # if elec_area != elec_area_old:
+            #     elec_area_old = elec_area
+            #     current_den = current/elec_area
+            #     # Overwrite current with current density
+            #     current_den_lst[cv_name_idx] = current_den
+            # else:
+            #     current_den = current_den_lst[cv_name_idx]
+            
+            # if peak_mode_1 == 'deflection':
+            #     peak_pos = idx_defl_points[np.abs(idx_defl_points - peak_pos).argmin()]
+            #     peak_pos = int(peak_pos)
+            # if peak_mode_2 == 'deflection':
+            #     trou_pos = idx_defl_points[np.abs(idx_defl_points - trou_pos).argmin()]
+            #     trou_pos = int(trou_pos)
+                
             # if values[1] == 'cv_layout_key':
+            #     # ax_cv.cla() ###### Clear plot before redraw
+            #     if nicholson_cb == False:
+            #         low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne)
+            #         low_range_c, high_range_c, trou_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, volt, current, peak_range, trou_pos, jpc_lns, jpc_lne)                
+                    
+            #         # Find alpha
+            #         ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen,current_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_volt)
+            #         ep12_jpc, jp12_jpc, alpha_jpc = find_alpha(volt_compen,current_den,jpc_lns,trou_pos,jpc_poly1d,jpc,trou_volt)
+                    
+            #         ax_cv.plot(ep12_jpa,jp12_jpa,'x')
+            #         ax_cv.plot(ep12_jpc,jp12_jpc,'x')
+                    
+            #         # Find estimate standard electrode potential (E1/2~E0)
+            #         E1_2 = (trou_volt+peak_volt)/2
+            #         # Find peak-peak separation voltage
+            #         delta_e = np.abs(trou_volt-peak_volt)
+                    
+            #         ax_cv.plot(E1_2,0,"D", markersize = 6)
+                    
+                    
+            #         ax_cv.plot((volt_compen[low_range_a],volt_compen[high_range_a]),(current_den[low_range_a],current_den[high_range_a]),"|", markersize = 10)
+            #         ax_cv.plot((volt_compen[low_range_c],volt_compen[high_range_c]),(current_den[low_range_c],current_den[high_range_c]),"|", markersize = 10)
                 
-                # if event == 'sl_cutval_s':
-                #     window['sl_cutval_s_pos'].Update(cutval_s)
-                # elif event == 'sl_cutval_s_pos':
-                #     window['sl_cutval_s'].Update(cutval_s_pos)
-                #     cutval_s = cutval_s_pos
+            #         ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='red')
+            #         ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='r', length_includes_head=True)
+            #         ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--', color='red')
                     
-                # elif event == 'sl_cutval_e':
-                #     window['sl_cutval_e_pos'].Update(cutval_e)
-                # elif event == 'sl_cutval_e_pos':
-                #     window['sl_cutval_e'].Update(cutval_e_pos)
-                #     cutval_e = cutval_e_pos
+            #         ax_cv.plot(volt_compen[jpc_lns:jpc_lne],current_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
+            #         ax_cv.arrow(trou_volt,jpc_poly1d(trou_volt),0,jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
+            #         ax_cv.plot(np.array([volt_compen[jpc_lns],trou_volt]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(trou_volt)]),'--', color='blue')
+                   
+            #     elif nicholson_cb == True:
+            #         if values['inv_jpa_jpc'] == True: 
+            #             jp1_text = 'jpc'
+            #             jp2_text = 'jpa0'
+            #         else:
+            #             jp1_text = 'jpa'
+            #             jp2_text = 'jpc0'
+            #         jpc0_lns = jpa_lns
+            #         jpc0_lne = jpa_lne
+                    
+            #         low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne)
+            #         low_range_c, high_range_c, trou_volt, peak_curr_c, jpc0, _ = get_peak_CV(peak_mode_2,cv_size, volt, current, peak_range, trou_pos, jpc_lns, jpc_lne)
+                    
+            #         # Find estimate standard electrode potential (E1/2~E0)
+            #         E1_2 = (peak_volt+trou_volt)/2
+            #         # Find peak-peak separation voltage
+            #         delta_e = np.abs(trou_volt-peak_volt)
+            #         ax_cv.plot(E1_2,0,"D", markersize = 6)
                 
-                # elif event == 'sl_jpa_lns':
-                #     window['sl_jpa_lns_pos'].Update(jpa_lns)
-                # elif event == 'sl_jpa_lns_pos':
-                #     window['sl_jpa_lns'].Update(jpa_lns)
-                #     jpa_lns = jpa_lns_pos
-                    
-                # elif event == 'sl_jpa_lne':
-                #     window['sl_jpa_lne_pos'].Update(jpa_lne)
-                # elif event == 'sl_jpa_lne_pos':
-                #     window['sl_jpa_lne'].Update(jpa_lne)
-                #     jpa_lne = jpa_lne_pos
-                    
-                # elif event == 'sl_jpc_lns':
-                #     window['sl_jpc_lns_pos'].Update(jpc_lns)
-                # elif event == 'sl_jpc_lns_pos':
-                #     window['sl_jpc_lns'].Update(jpc_lns)
-                #     jpc_lns = jpc_lns_pos
-                    
-                # elif event == 'sl_jpc_lne':
-                #     window['sl_jpc_lne_pos'].Update(jpc_lne)
-                # elif event == 'sl_jpc_lne_pos':
-                #     window['sl_jpc_lne'].Update(jpc_lne)
-                #     jpc_lne = jpc_lne_pos
-                    
-                # elif event == 'peak_range':
-                #     window['peak_range_pos'].Update(peak_range)
-                # elif event == 'peak_range_pos':
-                #     window['peak_range'].Update(peak_range_pos)
-                #     peak_range = peak_range_pos     
-                    
-                # elif event == 'peak_pos':
-                #     window['peak_pos_pos'].Update(peak_pos)
-                # elif event == 'peak_range_pos':
-                #     window['peak_pos'].Update(peak_pos_pos)
-                #     peak_pos = peak_pos_pos     
-                    
-                # elif event == 'trou_pos':
-                #     window['trou_pos_pos'].Update(trou_pos)
-                # elif event == 'trou_pos_pos':
-                #     window['trou_pos'].Update(trou_pos_pos)
-                #     trou_pos = trou_pos_pos   
-                    
-                # elif event == 'idx_jsp0':
-                #     window['idx_jsp0_pos'].Update(idx_jsp0)
-                # elif event == 'idx_jsp0_pos':
-                #     window['idx_jsp0'].Update(idx_jsp0_pos)
-                #     idx_jsp0 = idx_jsp0_pos                           
-            
-            # if values[1] == 'cv_ecsa_layout_key':                   
-                # if event == 'sl_cutval_s_ecsa':
-                #     window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa)
-                # elif event == 'sl_cutval_s_ecsa_pos':
-                #     window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_pos)
-                #     cutval_s_ecsa = cutval_s_ecsa_pos
-                    
-                # elif event == 'sl_cutval_e_ecsa':
-                #     window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa)
-                # elif event == 'sl_cutval_e_ecsa_pos':
-                #     window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_pos)
-                #     cutval_e_ecsa = cutval_e_ecsa_pos
+            #         ax_cv.plot((volt_compen[low_range_a],volt_compen[high_range_a]),(current_den[low_range_a],current_den[high_range_a]),"|", markersize = 10)
+            #         ax_cv.plot((volt_compen[low_range_c],volt_compen[high_range_c]),(current_den[low_range_c],current_den[high_range_c]),"|", markersize = 10)
                 
-                # elif event == 'sl_v_ln_ecsa':
-                #     window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa)
-                # elif event == 'sl_v_ln_ecsa_pos':
-                #     window['sl_v_ln_ecsa'].Update(v_ln_ecsa_pos)
-                #     v_ln_ecsa = v_ln_ecsa_pos
+            #         ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--', color='green') #Peak
+            #         ax_cv.plot(np.array([volt_compen[jpa_lns],trou_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(trou_volt)]),'--', color='green') #Peak    
+            #         ax_cv.arrow(trou_volt,jpa_poly1d(trou_volt),0,jpc0,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='green', length_includes_head=True) #jpc0 
+            #         ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003, color='black', length_includes_head=True) #jpa
+    
+            #         jsp0_volt = volt_compen[idx_jsp0]
+            #         jsp0 = current_den[idx_jsp0]-jpa_poly1d(jsp0_volt)
+            #         ax_cv.plot(np.array([volt_compen[jpa_lns],volt_compen[idx_jsp0]]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(jsp0_volt)]),'--', color='green') #jsp0
+            #         ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=3,linestyle='-', color='blue')
+            #         ax_cv.arrow(volt_compen[idx_jsp0],jpa_poly1d(jsp0_volt),0,jsp0,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True) #jsp0
                     
-                # elif event == 'sl_h_ln_ecsa':
-                #     window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa)
-                # elif event == 'sl_h_ln_ecsa_pos':
-                #     window['sl_h_ln_ecsa'].Update(h_ln_ecsa_pos)
-                #     h_ln_ecsa = h_ln_ecsa_pos  
+            #         ax_cv.text(peak_volt,jpa_poly1d(peak_volt), jp1_text, fontsize=10)
+            #         ax_cv.text(trou_volt,jpa_poly1d(trou_volt), jp2_text, fontsize=10)
+            #         ax_cv.text(volt_compen[idx_jsp0],jpa_poly1d(jsp0_volt), 'jsp0', fontsize=10)
                     
-                # elif event == 'peak_range_ecsa':
-                #     window['peak_range_ecsa_pos'].Update(peak_range_ecsa)
-                # elif event == 'peak_range_ecsa_pos':
-                #     window['peak_range_ecsa'].Update(peak_range_ecsa_pos)
-                #     peak_range_ecsa = peak_range_ecsa_pos
-                            
-                # Switch slider when it cross
-                # cutval_s,cutval_e = switch_val(cutval_s,cutval_e)
-                # jpa_lns,jpa_lne = switch_val(jpa_lns,jpa_lne)
-                # jpc_lns,jpc_lne = switch_val(jpc_lns,jpc_lne)
-                # cutval_s_ecsa,cutval_e_ecsa = switch_val(cutval_s_ecsa,cutval_e_ecsa)
-
-            # fitting_save_ecsa = np.array([cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa], dtype=object) 
-            # # print(fitting_save.size)
-            # fitting_save_array[cv_name_idx+1][17:23] = fitting_save_ecsa
-            
-            if ir_compen != ir_compen_old:
-                ir_compen_old = ir_compen
-                volt_compen = ir_compen_func(volt,current,ir_compen)
-                # Overwrite volt and curr with ir compen
-                volt_ir_lst[cv_name_idx] = volt_compen
-            else:
-                volt_compen = volt_ir_lst[cv_name_idx]
-            
-            if elec_area != elec_area_old:
-                elec_area_old = elec_area
-                current_den = current/elec_area
-                # Overwrite current with current density
-                current_den_lst[cv_name_idx] = current_den
-            else:
-                current_den = current_den_lst[cv_name_idx]
-            
-            if peak_mode_1 == 'deflection':
-                peak_pos = idx_defl_points[np.abs(idx_defl_points - peak_pos).argmin()]
-                peak_pos = int(peak_pos)
-            if peak_mode_2 == 'deflection':
-                trou_pos = idx_defl_points[np.abs(idx_defl_points - trou_pos).argmin()]
-                trou_pos = int(trou_pos)
-                
-            if values[1] == 'cv_layout_key':
-                # ax_cv.cla() ###### Clear plot before redraw
-                if nicholson_cb == True:
-                    if values['inv_jpa_jpc'] == True: 
-                        jp1_text = 'jpc'
-                        jp2_text = 'jpa0'
-                    else:
-                        jp1_text = 'jpa'
-                        jp2_text = 'jpc0'
-                    jpc0_lns = jpa_lns
-                    jpc0_lne = jpa_lne
-                    
-                    low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne)
-                    low_range_c, high_range_c, trou_volt, peak_curr_c, jpc0, _ = get_peak_CV(peak_mode_2,cv_size, volt, current, peak_range, trou_pos, jpc_lns, jpc_lne)
-                    
-                    # Find estimate standard electrode potential (E1/2~E0)
-                    E1_2 = (peak_volt+trou_volt)/2
-                    # Find peak-peak separation voltage
-                    delta_e = np.abs(trou_volt-peak_volt)
-                    ax_cv.plot(E1_2,0,"D", markersize = 6)
-                
-                    ax_cv.plot((volt_compen[low_range_a],volt_compen[high_range_a]),(current_den[low_range_a],current_den[high_range_a]),"|", markersize = 10)
-                    ax_cv.plot((volt_compen[low_range_c],volt_compen[high_range_c]),(current_den[low_range_c],current_den[high_range_c]),"|", markersize = 10)
-                
-                    ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--', color='green') #Peak
-                    ax_cv.plot(np.array([volt_compen[jpa_lns],trou_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(trou_volt)]),'--', color='green') #Peak    
-                    ax_cv.arrow(trou_volt,jpa_poly1d(trou_volt),0,jpc0,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='green', length_includes_head=True) #jpc0 
-                    ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003, color='black', length_includes_head=True) #jpa
-                ax_cv.cla() ###### Clear plot before redraw
-                if nicholson_cb == True:
-                    if values['inv_jpa_jpc'] == True: 
-                        jp1_text = 'jpc'
-                        jp2_text = 'jpa0'
-                    else:
-                        jp1_text = 'jpa'
-                        jp2_text = 'jpc0'
-                    jpc0_lns = jpa_lns
-                    jpc0_lne = jpa_lne
-                    jsp0_volt = volt_compen[idx_jsp0]
-                    jsp0 = current_den[idx_jsp0]-jpa_poly1d(jsp0_volt)
-                    ax_cv.plot(np.array([volt_compen[jpa_lns],volt_compen[idx_jsp0]]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(jsp0_volt)]),'--', color='green') #jsp0
-                    ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=3,linestyle='-', color='blue')
-                    ax_cv.arrow(volt_compen[idx_jsp0],jpa_poly1d(jsp0_volt),0,jsp0,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True) #jsp0
-                    
-                    ax_cv.text(peak_volt,jpa_poly1d(peak_volt), jp1_text, fontsize=10)
-                    ax_cv.text(trou_volt,jpa_poly1d(trou_volt), jp2_text, fontsize=10)
-                    ax_cv.text(volt_compen[idx_jsp0],jpa_poly1d(jsp0_volt), 'jsp0', fontsize=10)
-                    
-                    jpa = np.abs(jpa)
-                    jpc0 = np.abs(jpc0)
-                    jsp0 = np.abs(jsp0)
-                    # Nicholson, R. S. Semiempirical Procedure for Measuring with
-                    # Stationary Electrode Polarography Rates of Chemical Reactions
-                    # Involving the Product of Electron Transfer. Anal. Chem. 1966, 38
-                    # (10), 1406.
-                    jpc = jpa*((jpc0/jpa)+((0.485*np.abs(jsp0))/jpa)+0.086)
+            #         jpa = np.abs(jpa)
+            #         jpc0 = np.abs(jpc0)
+            #         jsp0 = np.abs(jsp0)
+            #         # Nicholson, R. S. Semiempirical Procedure for Measuring with
+            #         # Stationary Electrode Polarography Rates of Chemical Reactions
+            #         # Involving the Product of Electron Transfer. Anal. Chem. 1966, 38
+            #         # (10), 1406.
+            #         jpc = jpa*((jpc0/jpa)+((0.485*np.abs(jsp0))/jpa)+0.086)
                         
-                    window['jsp0_volt'].Update(jsp0_volt)
-                elif nicholson_cb == False:
-                    # print("h========================================")
-                    low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne)
-                    low_range_c, high_range_c, trou_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, volt, current, peak_range, trou_pos, jpc_lns, jpc_lne)                
-                    
-                    # Find alpha
-                    ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen,current_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_volt)
-                    ep12_jpc, jp12_jpc, alpha_jpc = find_alpha(volt_compen,current_den,jpc_lns,trou_pos,jpc_poly1d,jpc,trou_volt)
-                    
-                    ax_cv.plot(ep12_jpa,jp12_jpa,'x')
-                    ax_cv.plot(ep12_jpc,jp12_jpc,'x')
-                    
-                    # Find estimate standard electrode potential (E1/2~E0)
-                    E1_2 = (trou_volt+peak_volt)/2
-                    # Find peak-peak separation voltage
-                    delta_e = np.abs(trou_volt-peak_volt)
-                    
-                    ax_cv.plot(E1_2,0,"D", markersize = 6)
-                    
-                    # print("+++++++++++++++++++++++++++++++++++++++++++++",jpa_lns)
-                    ax_cv.plot((volt_compen[low_range_a],volt_compen[high_range_a]),(current_den[low_range_a],current_den[high_range_a]),"|", markersize = 10)
-                    ax_cv.plot((volt_compen[low_range_c],volt_compen[high_range_c]),(current_den[low_range_c],current_den[high_range_c]),"|", markersize = 10)
-                
-                    ax_cv.plot(volt_compen[jpa_lns:jpa_lne],current_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='red')
-                    ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='r', length_includes_head=True)
-                    ax_cv.plot(np.array([volt_compen[jpa_lns],peak_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(peak_volt)]),'--', color='red')
-                    
-                    ax_cv.plot(volt_compen[jpc_lns:jpc_lne],current_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
-                    ax_cv.arrow(trou_volt,jpc_poly1d(trou_volt),0,jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
-                    ax_cv.plot(np.array([volt_compen[jpc_lns],trou_volt]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(trou_volt)]),'--', color='blue')
-        
-                # invert jpa and jpc or not
-                if values['inv_jpa_jpc'] == True:
-                    jpa, jpc = jpc, jpa
-                    alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa
+            #         window['jsp0_volt'].Update(jsp0_volt)
+
+                # # invert jpa and jpc or not
+                # if values['inv_jpa_jpc'] == True:
+                #     jpa, jpc = jpc, jpa
+                #     alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa
                     
 
-                # Start plotting
-                volt_lst_len = len(volt_lst)
-                for j in np.arange(0,volt_lst_len):
-                    cutval_s_all = int(fitting_save_array[j+1,0])
-                    cutval_e_all = int(fitting_save_array[j+1,1])
-                    print(cutval_s_all,cutval_e_all)
-                    ax_cv.plot(np.array(volt_ir_lst[j][cutval_s_all:cutval_e_all]).T, np.array(current_den_lst[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=0.8)
+                # # Start plotting
+                # volt_lst_len = len(volt_lst)
+                # for j in np.arange(0,volt_lst_len):
+                #     cutval_s_all = int(fitting_save_array[j+1,0])
+                #     cutval_e_all = int(fitting_save_array[j+1,1])
+                #     print(cutval_s_all,cutval_e_all)
+                #     ax_cv.plot(np.array(volt_ir_lst[j][cutval_s_all:cutval_e_all]).T, np.array(current_den_lst[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=0.8)
                 
-                if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
-                    clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
-                    volt_defl = np.interp([clip_defl], idx_arr, volt_compen)
-                    curr_defl = np.interp([clip_defl], idx_arr, current_den)
+                # if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
+                #     clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
+                #     volt_defl = np.interp([clip_defl], idx_arr, volt_compen)
+                #     curr_defl = np.interp([clip_defl], idx_arr, current_den)
               
-                    ax_cv.plot(volt_defl,curr_defl,'.',color='green')
-                ax_cv.grid()
-                ax_cv.set_xlabel("Voltage")
-                ax_cv.set_ylabel("Current")  
+                #     ax_cv.plot(volt_defl,curr_defl,'.',color='green')
+                # ax_cv.grid()
+                # ax_cv.set_xlabel("Voltage")
+                # ax_cv.set_ylabel("Current")  
                 
-                fig_agg_cv.draw()
-                cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, peak_volt, trou_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
-                cv_results = cv_results.sort_index()
-                window['cv_results_dis'].Update(cv_results.to_string(index=False))
+                # fig_agg_cv.draw()
+                # cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, peak_volt, trou_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
+                # cv_results = cv_results.sort_index()
+                # window['cv_results_dis'].Update(cv_results.to_string(index=False))
                 
             if values[1] == 'cv_ecsa_layout_key':
                 ax_cv_ecsa.cla() ###### Clear plot before redraw

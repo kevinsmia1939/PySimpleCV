@@ -144,7 +144,7 @@ def ir_compen_func(volt,current,ir_compen):
 
 def get_peak_CV(peak_mode,cv_size, volt, current, peak_range, peak_pos, jp_lns, jp_lne):
     # If peak range is given as 0, then peak is just where peak position is
-    if peak_mode == "deflection":
+    if peak_mode in ("exact","deflection"):
         peak_range = 0
         peak_curr = current[peak_pos]
         peak_volt = volt[peak_pos]   
