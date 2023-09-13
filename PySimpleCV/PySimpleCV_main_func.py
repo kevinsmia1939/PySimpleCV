@@ -300,13 +300,14 @@ def diffusion(scan,jp,alpha,conc_bulk,n):
 # jp - peak current density, unit in A/cm2
 # alpha - charge-transfer coefficient, no unit
 # conc_bulk - Bulk concentration, unit in mol/cm3
-# n - number of electrons, no unit 
+# n - number of electrons, no unit
+    jp = np.abs(jp) 
     sqrt_scan = np.sqrt(scan)
     try: 
         jp_arr_lnfit, _ = poly.polyfit(sqrt_scan,jp,1,full=True)
         jp_arr_poly = poly.Polynomial(jp_arr_lnfit)
         jp_slope = jp_arr_lnfit[1] # take slope
-        D_rev = (jp_slope/(2.69*(10**5)*n**(3/2)*conc_bulk))**2 # reversible   
+        D_rev = (jp_slope/(2.69*(10**5)*n**(3/2)*conc_bulk))**2 # reversible
         D_irr = (jp_slope/(2.99*(10**5)*n**(3/2)*(alpha**0.5)*conc_bulk))**2 # irreversible  
     except SystemError:
         pass  
@@ -319,16 +320,17 @@ def diffusion(scan,jp,alpha,conc_bulk,n):
     return sqrt_scan, jp_fit ,D_irr ,D_rev ,r2
 
 def reaction_rate(e_e0,jp,conc_bulk,n):
+    jp = np.abs(jp)
     lnjp = np.log(jp)
     try:     
         lnjp_lnfit, _ = poly.polyfit(e_e0,lnjp,1,full=True)
         lnjp_poly = poly.Polynomial(lnjp_lnfit)
-        lnjpa_b = lnjp_lnfit[0] # take intercept
+        lnjp_b = lnjp_lnfit[0] # take intercept
         slope = lnjp_lnfit[1]
         F = 96485.332
         alpha_cat = -slope*8.314472*298.15/F #cathodic where slope is negative
         alpha_ano = 1 + alpha_cat #anodic where slope is positive
-        k0 = np.exp(lnjpa_b-np.log(0.227*F*n*conc_bulk))
+        k0 = np.exp(lnjp_b-np.log(0.227*F*n*conc_bulk))
     except SystemError:
         pass
     # Calculate R2
