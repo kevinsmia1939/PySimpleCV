@@ -357,51 +357,53 @@ while True:
                 # If cancel, close the window, go back to beginning
                 if cv_file_new is None or cv_file_new == '' or cv_file_new == ():
                     continue
-                # try:
-                cv_file_multiple = cv_file_new     
-                for cv_file in cv_file_multiple.split(';'):      
-                    cv_name = os.path.basename(cv_file) #Get file name
-                    df_CV, file_scan_rate = CV_file2df(cv_file, cv_format)       
-                    cv_size, volt, current = get_CV_init(df_CV)
-                    cv_path_lst.append(cv_file) #Create 2D array of CVs so we can select, plot, and analyze data based on index
-                    cv_name_lst.append(cv_name)
-                    volt_lst.append(volt)
-                    current_lst.append(current)
-                    volt_ir_lst.append(volt) #Append volt to ir compensated volt, this is like ir=0
-                    current_den_lst.append(current) # This is like elec_area = 1
-                    cv_size_lst.append(cv_size)
-                    
-                    # deflection and Peak detection
-                    _, idx_intc_defl = deflection(cv_size,volt,current)
-                    idx_intc_defl_lst.append(idx_intc_defl)
-                    
-                    ###############################################################################
-                    # Add new value from the CV file to save data array
-                    fitting_default[:,1] = cv_size
-                    fitting_default[:,19] = cv_size 
-                    fitting_default[:,15] = file_scan_rate
-                    fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
-                    ###############################################################################
-                    
-                    window['cv_combo_cv'].Update(values=cv_name_lst) # Update combo list of CVs
-                    window['cv_combo_cv'].Update(cv_name) # Update default combo display
-                    values['cv_combo_cv'] = cv_name
-                    window['cv_combo_ecsa'].Update(values=cv_name_lst) # Update combo list of CVs
-                    window['cv_combo_ecsa'].Update(cv_name) # Update default combo display
-                    values['cv_combo_ecsa'] = cv_name
-                    disable_slider(False)
-                    cv_select = cv_name    
-                    cv_name_idx = cv_name_lst.index(cv_select)
-                    cv_results.loc[cv_name_idx] = [cv_select, file_scan_rate, '0', '0', '0', '0', '0', '0', '0', '0', '0']
-                # except Exception as file_error:
-                #     sg.popup(file_error, keep_on_top=True)
-                #     continue
+                try:
+                    cv_file_multiple = cv_file_new     
+                    for cv_file in cv_file_multiple.split(';'):      
+                        cv_name = os.path.basename(cv_file) #Get file name
+                        df_CV, file_scan_rate = CV_file2df(cv_file, cv_format)       
+                        cv_size, volt, current = get_CV_init(df_CV)
+                        cv_path_lst.append(cv_file) #Create 2D array of CVs so we can select, plot, and analyze data based on index
+                        cv_name_lst.append(cv_name)
+                        volt_lst.append(volt)
+                        current_lst.append(current)
+                        volt_ir_lst.append(volt) #Append volt to ir compensated volt, this is like ir=0
+                        current_den_lst.append(current) # This is like elec_area = 1
+                        cv_size_lst.append(cv_size)
+                        
+                        # deflection and Peak detection
+                        _, idx_intc_defl = deflection(cv_size,volt,current)
+                        idx_intc_defl_lst.append(idx_intc_defl)
+                        
+                        ###############################################################################
+                        # Add new value from the CV file to save data array
+                        fitting_default[:,1] = cv_size
+                        fitting_default[:,19] = cv_size 
+                        fitting_default[:,15] = file_scan_rate
+                        fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
+                        ###############################################################################
+                        
+                        window['cv_combo_cv'].Update(values=cv_name_lst) # Update combo list of CVs
+                        window['cv_combo_cv'].Update(cv_name) # Update default combo display
+                        values['cv_combo_cv'] = cv_name
+                        window['cv_combo_ecsa'].Update(values=cv_name_lst) # Update combo list of CVs
+                        window['cv_combo_ecsa'].Update(cv_name) # Update default combo display
+                        values['cv_combo_ecsa'] = cv_name
+                        disable_slider(False)
+                        cv_select = cv_name    
+                        cv_name_idx = cv_name_lst.index(cv_select)
+                        cv_results.loc[cv_name_idx] = [cv_select, file_scan_rate, '0', '0', '0', '0', '0', '0', '0', '0', '0']
+                except Exception as file_error:
+                    sg.popup(file_error, keep_on_top=True)
+                    continue
+                
             if values[1] == 'cv_layout_key':
                 cv_select = values['cv_combo_cv']
                 if values['cv_combo_cv'] == '': #Prevent error when combo box value is empty
                     cv_name_idx = 0
                 else:
                     cv_name_idx = cv_name_lst.index(cv_select)
+                    
             elif values[1] == 'cv_ecsa_layout_key':
                 cv_select = values['cv_combo_ecsa']
                 if values['cv_combo_ecsa'] == '': #Prevent error when combo box value is empty
@@ -434,8 +436,7 @@ while True:
             window['peak_range_ecsa'].Update(range=(1,100))
 
             if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
-                cv_name_idx_old = cv_name_idx
-                
+                cv_name_idx_old = cv_name_idx                
                 
                 # Restore saved values
                 cutval_s_save = int(fitting_save_array[cv_name_idx+1,0])
@@ -962,7 +963,7 @@ while True:
             if save_cv_loc is None or save_cv_loc == '' or save_cv_loc == ():
                 continue
             fig_cv.savefig(save_cv_loc)
-        case 'Open Battery File':
+        case 'Open battery file':
             bat_file_new = sg.popup_get_file('Choose battery cycle file (.xls)')
             # If cancel, close the window, go back to beginning
             # If empty, use old file

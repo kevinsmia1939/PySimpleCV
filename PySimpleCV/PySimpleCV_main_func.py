@@ -270,11 +270,10 @@ def lowess_diff(x,y,frac):
     return smh_x, smh_diff_y
 
 def deflection(cv_size,volt,current):
+    print("repeat???????//")
     frac = 0.05
     smh_volt,smh_curr = lowess_func(volt,current,frac)
     smh_volt,diff1_curr = diff(smh_volt,smh_curr) #First diff, find peaks (slope = 0)
-    
-    print(len(smh_volt),len(diff1_curr))
     smh_volt,diff2_curr = lowess_diff(smh_volt,diff1_curr,0.05)
     smh_volt,diff3_curr = lowess_diff(smh_volt,diff2_curr,0) #Detect deflection
     idx_intc_peak = idx_intercept(0,diff1_curr)
