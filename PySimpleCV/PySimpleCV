@@ -307,7 +307,8 @@ volt_ir_lst = []
 cv_path_lst = []
 cv_name_lst = []
 cv_size_lst = []
-fitting_default = np.array([[0.,0.,0.,0.,0.,0.,1.,1.,1.,0.,"max","min",1.,0.,0.,0.,0.,0.,0.,0.,0.,1.]], dtype=object)
+#                            cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb, cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa
+fitting_default = np.array([[0.,       0.,       0.,      0.,      0.,      0.,      1.,       1.,       100.,         0.,        "max",       "min",      1.,        0.,       0.,          0.,        0.,           0.,            0.,            0.,        0.,        1.]], dtype=object)
 fitting_save_array = np.zeros((1,fitting_default.size), dtype=object)
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
@@ -400,12 +401,13 @@ while True:
                 cv_select = cv_name    
                 cv_name_idx = cv_name_lst.index(cv_select)
                 cv_results.loc[cv_name_idx] = [cv_select, file_scan_rate, '0', '0', '0', '0', '0', '0', '0', '0', '0']
-        
+                
             volt = volt_lst[cv_name_idx]
             current = current_lst[cv_name_idx]
             cv_size = cv_size_lst[cv_name_idx]
             idx_arr = np.arange(0,cv_size)
             idx_defl_points = np.array(idx_intc_defl_lst[cv_name_idx])
+            
             window['sl_cutval_s'].Update(range=(0,cv_size-1))
             window['sl_cutval_e'].Update(range=(0,cv_size-1))
             window['sl_jpa_lns'].Update(range=(0,cv_size-1))
@@ -423,7 +425,7 @@ while True:
     # if event == 1:
     #     print("===========tab change========")
 
-    if event == 'cv_combo_cv': #Change combo also updat eslider range
+    if event in ('cv_combo_cv','cv_open_menu'): #Change combo also update slider range
         cv_select = values['cv_combo_cv']
         if values['cv_combo_cv'] == '': #Prevent error when combo box value is empty
             cv_name_idx = 0
@@ -444,9 +446,162 @@ while True:
         window['peak_pos'].Update(range=(1, cv_size-1))
         window['trou_pos'].Update(range=(1, cv_size-1))
         window['idx_jsp0'].Update(range=(1, cv_size-1))
+        if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
+            cv_name_idx_old = cv_name_idx                    
+            # Restore saved values
+            cutval_s_save = int(fitting_save_array[cv_name_idx+1,0])
+            cutval_e_save = int(fitting_save_array[cv_name_idx+1,1])
+            jpa_lns_save = int(fitting_save_array[cv_name_idx+1,2])
+            jpa_lne_save = int(fitting_save_array[cv_name_idx+1,3])
+            jpc_lns_save = int(fitting_save_array[cv_name_idx+1,4])
+            jpc_lne_save = int(fitting_save_array[cv_name_idx+1,5])
+            peak_pos_save = int(fitting_save_array[cv_name_idx+1,6])
+            trou_pos_save = int(fitting_save_array[cv_name_idx+1,7])
+            peak_range_save = int(fitting_save_array[cv_name_idx+1,8])
+            ir_compen_save = float(fitting_save_array[cv_name_idx+1,9])
+            peak_mode_1_save = str(fitting_save_array[cv_name_idx+1,10])
+            peak_mode_2_save = str(fitting_save_array[cv_name_idx+1,11])
+            elec_area_save = int(fitting_save_array[cv_name_idx+1,12])
+            idx_jsp0_save = int(fitting_save_array[cv_name_idx+1,13])
+            inv_jpa_jpc_save = int(fitting_save_array[cv_name_idx+1,14])
+            scan_rate_save = float(fitting_save_array[cv_name_idx+1,15])
+            nicholson_cb_save = float(fitting_save_array[cv_name_idx+1,16])
+            # Put slider to previous position
+            window['sl_cutval_s'].Update(cutval_s_save)
+            window['sl_cutval_e'].Update(cutval_e_save)
+            window['sl_jpa_lns'].Update(jpa_lns_save)
+            window['sl_jpa_lne'].Update(jpa_lne_save)
+            window['sl_jpc_lns'].Update(jpc_lns_save)
+            window['sl_jpc_lne'].Update(jpc_lne_save)
+            window['peak_pos'].Update(peak_pos_save)
+            window['trou_pos'].Update(trou_pos_save)
+            window['peak_range'].Update(peak_range_save)
+            window['ir_compen'].Update(ir_compen_save)
+            window['peak_mode_1'].Update(peak_mode_1_save)
+            window['peak_mode_2'].Update(peak_mode_2_save)
+            window['elec_area'].Update(elec_area_save)
+            window['idx_jsp0'].Update(idx_jsp0_save)
+            window['inv_jpa_jpc'].Update(inv_jpa_jpc_save)
+            window['scan_rate'].Update(scan_rate_save)
+            window['nicholson_cb'].Update(nicholson_cb_save)
+            # Assign the value from saved data
+            cutval_s = cutval_s_save
+            cutval_e = cutval_e_save
+            jpa_lns = jpa_lns_save
+            jpa_lne = jpa_lne_save
+            jpc_lns = jpc_lns_save
+            jpc_lne = jpc_lne_save
+            peak_pos = peak_pos_save
+            trou_pos = trou_pos_save
+            peak_range = peak_range_save
+            ir_compen = ir_compen_save
+            peak_mode_1 = peak_mode_1_save
+            peak_mode_2 = peak_mode_2_save
+            elec_area = elec_area_save
+            idx_jsp0 = idx_jsp0_save
+            inv_jpa_jpc = inv_jpa_jpc_save
+            scan_rate = scan_rate_save
+            nicholson_cb = nicholson_cb_save
             
+        # elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
+    if event in ('inv_jpa_jpc', 'ir_compen', 'elec_area', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc', 'elec_n', 'enable_d', 'enable_k', 'peak_mode_1', 'peak_mode_2'):      
+        cutval_s = int(values['sl_cutval_s'])
+        cutval_e = int(values['sl_cutval_e'])
+        jpa_lns = int(values['sl_jpa_lns'])
+        jpa_lne = int(values['sl_jpa_lne'])
+        jpc_lns = int(values['sl_jpc_lns'])
+        jpc_lne = int(values['sl_jpc_lne'])
+        peak_pos = int(values['peak_pos'])
+        trou_pos = int(values['trou_pos'])
+        peak_range = int(values['peak_range'])
+        peak_mode_1 = str(values['peak_mode_1'])
+        peak_mode_2 = str(values['peak_mode_2'])
+        idx_jsp0 = int(values['idx_jsp0'])
+        inv_jpa_jpc = int(values['inv_jpa_jpc'])
+        nicholson_cb = int(values['nicholson_cb'])
+        # Make sure that proper number format is used
+        ir_compen = check_val(values['ir_compen'], "float", 0)
+        scan_rate = check_val(values['scan_rate'], "float", 0)
+        elec_area = check_val(values['elec_area'], "float", 1)    
+        cutval_s_pos = check_val(values['sl_cutval_s_pos'], "int", 1)
+        cutval_e_pos = check_val(values['sl_cutval_e_pos'], "int", 1)  
+        jpa_lns_pos = check_val(values['sl_jpa_lns_pos'], "int", 1)
+        jpa_lne_pos = check_val(values['sl_jpa_lne_pos'], "int", 1)  
+        jpc_lns_pos = check_val(values['sl_jpc_lns_pos'], "int", 1)  
+        jpc_lne_pos = check_val(values['sl_jpc_lne_pos'], "int", 1)  
+        peak_range_pos = check_val(values['peak_range_pos'], "int", 1)  
+        peak_pos_pos = check_val(values['peak_pos_pos'], "int", 1) 
+        trou_pos_pos = check_val(values['trou_pos_pos'], "int", 1)
+        idx_jsp0_pos = check_val(values['idx_jsp0_pos'], "int", 1) 
+        
+        if event == 'sl_cutval_s':
+            window['sl_cutval_s_pos'].Update(cutval_s)
+        elif event == 'sl_cutval_s_pos':
+            window['sl_cutval_s'].Update(cutval_s_pos)
+            cutval_s = cutval_s_pos
             
-    if event == 'cv_combo_ecsa':
+        elif event == 'sl_cutval_e':
+            window['sl_cutval_e_pos'].Update(cutval_e)
+        elif event == 'sl_cutval_e_pos':
+            window['sl_cutval_e'].Update(cutval_e_pos)
+            cutval_e = cutval_e_pos
+        
+        elif event == 'sl_jpa_lns':
+            window['sl_jpa_lns_pos'].Update(jpa_lns)
+        elif event == 'sl_jpa_lns_pos':
+            window['sl_jpa_lns'].Update(jpa_lns)
+            jpa_lns = jpa_lns_pos
+            
+        elif event == 'sl_jpa_lne':
+            window['sl_jpa_lne_pos'].Update(jpa_lne)
+        elif event == 'sl_jpa_lne_pos':
+            window['sl_jpa_lne'].Update(jpa_lne)
+            jpa_lne = jpa_lne_pos
+            
+        elif event == 'sl_jpc_lns':
+            window['sl_jpc_lns_pos'].Update(jpc_lns)
+        elif event == 'sl_jpc_lns_pos':
+            window['sl_jpc_lns'].Update(jpc_lns)
+            jpc_lns = jpc_lns_pos
+            
+        elif event == 'sl_jpc_lne':
+            window['sl_jpc_lne_pos'].Update(jpc_lne)
+        elif event == 'sl_jpc_lne_pos':
+            window['sl_jpc_lne'].Update(jpc_lne)
+            jpc_lne = jpc_lne_pos
+            
+        elif event == 'peak_range':
+            window['peak_range_pos'].Update(peak_range)
+        elif event == 'peak_range_pos':
+            window['peak_range'].Update(peak_range_pos)
+            peak_range = peak_range_pos     
+            
+        elif event == 'peak_pos':
+            window['peak_pos_pos'].Update(peak_pos)
+        elif event == 'peak_range_pos':
+            window['peak_pos'].Update(peak_pos_pos)
+            peak_pos = peak_pos_pos     
+            
+        elif event == 'trou_pos':
+            window['trou_pos_pos'].Update(trou_pos)
+        elif event == 'trou_pos_pos':
+            window['trou_pos'].Update(trou_pos_pos)
+            trou_pos = trou_pos_pos   
+            
+        elif event == 'idx_jsp0':
+            window['idx_jsp0_pos'].Update(idx_jsp0)
+        elif event == 'idx_jsp0_pos':
+            window['idx_jsp0'].Update(idx_jsp0_pos)
+            idx_jsp0 = idx_jsp0_pos     
+            
+        cutval_s,cutval_e = switch_val(cutval_s,cutval_e)
+        jpa_lns,jpa_lne = switch_val(jpa_lns,jpa_lne)
+        jpc_lns,jpc_lne = switch_val(jpc_lns,jpc_lne)
+        
+        fitting_save_cv = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb])
+        fitting_save_array[cv_name_idx+1][0:17] = fitting_save_cv
+
+    if event in ('cv_open_menu_ecsa', 'cv_load_ecsa','cv_combo_ecsa'):
         cv_select = values['cv_combo_ecsa']
         if values['cv_combo_ecsa'] == '': #Prevent error when combo box value is empty
             cv_name_idx = 0
@@ -461,261 +616,197 @@ while True:
         window['sl_cutval_e_ecsa'].Update(range=(0,cv_size-1))
         window['sl_v_ln_ecsa'].Update(range=(0,cv_size-1))
         window['sl_h_ln_ecsa'].Update(range=(0,cv_size-1))
-        window['peak_range_ecsa'].Update(range=(1,100))        
-
+        window['peak_range_ecsa'].Update(range=(1,100))  
+        
+        if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
+            cv_name_idx_old = cv_name_idx                    
+            # Restore saved values        
+            cutval_s_ecsa_save = int(fitting_save_array[cv_name_idx+1,17])
+            cutval_e_ecsa_save = int(fitting_save_array[cv_name_idx+1,18])               
+            v_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,19])
+            h_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,20])
+            peak_range_ecsa_save = int(fitting_save_array[cv_name_idx+1,21])
+            # Put slider to previous position
+            window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_save)
+            window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_save)
+            window['sl_v_ln_ecsa'].Update(v_ln_ecsa_save)
+            window['sl_h_ln_ecsa'].Update(h_ln_ecsa_save)
+            window['peak_range_ecsa'].Update(peak_range_ecsa_save)  
+            window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa_save)
+            window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa_save)
+            window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa_save)                   
+            window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa_save)
+            window['peak_range_ecsa_pos'].Update(h_ln_ecsa_save)
+            # Assign the value from saved data
+            cutval_s_ecsa = cutval_s_ecsa_save
+            cutval_e_ecsa = cutval_e_ecsa_save
+            v_ln_ecsa = v_ln_ecsa_save
+            h_ln_ecsa = h_ln_ecsa_save
+            cutval_s_ecsa_pos = cutval_s_ecsa_save
+            cutval_e_ecsa_pos = cutval_e_ecsa_save
+            v_ln_ecsa_pos = v_ln_ecsa_save
+            h_ln_ecsa_pos = h_ln_ecsa_save
+            peak_range_ecsa = peak_range_ecsa_save
+        # elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
+        
+    if event in ('sl_v_ln_ecsa', 'sl_h_ln_ecsa', 'sl_cutval_s_ecsa', 'sl_cutval_e_ecsa', 'peak_range_ecsa', 'ir_compen_ecsa', 'sl_cutval_s_ecsa_pos', 'sl_cutval_e_ecsa_pos', 'sl_v_ln_ecsa_pos', 'sl_h_ln_ecsa_pos', 'peak_range_ecsa_pos'):
+        cutval_s_ecsa = int(values['sl_cutval_s_ecsa'])
+        cutval_e_ecsa = int(values['sl_cutval_e_ecsa'])
+        v_ln_ecsa = int(values['sl_v_ln_ecsa'])
+        h_ln_ecsa = int(values['sl_h_ln_ecsa'])
+        peak_range_ecsa = int(values['peak_range_ecsa'])
+        # Make sure that proper number format is used
+        ir_compen = check_val(values['ir_compen'], "float", 0)
+        scan_rate = check_val(values['scan_rate'], "float", 0)
+        elec_area = check_val(values['elec_area'], "float", 1)
+        
+        cutval_s_ecsa_pos = check_val(values['sl_cutval_s_ecsa_pos'], "int", 1)
+        cutval_e_ecsa_pos = check_val(values['sl_cutval_e_ecsa_pos'], "int", 1)    
+        v_ln_ecsa_pos = check_val(values['sl_v_ln_ecsa_pos'], "int", 1)
+        h_ln_ecsa_pos = check_val(values['sl_h_ln_ecsa_pos'], "int", 1)   
+        peak_range_ecsa_pos = check_val(values['peak_range_ecsa_pos'], "int", 1)
             
+        if event == 'sl_cutval_s_ecsa':
+            window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa)
+        elif event == 'sl_cutval_s_ecsa_pos':
+            window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_pos)
+            cutval_s_ecsa = cutval_s_ecsa_pos
+            
+        elif event == 'sl_cutval_e_ecsa':
+            window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa)
+        elif event == 'sl_cutval_e_ecsa_pos':
+            window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_pos)
+            cutval_e_ecsa = cutval_e_ecsa_pos
+        
+        elif event == 'sl_v_ln_ecsa':
+            window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa)
+        elif event == 'sl_v_ln_ecsa_pos':
+            window['sl_v_ln_ecsa'].Update(v_ln_ecsa_pos)
+            v_ln_ecsa = v_ln_ecsa_pos
+            
+        elif event == 'sl_h_ln_ecsa':
+            window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa)
+        elif event == 'sl_h_ln_ecsa_pos':
+            window['sl_h_ln_ecsa'].Update(h_ln_ecsa_pos)
+            h_ln_ecsa = h_ln_ecsa_pos  
+            
+        elif event == 'peak_range_ecsa':
+            window['peak_range_ecsa_pos'].Update(peak_range_ecsa)
+        elif event == 'peak_range_ecsa_pos':
+            window['peak_range_ecsa'].Update(peak_range_ecsa_pos)
+            peak_range_ecsa = peak_range_ecsa_pos           
+                      
+        cutval_s_ecsa,cutval_e_ecsa = switch_val(cutval_s_ecsa,cutval_e_ecsa)
+        fitting_save_ecsa = np.array([cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa], dtype=object) 
+        fitting_save_array[cv_name_idx+1][17:23] = fitting_save_ecsa    
+        
+    # if event in ('inv_jpa_jpc', 'ir_compen', 'elec_area', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos',| 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc', 'elec_n', 'enable_d', 'enable_k', 'peak_mode_1', 'peak_mode_2')
+    # print(cv_name_idx,cv_name_idx_old)       
     match event:      
         case 'cv_open_menu' | 'cv_load_cv' | 'cv_combo_cv' | 'inv_jpa_jpc' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trou_pos' | 'sl_cutval_s_pos' | 'sl_cutval_e_pos' | 'sl_jpa_lns_pos' | 'sl_jpa_lne_pos' |  'sl_jpc_lns_pos' | 'sl_jpc_lne_pos' | 'peak_range_pos' | 'peak_pos_pos' | 'trou_pos_pos'| 'nicholson_cb' | 'idx_jsp0' | 'idx_jsp0_pos' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k' | 'peak_mode_1' | 'peak_mode_2' | 'cv_open_menu_ecsa' | 'cv_load_ecsa' | 'cv_combo_ecsa' | 'sl_v_ln_ecsa' | 'sl_h_ln_ecsa' | 'sl_cutval_s_ecsa' | 'sl_cutval_e_ecsa' | 'peak_range_ecsa' | 'ir_compen_ecsa' | 'sl_cutval_s_ecsa_pos' | 'sl_cutval_e_ecsa_pos' | 'sl_v_ln_ecsa_pos' | 'sl_h_ln_ecsa_pos' | 'peak_range_ecsa_pos' :
 
-            # Deflection points
-            # idx_defl_points = np.array(idx_intc_defl_lst[cv_name_idx])  
-
-
+            # if values[1] == 'cv_layout_key':
+                
+                # if event == 'sl_cutval_s':
+                #     window['sl_cutval_s_pos'].Update(cutval_s)
+                # elif event == 'sl_cutval_s_pos':
+                #     window['sl_cutval_s'].Update(cutval_s_pos)
+                #     cutval_s = cutval_s_pos
+                    
+                # elif event == 'sl_cutval_e':
+                #     window['sl_cutval_e_pos'].Update(cutval_e)
+                # elif event == 'sl_cutval_e_pos':
+                #     window['sl_cutval_e'].Update(cutval_e_pos)
+                #     cutval_e = cutval_e_pos
+                
+                # elif event == 'sl_jpa_lns':
+                #     window['sl_jpa_lns_pos'].Update(jpa_lns)
+                # elif event == 'sl_jpa_lns_pos':
+                #     window['sl_jpa_lns'].Update(jpa_lns)
+                #     jpa_lns = jpa_lns_pos
+                    
+                # elif event == 'sl_jpa_lne':
+                #     window['sl_jpa_lne_pos'].Update(jpa_lne)
+                # elif event == 'sl_jpa_lne_pos':
+                #     window['sl_jpa_lne'].Update(jpa_lne)
+                #     jpa_lne = jpa_lne_pos
+                    
+                # elif event == 'sl_jpc_lns':
+                #     window['sl_jpc_lns_pos'].Update(jpc_lns)
+                # elif event == 'sl_jpc_lns_pos':
+                #     window['sl_jpc_lns'].Update(jpc_lns)
+                #     jpc_lns = jpc_lns_pos
+                    
+                # elif event == 'sl_jpc_lne':
+                #     window['sl_jpc_lne_pos'].Update(jpc_lne)
+                # elif event == 'sl_jpc_lne_pos':
+                #     window['sl_jpc_lne'].Update(jpc_lne)
+                #     jpc_lne = jpc_lne_pos
+                    
+                # elif event == 'peak_range':
+                #     window['peak_range_pos'].Update(peak_range)
+                # elif event == 'peak_range_pos':
+                #     window['peak_range'].Update(peak_range_pos)
+                #     peak_range = peak_range_pos     
+                    
+                # elif event == 'peak_pos':
+                #     window['peak_pos_pos'].Update(peak_pos)
+                # elif event == 'peak_range_pos':
+                #     window['peak_pos'].Update(peak_pos_pos)
+                #     peak_pos = peak_pos_pos     
+                    
+                # elif event == 'trou_pos':
+                #     window['trou_pos_pos'].Update(trou_pos)
+                # elif event == 'trou_pos_pos':
+                #     window['trou_pos'].Update(trou_pos_pos)
+                #     trou_pos = trou_pos_pos   
+                    
+                # elif event == 'idx_jsp0':
+                #     window['idx_jsp0_pos'].Update(idx_jsp0)
+                # elif event == 'idx_jsp0_pos':
+                #     window['idx_jsp0'].Update(idx_jsp0_pos)
+                #     idx_jsp0 = idx_jsp0_pos                           
             
-            # window['sl_cutval_s_ecsa'].Update(range=(0,cv_size-1))
-            # window['sl_cutval_e_ecsa'].Update(range=(0,cv_size-1))
-            # window['sl_v_ln_ecsa'].Update(range=(0,cv_size-1))
-            # window['sl_h_ln_ecsa'].Update(range=(0,cv_size-1))
-            # window['peak_range_ecsa'].Update(range=(1,100))
-
-            if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
-                cv_name_idx_old = cv_name_idx                
-                
-                # Restore saved values
-                cutval_s_save = int(fitting_save_array[cv_name_idx+1,0])
-                cutval_e_save = int(fitting_save_array[cv_name_idx+1,1])
-                jpa_lns_save = int(fitting_save_array[cv_name_idx+1,2])
-                jpa_lne_save = int(fitting_save_array[cv_name_idx+1,3])
-                jpc_lns_save = int(fitting_save_array[cv_name_idx+1,4])
-                jpc_lne_save = int(fitting_save_array[cv_name_idx+1,5])
-                peak_pos_save = int(fitting_save_array[cv_name_idx+1,6])
-                trou_pos_save = int(fitting_save_array[cv_name_idx+1,7])
-                peak_range_save = int(fitting_save_array[cv_name_idx+1,8])
-                ir_compen_save = float(fitting_save_array[cv_name_idx+1,9])
-                peak_mode_1_save = str(fitting_save_array[cv_name_idx+1,10])
-                peak_mode_2_save = str(fitting_save_array[cv_name_idx+1,11])
-                elec_area_save = int(fitting_save_array[cv_name_idx+1,12])
-                idx_jsp0_save = int(fitting_save_array[cv_name_idx+1,13])
-                inv_jpa_jpc_save = int(fitting_save_array[cv_name_idx+1,14])
-                scan_rate_save = float(fitting_save_array[cv_name_idx+1,15])
-                nicholson_cb_save = float(fitting_save_array[cv_name_idx+1,16])
-
-                cutval_s_ecsa_save = int(fitting_save_array[cv_name_idx+1,17])
-                cutval_e_ecsa_save = int(fitting_save_array[cv_name_idx+1,18])               
-                v_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,19])
-                h_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,20])
-                peak_range_ecsa_save = int(fitting_save_array[cv_name_idx+1,21])
-                # Put slider to previous position
-                window['sl_cutval_s'].Update(cutval_s_save)
-                window['sl_cutval_e'].Update(cutval_e_save)
-                window['sl_jpa_lns'].Update(jpa_lns_save)
-                window['sl_jpa_lne'].Update(jpa_lne_save)
-                window['sl_jpc_lns'].Update(jpc_lns_save)
-                window['sl_jpc_lne'].Update(jpc_lne_save)
-                window['peak_pos'].Update(peak_pos_save)
-                window['trou_pos'].Update(trou_pos_save)
-                window['peak_range'].Update(peak_range_save)
-                window['ir_compen'].Update(ir_compen_save)
-                window['peak_mode_1'].Update(peak_mode_1_save)
-                window['peak_mode_2'].Update(peak_mode_2_save)
-                window['elec_area'].Update(elec_area_save)
-                window['idx_jsp0'].Update(idx_jsp0_save)
-                window['inv_jpa_jpc'].Update(inv_jpa_jpc_save)
-                window['scan_rate'].Update(scan_rate_save)
-                window['nicholson_cb'].Update(nicholson_cb_save)
-                
-                window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_save)
-                window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_save)
-                window['sl_v_ln_ecsa'].Update(v_ln_ecsa_save)
-                window['sl_h_ln_ecsa'].Update(h_ln_ecsa_save)
-                window['peak_range_ecsa'].Update(peak_range_ecsa_save)  
-                window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa_save)
-                window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa_save)
-                window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa_save)                   
-                window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa_save)
-                window['peak_range_ecsa_pos'].Update(h_ln_ecsa_save)
-                
-                # Assign the value from saved data
-                cutval_s = cutval_s_save
-                cutval_e = cutval_e_save
-                jpa_lns = jpa_lns_save
-                jpa_lne = jpa_lne_save
-                jpc_lns = jpc_lns_save
-                jpc_lne = jpc_lne_save
-                peak_pos = peak_pos_save
-                trou_pos = trou_pos_save
-                peak_range = peak_range_save
-                ir_compen = ir_compen_save
-                peak_mode_1 = peak_mode_1_save
-                peak_mode_2 = peak_mode_2_save
-                elec_area = elec_area_save
-                idx_jsp0 = idx_jsp0_save
-                inv_jpa_jpc = inv_jpa_jpc_save
-                scan_rate = scan_rate_save
-                nicholson_cb = nicholson_cb_save
-                cutval_s_ecsa = cutval_s_ecsa_save
-                cutval_e_ecsa = cutval_e_ecsa_save
-                v_ln_ecsa = v_ln_ecsa_save
-                h_ln_ecsa = h_ln_ecsa_save
-                cutval_s_ecsa_pos = cutval_s_ecsa_save
-                cutval_e_ecsa_pos = cutval_e_ecsa_save
-                v_ln_ecsa_pos = v_ln_ecsa_save
-                h_ln_ecsa_pos = h_ln_ecsa_save
-                peak_range_ecsa = peak_range_ecsa_save
-                
-                
-            elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
-                cutval_s = int(values['sl_cutval_s'])
-                cutval_e = int(values['sl_cutval_e'])
-                jpa_lns = int(values['sl_jpa_lns'])
-                jpa_lne = int(values['sl_jpa_lne'])
-                jpc_lns = int(values['sl_jpc_lns'])
-                jpc_lne = int(values['sl_jpc_lne'])
-                peak_pos = int(values['peak_pos'])
-                trou_pos = int(values['trou_pos'])
-                peak_range = int(values['peak_range'])
-                
-                
-                
-                peak_mode_1 = str(values['peak_mode_1'])
-                peak_mode_2 = str(values['peak_mode_2'])
-                idx_jsp0 = int(values['idx_jsp0'])
-                inv_jpa_jpc = int(values['inv_jpa_jpc'])
-                nicholson_cb = int(values['nicholson_cb'])
-                
-                cutval_s_ecsa = int(values['sl_cutval_s_ecsa'])
-                cutval_e_ecsa = int(values['sl_cutval_e_ecsa'])
-                v_ln_ecsa = int(values['sl_v_ln_ecsa'])
-                h_ln_ecsa = int(values['sl_h_ln_ecsa'])
-                peak_range_ecsa = int(values['peak_range_ecsa'])
-                
-                # Make sure that proper number format is used
-                ir_compen = check_val(values['ir_compen'], "float", 0)
-                scan_rate = check_val(values['scan_rate'], "float", 0)
-                elec_area = check_val(values['elec_area'], "float", 1)
-                
-                # CV
-                cutval_s_pos = check_val(values['sl_cutval_s_pos'], "int", 1)
-                cutval_e_pos = check_val(values['sl_cutval_e_pos'], "int", 1)  
-                jpa_lns_pos = check_val(values['sl_jpa_lns_pos'], "int", 1)
-                jpa_lne_pos = check_val(values['sl_jpa_lne_pos'], "int", 1)  
-                jpc_lns_pos = check_val(values['sl_jpc_lns_pos'], "int", 1)  
-                jpc_lne_pos = check_val(values['sl_jpc_lne_pos'], "int", 1)  
-                peak_range_pos = check_val(values['peak_range_pos'], "int", 1)  
-                peak_pos_pos = check_val(values['peak_pos_pos'], "int", 1) 
-                trou_pos_pos = check_val(values['trou_pos_pos'], "int", 1)
-                idx_jsp0_pos = check_val(values['idx_jsp0_pos'], "int", 1)
-                
-                #ECSA
-                cutval_s_ecsa_pos = check_val(values['sl_cutval_s_ecsa_pos'], "int", 1)
-                cutval_e_ecsa_pos = check_val(values['sl_cutval_e_ecsa_pos'], "int", 1)    
-                v_ln_ecsa_pos = check_val(values['sl_v_ln_ecsa_pos'], "int", 1)
-                h_ln_ecsa_pos = check_val(values['sl_h_ln_ecsa_pos'], "int", 1)   
-                peak_range_ecsa_pos = check_val(values['peak_range_ecsa_pos'], "int", 1)
-                
-                
-                # Update slider when slider position box change
-                if values[1] == 'cv_layout_key':
+            # if values[1] == 'cv_ecsa_layout_key':                   
+                # if event == 'sl_cutval_s_ecsa':
+                #     window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa)
+                # elif event == 'sl_cutval_s_ecsa_pos':
+                #     window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_pos)
+                #     cutval_s_ecsa = cutval_s_ecsa_pos
                     
-                    if event == 'sl_cutval_s':
-                        window['sl_cutval_s_pos'].Update(cutval_s)
-                    elif event == 'sl_cutval_s_pos':
-                        window['sl_cutval_s'].Update(cutval_s_pos)
-                        cutval_s = cutval_s_pos
-                        
-                    elif event == 'sl_cutval_e':
-                        window['sl_cutval_e_pos'].Update(cutval_e)
-                    elif event == 'sl_cutval_e_pos':
-                        window['sl_cutval_e'].Update(cutval_e_pos)
-                        cutval_e = cutval_e_pos
-                    
-                    elif event == 'sl_jpa_lns':
-                        window['sl_jpa_lns_pos'].Update(jpa_lns)
-                    elif event == 'sl_jpa_lns_pos':
-                        window['sl_jpa_lns'].Update(jpa_lns)
-                        jpa_lns = jpa_lns_pos
-                        
-                    elif event == 'sl_jpa_lne':
-                        window['sl_jpa_lne_pos'].Update(jpa_lne)
-                    elif event == 'sl_jpa_lne_pos':
-                        window['sl_jpa_lne'].Update(jpa_lne)
-                        jpa_lne = jpa_lne_pos
-                        
-                    elif event == 'sl_jpc_lns':
-                        window['sl_jpc_lns_pos'].Update(jpc_lns)
-                    elif event == 'sl_jpc_lns_pos':
-                        window['sl_jpc_lns'].Update(jpc_lns)
-                        jpc_lns = jpc_lns_pos
-                        
-                    elif event == 'sl_jpc_lne':
-                        window['sl_jpc_lne_pos'].Update(jpc_lne)
-                    elif event == 'sl_jpc_lne_pos':
-                        window['sl_jpc_lne'].Update(jpc_lne)
-                        jpc_lne = jpc_lne_pos
-                        
-                    elif event == 'peak_range':
-                        window['peak_range_pos'].Update(peak_range)
-                    elif event == 'peak_range_pos':
-                        window['peak_range'].Update(peak_range_pos)
-                        peak_range = peak_range_pos     
-                        
-                    elif event == 'peak_pos':
-                        window['peak_pos_pos'].Update(peak_pos)
-                    elif event == 'peak_range_pos':
-                        window['peak_pos'].Update(peak_pos_pos)
-                        peak_pos = peak_pos_pos     
-                        
-                    elif event == 'trou_pos':
-                        window['trou_pos_pos'].Update(trou_pos)
-                    elif event == 'trou_pos_pos':
-                        window['trou_pos'].Update(trou_pos_pos)
-                        trou_pos = trou_pos_pos   
-                        
-                    elif event == 'idx_jsp0':
-                        window['idx_jsp0_pos'].Update(idx_jsp0)
-                    elif event == 'idx_jsp0_pos':
-                        window['idx_jsp0'].Update(idx_jsp0_pos)
-                        idx_jsp0 = idx_jsp0_pos                           
+                # elif event == 'sl_cutval_e_ecsa':
+                #     window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa)
+                # elif event == 'sl_cutval_e_ecsa_pos':
+                #     window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_pos)
+                #     cutval_e_ecsa = cutval_e_ecsa_pos
                 
-                elif values[1] == 'cv_ecsa_layout_key':                   
-                    if event == 'sl_cutval_s_ecsa':
-                        window['sl_cutval_s_ecsa_pos'].Update(cutval_s_ecsa)
-                    elif event == 'sl_cutval_s_ecsa_pos':
-                        window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_pos)
-                        cutval_s_ecsa = cutval_s_ecsa_pos
-                        
-                    elif event == 'sl_cutval_e_ecsa':
-                        window['sl_cutval_e_ecsa_pos'].Update(cutval_e_ecsa)
-                    elif event == 'sl_cutval_e_ecsa_pos':
-                        window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_pos)
-                        cutval_e_ecsa = cutval_e_ecsa_pos
+                # elif event == 'sl_v_ln_ecsa':
+                #     window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa)
+                # elif event == 'sl_v_ln_ecsa_pos':
+                #     window['sl_v_ln_ecsa'].Update(v_ln_ecsa_pos)
+                #     v_ln_ecsa = v_ln_ecsa_pos
                     
-                    elif event == 'sl_v_ln_ecsa':
-                        window['sl_v_ln_ecsa_pos'].Update(v_ln_ecsa)
-                    elif event == 'sl_v_ln_ecsa_pos':
-                        window['sl_v_ln_ecsa'].Update(v_ln_ecsa_pos)
-                        v_ln_ecsa = v_ln_ecsa_pos
-                        
-                    elif event == 'sl_h_ln_ecsa':
-                        window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa)
-                    elif event == 'sl_h_ln_ecsa_pos':
-                        window['sl_h_ln_ecsa'].Update(h_ln_ecsa_pos)
-                        h_ln_ecsa = h_ln_ecsa_pos  
-                        
-                    elif event == 'peak_range_ecsa':
-                        window['peak_range_ecsa_pos'].Update(peak_range_ecsa)
-                    elif event == 'peak_range_ecsa_pos':
-                        window['peak_range_ecsa'].Update(peak_range_ecsa_pos)
-                        peak_range_ecsa = peak_range_ecsa_pos
+                # elif event == 'sl_h_ln_ecsa':
+                #     window['sl_h_ln_ecsa_pos'].Update(h_ln_ecsa)
+                # elif event == 'sl_h_ln_ecsa_pos':
+                #     window['sl_h_ln_ecsa'].Update(h_ln_ecsa_pos)
+                #     h_ln_ecsa = h_ln_ecsa_pos  
+                    
+                # elif event == 'peak_range_ecsa':
+                #     window['peak_range_ecsa_pos'].Update(peak_range_ecsa)
+                # elif event == 'peak_range_ecsa_pos':
+                #     window['peak_range_ecsa'].Update(peak_range_ecsa_pos)
+                #     peak_range_ecsa = peak_range_ecsa_pos
                             
                 # Switch slider when it cross
-                cutval_s,cutval_e = switch_val(cutval_s,cutval_e)
-                jpa_lns,jpa_lne = switch_val(jpa_lns,jpa_lne)
-                jpc_lns,jpc_lne = switch_val(jpc_lns,jpc_lne)
-                cutval_s_ecsa,cutval_e_ecsa = switch_val(cutval_s_ecsa,cutval_e_ecsa)
+                # cutval_s,cutval_e = switch_val(cutval_s,cutval_e)
+                # jpa_lns,jpa_lne = switch_val(jpa_lns,jpa_lne)
+                # jpc_lns,jpc_lne = switch_val(jpc_lns,jpc_lne)
+                # cutval_s_ecsa,cutval_e_ecsa = switch_val(cutval_s_ecsa,cutval_e_ecsa)
 
-                fitting_save = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb, cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa], dtype=object) 
-                fitting_save_array[cv_name_idx+1] = fitting_save
+            # fitting_save_ecsa = np.array([cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa], dtype=object) 
+            # # print(fitting_save.size)
+            # fitting_save_array[cv_name_idx+1][17:23] = fitting_save_ecsa
             
             if ir_compen != ir_compen_old:
                 ir_compen_old = ir_compen
@@ -741,7 +832,7 @@ while True:
                 trou_pos = int(trou_pos)
                 
             if values[1] == 'cv_layout_key':
-                ax_cv.cla() ###### Clear plot before redraw
+                # ax_cv.cla() ###### Clear plot before redraw
                 if nicholson_cb == True:
                     if values['inv_jpa_jpc'] == True: 
                         jp1_text = 'jpc'
@@ -768,7 +859,16 @@ while True:
                     ax_cv.plot(np.array([volt_compen[jpa_lns],trou_volt]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(trou_volt)]),'--', color='green') #Peak    
                     ax_cv.arrow(trou_volt,jpa_poly1d(trou_volt),0,jpc0,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='green', length_includes_head=True) #jpc0 
                     ax_cv.arrow(peak_volt,jpa_poly1d(peak_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003, color='black', length_includes_head=True) #jpa
-    
+                ax_cv.cla() ###### Clear plot before redraw
+                if nicholson_cb == True:
+                    if values['inv_jpa_jpc'] == True: 
+                        jp1_text = 'jpc'
+                        jp2_text = 'jpa0'
+                    else:
+                        jp1_text = 'jpa'
+                        jp2_text = 'jpc0'
+                    jpc0_lns = jpa_lns
+                    jpc0_lne = jpa_lne
                     jsp0_volt = volt_compen[idx_jsp0]
                     jsp0 = current_den[idx_jsp0]-jpa_poly1d(jsp0_volt)
                     ax_cv.plot(np.array([volt_compen[jpa_lns],volt_compen[idx_jsp0]]),np.array([jpa_poly1d(volt_compen[jpa_lns]),jpa_poly1d(jsp0_volt)]),'--', color='green') #jsp0
@@ -790,6 +890,7 @@ while True:
                         
                     window['jsp0_volt'].Update(jsp0_volt)
                 elif nicholson_cb == False:
+                    # print("h========================================")
                     low_range_a, high_range_a, peak_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, volt, current, peak_range, peak_pos, jpa_lns, jpa_lne)
                     low_range_c, high_range_c, trou_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, volt, current, peak_range, trou_pos, jpc_lns, jpc_lne)                
                     
@@ -807,7 +908,7 @@ while True:
                     
                     ax_cv.plot(E1_2,0,"D", markersize = 6)
                     
-                    
+                    # print("+++++++++++++++++++++++++++++++++++++++++++++",jpa_lns)
                     ax_cv.plot((volt_compen[low_range_a],volt_compen[high_range_a]),(current_den[low_range_a],current_den[high_range_a]),"|", markersize = 10)
                     ax_cv.plot((volt_compen[low_range_c],volt_compen[high_range_c]),(current_den[low_range_c],current_den[high_range_c]),"|", markersize = 10)
                 
@@ -818,7 +919,7 @@ while True:
                     ax_cv.plot(volt_compen[jpc_lns:jpc_lne],current_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
                     ax_cv.arrow(trou_volt,jpc_poly1d(trou_volt),0,jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
                     ax_cv.plot(np.array([volt_compen[jpc_lns],trou_volt]),np.array([jpc_poly1d(volt_compen[jpc_lns]),jpc_poly1d(trou_volt)]),'--', color='blue')
-                   
+        
                 # invert jpa and jpc or not
                 if values['inv_jpa_jpc'] == True:
                     jpa, jpc = jpc, jpa
@@ -830,6 +931,7 @@ while True:
                 for j in np.arange(0,volt_lst_len):
                     cutval_s_all = int(fitting_save_array[j+1,0])
                     cutval_e_all = int(fitting_save_array[j+1,1])
+                    print(cutval_s_all,cutval_e_all)
                     ax_cv.plot(np.array(volt_ir_lst[j][cutval_s_all:cutval_e_all]).T, np.array(current_den_lst[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=0.8)
                 
                 if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
