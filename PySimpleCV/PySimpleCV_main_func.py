@@ -264,18 +264,20 @@ def diff(x,y):
     diff_y = diff_y[valid_indices]
     return x, diff_y #This is y
 
-def lowess_diff(x,y,frac):
-    smh_x, smh_y = lowess_func(x,y,frac)
-    smh_x,smh_diff_y = diff(smh_x,smh_y)
-    return smh_x, smh_diff_y
+def lowess_diff(x_idx,x,y,frac):
+    _, smh_y = lowess_func(x_idx,y,frac)
+    x, smh_diff_y = diff(x,smh_y)
+    return x, smh_diff_y
 
 def deflection(cv_size,volt,current):
-    print("repeat???????//")
+    # The idx_arr is use to "unwarp" the circular CV
+    idx_arr = np.arange(0,cv_size)
     frac = 0.05
-    smh_volt,smh_curr = lowess_func(volt,current,frac)
+    _,smh_curr = lowess_func(idx_arr,current,frac)
+    _,smh_volt = lowess_func(idx_arr,volt,frac)
     smh_volt,diff1_curr = diff(smh_volt,smh_curr) #First diff, find peaks (slope = 0)
-    smh_volt,diff2_curr = lowess_diff(smh_volt,diff1_curr,0.05)
-    smh_volt,diff3_curr = lowess_diff(smh_volt,diff2_curr,0) #Detect deflection
+    smh_volt,diff2_curr = lowess_diff(idx_arr,smh_volt,diff1_curr,0.05)
+    smh_volt,diff3_curr = lowess_diff(idx_arr,smh_volt,diff2_curr,0) #Detect deflection
     idx_intc_peak = idx_intercept(0,diff1_curr)
     idx_intc_defl = idx_intercept(0,diff3_curr)
     return idx_intc_peak, idx_intc_defl 
