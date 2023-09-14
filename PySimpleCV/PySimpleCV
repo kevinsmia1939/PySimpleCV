@@ -389,7 +389,7 @@ while True:
                 # Add new value from the CV file to save data array
                 fitting_default[:,0] = cv_file
                 fitting_default[:,2] = cv_size
-                fitting_default[:,4] = int(cv_size/10)
+                # fitting_default[:,4] = int(cv_size/10)
                 fitting_default[:,19] = cv_size 
                 fitting_default[:,16] = file_scan_rate
                 fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
@@ -813,21 +813,32 @@ while True:
             fig_agg_cv_k.draw()
 
     if event == 'save_cv_param':
-        save_cv_dir = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
-        if save_cv_dir is None or save_cv_dir == '' or save_cv_dir == ():
-            continue
-        with tarfile.open(save_cv_dir, 'w') as tar:
-            txt_buffer = io.BytesIO()
-            np.savetxt(txt_buffer, fitting_save_array, delimiter=',', fmt='%s')
-            txt_buffer.seek(0)
-            tarinfo = tarfile.TarInfo('cv_param'+'.txt')
-            tarinfo.size = len(txt_buffer.getvalue())
-            tar.addfile(tarinfo, fileobj=txt_buffer)
-            for cv_file in cv_path_lst:
-                arcname = os.path.basename(cv_file)
-                tar.add(cv_file, arcname='cv/'+str(arcname))
-        tar.close()
+        file_dir = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
+        print(file_dir)
+        np.savetxt(file_dir, fitting_save_array, delimiter=',', fmt='%s')    
         
+        # if save_cv_dir is None or save_cv_dir == '' or save_cv_dir == ():
+        #     continue
+        # with tarfile.open(save_cv_dir, 'w') as tar:
+        #     txt_buffer = io.BytesIO()
+        #     np.savetxt(txt_buffer, fitting_save_array, delimiter=',', fmt='%s')
+        #     txt_buffer.seek(0)
+        #     tarinfo = tarfile.TarInfo('cv_param'+'.txt')
+        #     tarinfo.size = len(txt_buffer.getvalue())
+        #     tar.addfile(tarinfo, fileobj=txt_buffer)
+        #     for cv_file in cv_path_lst:
+        #         arcname = os.path.basename(cv_file)
+        #         tar.add(cv_file, arcname='cv/'+str(arcname))
+        # tar.close()
+
+
+# array = np.array((1, 2, 3, 4, "apple", 8.913), dtype=object)
+
+# # Define the file location
+# file_location = "path/to/your/file.txt"
+
+# # Save the array to the text file
+# np.savetxt(file_location, array, delimiter=',', fmt='%s')        
         # # array = np.array((1, 2, 3, 4, "apple", 8.913), dtype=object)
 
         # # Define the filename for the text file
@@ -912,10 +923,7 @@ while True:
         cutval_s_ecsa = int(values['sl_cutval_s_ecsa'])
         cutval_e_ecsa = int(values['sl_cutval_e_ecsa'])
         v_ln_ecsa = int(values['sl_v_ln_ecsa'])
-        h_ln_ecsa = int(values['sl_h_ln_ecsa'])
-        
-        # print(cutval_s_ecsa,cutval_e_ecsa,v_ln_ecsa,h_ln_ecsa)
-        
+        h_ln_ecsa = int(values['sl_h_ln_ecsa'])  
         peak_range_ecsa = int(values['peak_range_ecsa'])
         # Make sure that proper number format is used
         ir_compen = check_val(values['ir_compen'], "float", 0)
@@ -1029,8 +1037,7 @@ while True:
         fitting_save_array = np.delete(fitting_save_array,1+cv_name_idx,0)
         cv_results = cv_results.drop([cv_name_idx])
         cv_results.reset_index(inplace=True)
-        cv_results = cv_results.drop('index',axis=1)
-        
+        cv_results = cv_results.drop('index',axis=1)      
         # If the deleted data is the last in the list, when delete, the cv_name_idx must be substract to refer to data below it.
         if len(cv_name_lst)-1 < cv_name_idx: 
             cv_name_idx = cv_name_idx - 1
@@ -1040,8 +1047,7 @@ while True:
         else:
             window['cv_results_dis'].Update(cv_results.to_string(index=False))
         
-        window['cv_combo_cv'].Update(values=cv_name_lst)
-        
+        window['cv_combo_cv'].Update(values=cv_name_lst)       
         # Change Slider range
         cv_size = len(volt_lst[cv_name_idx])
         window['sl_cutval_s'].Update(range=(0,cv_size-1))
@@ -1090,8 +1096,6 @@ while True:
         values['inv_jpa_jpc'] = inv_jpa_jpc_save
         values['scan_rate'] = scan_rate_save
         values['nicholson_cb'] = nicholson_cb_save  
-        
-        
         if len(cv_name_lst) == 0: # If CV all delete, make combo empty and disable slider
             window['cv_combo_cv'].Update()
             disable_slider(True)
