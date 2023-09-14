@@ -341,7 +341,7 @@ while True:
             continue
         try:
             fitting_save_array = np.loadtxt(load_cv_dir,dtype=object, delimiter=',')     
-            cv_results = pd.read_excel(cv_result_path)
+            cv_results = pd.read_excel(cv_result_path, index_col=0) #Use first column as index
             
             file_name_load_mult = fitting_save_array[1:,0]
             file_form_load_mult = fitting_save_array[1:,1]
@@ -790,7 +790,7 @@ while True:
         ax_cv.set_ylabel("Current")       
         fig_agg_cv.draw()
         
-        print(cv_results)
+        print(cv_results.to_string)
         cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, jpc0, peak_volt, trou_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
         cv_results = cv_results.sort_index()
         window['cv_results_dis'].Update(cv_results.to_string(index=False))
@@ -864,46 +864,6 @@ while True:
 
         np.savetxt(cv_param, fitting_save_array, delimiter=',', fmt='%s')
         cv_results.to_excel(cv_result_path, index=True)
-        # np.savetxt(cv_result, cv_results, delimiter=',', fmt='%s')
-        # if save_cv_dir is None or save_cv_dir == '' or save_cv_dir == ():
-        #     continue
-        # with tarfile.open(save_cv_dir, 'w') as tar:
-        #     txt_buffer = io.BytesIO()
-        #     np.savetxt(txt_buffer, fitting_save_array, delimiter=',', fmt='%s')
-        #     txt_buffer.seek(0)
-        #     tarinfo = tarfile.TarInfo('cv_param'+'.txt')
-        #     tarinfo.size = len(txt_buffer.getvalue())
-        #     tar.addfile(tarinfo, fileobj=txt_buffer)
-        #     for cv_file in cv_path_lst:
-        #         arcname = os.path.basename(cv_file)
-        #         tar.add(cv_file, arcname='cv/'+str(arcname))
-        # tar.close()
-
-
-# array = np.array((1, 2, 3, 4, "apple", 8.913), dtype=object)
-
-# # Define the file location
-# file_location = "path/to/your/file.txt"
-
-# # Save the array to the text file
-# np.savetxt(file_location, array, delimiter=',', fmt='%s')        
-        # # array = np.array((1, 2, 3, 4, "apple", 8.913), dtype=object)
-
-        # # Define the filename for the text file
-        # txt_filename = "array_data.txt"
-        
-        # # Save the array to the text file
-        # np.savetxt(txt_filename, fitting_save_array, delimiter=',', fmt='%s')
-        
-        # # Create a tar archive and add the text file to it
-        # tar_filename = "archive.tar"
-        # with tarfile.open(tar_filename, "w") as tar:
-        #     tar.add(txt_filename)
-        
-        # print(f"The array has been saved to {tar_filename} as {txt_filename}")
-
-
-
 
         #====================================================================================#
         #======================================CV ECSA ======================================#
@@ -1159,11 +1119,6 @@ while True:
 
 
 
-
-
-
-window.close()
-
     # if event in ('inv_jpa_jpc', 'ir_compen', 'elec_area', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos',| 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc', 'elec_n', 'enable_d', 'enable_k', 'peak_mode_1', 'peak_mode_2')
     # print(cv_name_idx,cv_name_idx_old)    
     # match event:      
@@ -1396,4 +1351,4 @@ window.close()
     #             continue
     #         fig_cv.savefig(save_bat_loc)            
 
-    # window.close()
+window.close()
