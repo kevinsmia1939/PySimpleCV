@@ -148,25 +148,24 @@ canvas_cv_D = window['-CANVAS_cv_D-'].tk_canvas
 canvas_cv_k = window['-CANVAS_cv_k-'].tk_canvas
 canvas_cv_ecsa = window['-CANVAS_cv_ecsa-'].tk_canvas
 canvas_bat = window['-CANVAS_bat-'].tk_canvas
-# canvas_eis = window['-CANVAS_eis-'].tk_canvas
 
 # Generate initial empty plot.
 fig_cv = Figure(figsize=(9,9))
 ax_cv = fig_cv.add_subplot(111)
-ax_cv.set_xlabel("Voltage")
-ax_cv.set_ylabel("Current")
+ax_cv.set_xlabel("Voltage",fontsize=14)
+ax_cv.set_ylabel("Current",fontsize=14)
 ax_cv.grid()
 
 fig_cv_D = Figure(figsize=(9,9))
 ax_cv_D = fig_cv_D.add_subplot(111)
-ax_cv_D.set_xlabel("Scan rate 1/2")
-ax_cv_D.set_ylabel("Jp")
+ax_cv_D.set_xlabel("Scan rate 1/2",fontsize=14)
+ax_cv_D.set_ylabel("Jp",fontsize=14)
 ax_cv_D.grid()
 
 fig_cv_kin = Figure(figsize=(9,9))
 ax_cv_kin = fig_cv_kin.add_subplot(111)
-ax_cv_kin.set_xlabel("Ep - E0")
-ax_cv_kin.set_ylabel("Jp")
+ax_cv_kin.set_xlabel("Ep - E0",fontsize=14)
+ax_cv_kin.set_ylabel("Jp",fontsize=14)
 ax_cv_kin.grid()
 
 # tight layout push away y label
@@ -177,8 +176,8 @@ fig_agg_cv_k = draw_figure(canvas_cv_k, fig_cv_kin)
 
 fig_cv_ecsa = Figure(figsize=(9,9))
 ax_cv_ecsa = fig_cv_ecsa.add_subplot(111)
-ax_cv_ecsa.set_xlabel("Voltage")
-ax_cv_ecsa.set_ylabel("Current")
+ax_cv_ecsa.set_xlabel("Voltage",fontsize=14)
+ax_cv_ecsa.set_ylabel("Current",fontsize=14)
 ax_cv_ecsa.grid()
 
 fig_agg_cv_ecsa = draw_figure(canvas_cv_ecsa, fig_cv_ecsa)
@@ -191,12 +190,12 @@ ax_bat_cap = ax_bat_volt.twinx()
 ax_bat_cycle = ax_bat_volt.twiny()
 ax_bat_eff.spines.right.set_position(("axes", 1.11))
 ax_bat_cap.spines.right.set_position(("axes", 1.21))
-ax_bat_volt.set_ylabel("Voltage")
-ax_bat_current.set_ylabel("Current")
-ax_bat_eff.set_ylabel("Voltage/Coulombic/ Energy Efficiencies")
-ax_bat_cap.set_ylabel("Capacity")
-ax_bat_cycle.set_xlabel("Cycle")
-ax_bat_volt.set_xlabel("Time")
+ax_bat_volt.set_ylabel("Voltage",fontsize=14)
+ax_bat_current.set_ylabel("Current",fontsize=14)
+ax_bat_eff.set_ylabel("Voltage/Coulombic/ Energy Efficiencies",fontsize=14)
+ax_bat_cap.set_ylabel("Capacity",fontsize=14)
+ax_bat_cycle.set_xlabel("Cycle",fontsize=14)
+ax_bat_volt.set_xlabel("Time",fontsize=14)
 # Create manual legend so we can put them in the same box
 volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
 current_leg = Line2D([0], [0], label='Current', color='red', linestyle='--')
@@ -204,10 +203,13 @@ VE_leg = Line2D([0], [0], label='VE', color='blue', marker='*', linestyle='None'
 CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
 EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
 cap_leg = Line2D([0], [0], label='Capacity', color='orange', marker='s', linestyle='None')
-ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg,cap_leg],ncol=6, bbox_to_anchor=(0.5,-0.25),loc='lower center')
+bat_legend = ax_bat_volt.legend(handles=[volt_leg,current_leg,VE_leg,CE_leg,EE_leg,cap_leg],ncol=3, bbox_to_anchor=(0.5,-0.25),loc='lower center',fontsize=15, markerscale=3)
+for legobj in bat_legend.legendHandles:
+    legobj.set_linewidth(3)
+    
 ax_bat_cycle.grid()
 ax_bat_volt.grid(axis='y')
-# fig_bat.tight_layout()
+fig_bat.tight_layout()
 fig_agg_bat = draw_figure(canvas_bat, fig_bat)
 
 cycle_start = 1
@@ -225,7 +227,7 @@ def clear_battery_plot():
     window['cycle_start'].Update(range=(0,0))
     window['cycle_end'].Update(range=(1,1))
     window['cycle_start'].Update(disabled=True)
-    window['cycle_end'].Update(disabled=True)    
+    window['cycle_end'].Update(disabled=True)  
     # Remove existing plot.
     ax_bat_current.cla()
     ax_bat_volt.cla()
@@ -235,12 +237,17 @@ def clear_battery_plot():
     #Redraw Efficiency axis and labels.
     ax_bat_eff.spines.right.set_position(("axes", 1.11))
     ax_bat_cap.spines.right.set_position(("axes", 1.21))
-    ax_bat_volt.set_ylabel("Voltage")
-    ax_bat_current.set_ylabel("Current")
-    ax_bat_eff.set_ylabel("Voltage/Current/Energy Efficiencies")
-    ax_bat_cap.set_ylabel("Capacity")
-    ax_bat_cycle.set_xlabel("Cycle")
-    ax_bat_volt.set_xlabel("Time")
+    ax_bat_volt.set_ylabel("Voltage",fontsize=14)
+    ax_bat_current.set_ylabel("Current",fontsize=14) 
+    ax_bat_eff.set_ylabel("Voltage/Coulombic/ Energy Efficiencies",fontsize=14)
+    ax_bat_cap.set_ylabel("Capacity",fontsize=14)
+    ax_bat_cycle.set_xlabel("Cycle",fontsize=14)
+    ax_bat_volt.set_xlabel("Time",fontsize=14)
+    # Move legend to correct position
+    ax_bat_current.yaxis.set_label_position("right")
+    ax_bat_eff.yaxis.set_label_position("right")
+    ax_bat_cap.yaxis.set_label_position("right")
+    ax_bat_cycle.xaxis.set_label_position("top")
     # Create manual legend so we can put them in the same box
     volt_leg = Line2D([0], [0], label='Voltage', color='blue', linestyle='-')
     current_leg = Line2D([0], [0], label='Current', color='red', linestyle='--')
@@ -298,8 +305,6 @@ def disable_slider(bool):
 
 randles_select = True
 volt_lst = []
-# smh_volt_lst = []
-# smh_curr_lst = []
 idx_intc_defl_lst = []
 current_lst = []
 current_den_lst = []
@@ -1244,10 +1249,10 @@ while True:
             dis_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], discharge_cap_arr, 'x',color='brown',label='capacity', markersize=4)
             CIM_marker, = ax_bat_volt.plot(time_df[cycle_idx], np.array(CIM_volt_drop_lst)/0.65, 'o',color='blue',label='CIM', markersize=4)
             
-            # ax_bat_volt.autoscale()
-            # ax_bat_current.autoscale()
-            # ax_bat_eff.autoscale()
-            # ax_bat_cap.autoscale()
+            ax_bat_volt.autoscale()
+            ax_bat_current.autoscale()
+            ax_bat_eff.autoscale()
+            ax_bat_cap.autoscale()
             # Set limit and ticks of bat_cycle
             # Match cycle scale to time scale and plot efficiency.
             cycle_plot = np.arange(0,tot_cycle_number,10)
@@ -1322,7 +1327,7 @@ while True:
             cycle_plot = np.arange(0,tot_cycle_number,50)          
         elif cycle_end-cycle_start >= 1001:
             cycle_plot = np.arange(0,tot_cycle_number,100)  
-                  
+        
         ax_bat_cycle.set_xticks(cycle_plot)        
         ax_bat_volt.set_xlim(left=left_bound,right=right_bound)
         ax_bat_cycle.set_xlim(left=cycle_start,right=cycle_end)
@@ -1336,26 +1341,6 @@ while True:
         window['output_ee'].Update(np.round(EE_avg,3))
                    
         ax_bat_cap.set_ylim(min(charge_cap_arr[cycle_start:cycle_end]), max(charge_cap_arr[cycle_start:cycle_end]))
-        
-        
-        # ax_bat_current = ax_bat_volt.twinx()
-        # ax_bat_eff = ax_bat_volt.twinx()
-        # ax_bat_cap = ax_bat_volt.twinx()
-        # ax_bat_cycle = ax_bat_volt.twiny()
-        # ax_bat_eff.spines.right.set_position(("axes", 1.11))
-        # ax_bat_cap.spines.right.set_position(("axes", 1.21))
-        # ax_bat_volt.set_ylabel("Voltage")
-        # ax_bat_current.set_ylabel("Current")
-        # ax_bat_eff.set_ylabel("Voltage/Coulombic/ Energy Efficiencies")
-        # ax_bat_cap.set_ylabel("Capacity")
-        # ax_bat_cycle.set_xlabel("Cycle")
-        # ax_bat_volt.set_xlabel("Time")
-        
-        # ax_bat_current.cla()
-        # ax_bat_volt.cla()
-        # ax_bat_eff.cla()
-        # ax_bat_cap.cla()
-        # ax_bat_cycle.cla()
         
         fig_agg_bat.draw()
     if event == 'bat_clear':
