@@ -337,7 +337,10 @@ while True:
             continue
 
     if event in ('cv_load_cv', 'cv_load_ecsa'):
-        load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))        
+        load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
+        if not load_cv_dir.endswith('.txt'):
+           sg.popup("Wrong file extension, is it .txt?", keep_on_top=True)
+           continue         
         directory, filename = os.path.split(load_cv_dir)
         filename_without_extension, _ = os.path.splitext(filename)
         results_filename = f"{filename_without_extension}_results.ods"
@@ -397,18 +400,30 @@ while True:
         window['idx_jsp0'].Update(range=(1, cv_size-1))
         
     if event in ('cv_open_menu', 'cv_open_menu_ecsa'):
-        if values['cv_open_menu'] == "VersaSTAT4 (.par)" or values['cv_open_menu_ecsa'] == "VersaSTAT4 (.par)":
+        if values['cv_open_menu'] == "VersaSTAT4 (.par)" or values['cv_open_menu_ecsa'] == "VersaSTAT4 (.par)":              
             file_format = "VersaSTAT"
             cv_file_new = sg.popup_get_file('Choose VersaSTAT4 CV file',multiple_files=True)
+            if not cv_file_new.endswith('.par'):
+               sg.popup("Wrong file extension, is it .par?", keep_on_top=True)
+               continue 
         elif values['cv_open_menu'] == "CorrWare (.cor)" or values['cv_open_menu_ecsa'] == "CorrWare (.cor)":
             file_format = "CorrWare"
             cv_file_new = sg.popup_get_file('Choose CorrWare CV file',multiple_files=True)
+            if not cv_file_new.endswith('.cor'):
+               sg.popup("Wrong file extension, is it .cor?", keep_on_top=True)
+               continue 
         elif values['cv_open_menu'] == "CSV (.csv)" or values['cv_open_menu_ecsa'] == "CSV (.csv)":
             file_format = "CSV"
             cv_file_new = sg.popup_get_file('Choose CSV CV file',multiple_files=True)
+            if not cv_file_new.endswith('.csv'):
+               sg.popup("Wrong file extension, is it .csv?", keep_on_top=True)
+               continue 
         elif values['cv_open_menu'] == "text (.txt)" or values['cv_open_menu_ecsa'] == "text (.txt)":
             file_format = "text"
             cv_file_new = sg.popup_get_file('Choose text CV file',multiple_files=True)
+            if not cv_file_new.endswith('.txt'):
+               sg.popup("Wrong file extension, is it .txt?", keep_on_top=True)
+               continue 
             
         # If cancel, close the window, go back to beginning
         if cv_file_new is None or cv_file_new == '' or cv_file_new == ():
@@ -1119,72 +1134,12 @@ while True:
             window['cv_combo_cv'].Update(cv_select)
             values['cv_combo_cv'] = cv_select    
 
-
-
-    # if event in ('inv_jpa_jpc', 'ir_compen', 'elec_area', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos',| 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc', 'elec_n', 'enable_d', 'enable_k', 'peak_mode_1', 'peak_mode_2')
-    # print(cv_name_idx,cv_name_idx_old)    
-    # match event:      
-    #     case 'cv_open_menu' | 'cv_load_cv' | 'cv_combo_cv' | 'inv_jpa_jpc' | 'ir_compen' | 'elec_area' | 'sl_cutval_s' | 'sl_cutval_e' | 'sl_jpa_lns' | 'sl_jpa_lne' |  'sl_jpc_lns' | 'sl_jpc_lne' | 'peak_range' | 'peak_pos' | 'trou_pos' | 'sl_cutval_s_pos' | 'sl_cutval_e_pos' | 'sl_jpa_lns_pos' | 'sl_jpa_lne_pos' |  'sl_jpc_lns_pos' | 'sl_jpc_lne_pos' | 'peak_range_pos' | 'peak_pos_pos' | 'trou_pos_pos'| 'nicholson_cb' | 'idx_jsp0' | 'idx_jsp0_pos' | 'scan_rate'  | 'bulk_conc'  | 'elec_n' | 'enable_d' | 'enable_k' | 'peak_mode_1' | 'peak_mode_2' | 'cv_open_menu_ecsa' | 'cv_load_ecsa' | 'cv_combo_ecsa' | 'sl_v_ln_ecsa' | 'sl_h_ln_ecsa' | 'sl_cutval_s_ecsa' | 'sl_cutval_e_ecsa' | 'peak_range_ecsa' | 'ir_compen_ecsa' | 'sl_cutval_s_ecsa_pos' | 'sl_cutval_e_ecsa_pos' | 'sl_v_ln_ecsa_pos' | 'sl_h_ln_ecsa_pos' | 'peak_range_ecsa_pos' :
-
-    #     case 'save_cv_param':
-    #         save_cv_dir = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("All TAR Files", "*.tar"), ("All Files", "*.*")))
-    #         if save_cv_dir is None or save_cv_dir == '' or save_cv_dir == ():
-    #             continue
-    #         with tarfile.open(save_cv_dir, 'w') as tar:
-    #             csv_buffer = io.BytesIO()
-    #             np.savetxt(csv_buffer, fitting_save_array, delimiter=',')
-    #             csv_buffer.seek(0)
-    #             tarinfo = tarfile.TarInfo('cv_param'+'.csv')
-    #             tarinfo.size = len(csv_buffer.getvalue())
-    #             tar.addfile(tarinfo, fileobj=csv_buffer)
-    #             for cv_file in cv_path_lst:
-    #                 arcname = os.path.basename(cv_file)
-    #                 tar.add(cv_file, arcname='cv/'+str(arcname))
-    #         tar.close()
-    #     case 'Delete CV File':
-    #         del current_lst[cv_name_idx]
-    #         del current_den_lst[cv_name_idx]
-    #         del cv_name_lst[cv_name_idx]
-    #         del cv_path_lst[cv_name_idx]
-    #         del cv_size_lst[cv_name_idx]
-    #         del idx_intc_defl_lst[cv_name_idx]
-    #         del smh_volt_lst[cv_name_idx]
-    #         del smh_curr_lst[cv_name_idx]
-    #         del volt_lst[cv_name_idx]
-    #         del volt_ir_lst[cv_name_idx]           
-    #         fitting_save_array = np.delete(fitting_save_array,1+cv_name_idx,0)
-    #         cv_results = cv_results.drop([cv_name_idx])
-    #         cv_results.reset_index(inplace=True)
-    #         cv_results = cv_results.drop('index',axis=1)
-            
-    #         # If the deleted data is the last in the list, when delete, the cv_name_idx must be substract to refer to data below it.
-    #         if len(cv_name_lst)-1 < cv_name_idx: 
-    #             cv_name_idx = cv_name_idx - 1
-                    
-    #         if cv_results.empty: # If dataframe empty, just put nothing in display
-    #             window['cv_results_dis'].Update('')
-    #         else:
-    #             window['cv_results_dis'].Update(cv_results.to_string(index=False))
-            
-    #         window['cv_combo'].Update(values=cv_name_lst)
-            
-    #         if len(cv_name_lst) == 0: # If CV all delete, make combo empty and disable slider
-    #             window['cv_combo'].Update()
-    #             disable_slider(True)
-    #             window['Delete CV File'].Update(disabled=True) # Disable delete button if empty
-    #             window['cv_combo'].Update('')
-    #             values['cv_combo'] = ''
-    #             continue
-    #         elif len(cv_name_lst) >= 1:
-    #             window['cv_combo'].Update(cv_name_lst)     
-    #             cv_select = cv_name_lst[cv_name_idx]
-    #             window['cv_combo'].Update(cv_select)
-    #             values['cv_combo'] = cv_select
-    #     case 'save_cv':
-    #         save_cv_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
-    #         if save_cv_loc is None or save_cv_loc == '' or save_cv_loc == ():
-    #             continue
-    #         fig_cv.savefig(save_cv_loc)
+    if event == 'save_cv':
+        save_cv_loc = sg.popup_get_file('Create of choose a file (PNG) to save to', save_as=True)
+        if save_cv_loc is None or save_cv_loc == '' or save_cv_loc == ():
+            continue
+        fig_cv.savefig(save_cv_loc)
+        
     if event == 'Open battery file':
         bat_file_new = sg.popup_get_file('Choose battery cycle file (.xls)')
         # If cancel, close the window, go back to beginning
