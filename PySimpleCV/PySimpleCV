@@ -350,38 +350,63 @@ while True:
     #         sg.popup('CV file not found, maybe missing file in TAR archive',file_not_found_error, keep_on_top=True)
     #         continue
         
-    # if event in ('cv_load_cv', 'cv_load_ecsa'):
-    #     load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
-    #     if load_cv_dir is None or load_cv_dir == '' or load_cv_dir == ():
-    #         continue
-    #     # temp_path = os.path.splitext(load_cv_dir)[0]+'_temp_pysimplecv'
-    #     # with tarfile.open(load_cv_dir, 'r') as tar:
-    #     #     tar.extractall(temp_path)
-    #     try:
-    #         fitting_save_array = np.loadtxt(load_cv_dir,dtype=object, delimiter=',')
-    #         cv_name_idx = 1
+    if event in ('cv_load_cv', 'cv_load_ecsa'):
+        load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
+        if load_cv_dir is None or load_cv_dir == '' or load_cv_dir == ():
+            continue
+        try:
+            fitting_save_array = np.loadtxt(load_cv_dir,dtype=object, delimiter=',')
+            # cv_name_idx = 1
 
-    #         cv_load_file_multiple = fitting_save_array[1:,0]
-            
-    #         for cv_file in cv_load_file_multiple:
-    #             print(cv_file)
-    #             # cv_name = os.path.basename(cv_file) #Get file name
-    #             df_CV, file_scan_rate = CV_file2df(cv_file, file_format)       
-    #             # cv_size, volt, current = get_CV_init(df_CV)
-    #             # cv_path_lst.append(cv_file) #Create 2D array of CVs so we can select, plot, and analyze data based on index
-    #             # cv_name_lst.append(cv_name)
-    #             # volt_lst.append(volt)
-    #             # current_lst.append(current)
-    #             # volt_ir_lst.append(volt) #Append volt to ir compensated volt, this is like ir=0
-    #             # current_den_lst.append(current) # This is like elec_area = 1
-    #             # cv_size_lst.append(cv_size)
-    
-    #             # deflection and Peak detection
-    #             # _, idx_intc_defl = deflection(cv_size,volt,current)
-    #             # idx_intc_defl_lst.append(idx_intc_defl)
-    #     except FileNotFoundError as file_not_found_error:
-    #         sg.popup('CV file not found, maybe missing file was moved',file_not_found_error, keep_on_top=True)
-    #         continue
+            file_name_load_mult = fitting_save_array[1:,0]
+            file_form_load_mult = fitting_save_array[1:,1]
+            for i in np.arange(0,len(file_name_load_mult)):
+                print(i)
+                cv_file = file_name_load_mult[i]
+                file_format = file_form_load_mult[i]
+                cv_name = os.path.basename(cv_file) #Get file name
+                df_CV, file_scan_rate = CV_file2df(cv_file, file_format)       
+                cv_size, volt, current = get_CV_init(df_CV)
+                cv_path_lst.append(cv_file) #Create 2D array of CVs so we can select, plot, and analyze data based on index
+                cv_name_lst.append(cv_name)
+                volt_lst.append(volt)
+                current_lst.append(current)
+                volt_ir_lst.append(volt) #Append volt to ir compensated volt, this is like ir=0
+                current_den_lst.append(current) # This is like elec_area = 1
+                cv_size_lst.append(cv_size)
+                # deflection and Peak detection
+                _, idx_intc_defl = deflection(cv_size,volt,current)
+                idx_intc_defl_lst.append(idx_intc_defl)
+                
+                window['cv_combo_cv'].Update(values=cv_name_lst) # Update combo list of CVs
+                window['cv_combo_cv'].Update(cv_name) # Update default combo display
+                values['cv_combo_cv'] = cv_name
+                window['cv_combo_ecsa'].Update(values=cv_name_lst) # Update combo list of CVs
+                window['cv_combo_ecsa'].Update(cv_name) # Update default combo display
+                values['cv_combo_ecsa'] = cv_name
+                disable_slider(False)
+                cv_select = cv_name    
+                cv_name_idx = cv_name_lst.index(cv_select)
+                cv_results.loc[cv_name_idx] = [cv_select, file_scan_rate, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']   
+        except FileNotFoundError as file_not_found_error:
+            sg.popup('CV file not found, maybe missing file was moved',file_not_found_error, keep_on_top=True)
+            continue
+             
+        volt = volt_lst[cv_name_idx]
+        current = current_lst[cv_name_idx]
+        cv_size = cv_size_lst[cv_name_idx]
+        idx_arr = np.arange(0,cv_size)
+        idx_defl_points = np.array(idx_intc_defl_lst[cv_name_idx])       
+        window['sl_cutval_s'].Update(range=(0,cv_size-1))
+        window['sl_cutval_e'].Update(range=(0,cv_size-1))
+        window['sl_jpa_lns'].Update(range=(0,cv_size-1))
+        window['sl_jpa_lne'].Update(range=(0,cv_size-1))
+        window['sl_jpc_lns'].Update(range=(0,cv_size-1))
+        window['sl_jpc_lne'].Update(range=(0,cv_size-1))
+        window['peak_range'].Update(range=(1, 100))
+        window['peak_pos'].Update(range=(1, cv_size-1))
+        window['trou_pos'].Update(range=(1, cv_size-1))
+        window['idx_jsp0'].Update(range=(1, cv_size-1))
         
     if event in ('cv_open_menu', 'cv_open_menu_ecsa'):
         if values['cv_open_menu'] == "VersaSTAT4 (.par)" or values['cv_open_menu_ecsa'] == "VersaSTAT4 (.par)":
@@ -561,8 +586,7 @@ while True:
             nicholson_cb = nicholson_cb_save
             
         # elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
-    if event in ('cv_open_menu', 'ir_compen', 'elec_area','inv_jpa_jpc', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc', 'elec_n', 'enable_d', 'enable_k','peak_mode_1', 'peak_mode_2'):      
-
+    if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area','inv_jpa_jpc', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc', 'elec_n', 'enable_d', 'enable_k','peak_mode_1', 'peak_mode_2'):
         cutval_s = int(values['sl_cutval_s'])
         cutval_e = int(values['sl_cutval_e'])        
         jpa_lns = int(values['sl_jpa_lns'])
@@ -780,11 +804,17 @@ while True:
         ax_cv.set_xlabel("Voltage")
         ax_cv.set_ylabel("Current")       
         fig_agg_cv.draw()
-    
+        
+        
+        # if event == 'cv_load_cv':
+        #     for cv in cv_name_lst:
+        #         cv_name_idx = cv_name_lst.index(cv) 
+        #         cv_results.loc[cv_name_idx] = [cv, scan_rate, jpa, jpc, jpc0, peak_volt, trou_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
+            
         cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, jpc0, peak_volt, trou_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
         cv_results = cv_results.sort_index()
         window['cv_results_dis'].Update(cv_results.to_string(index=False))
-        print(fitting_save_array)
+        # print(fitting_save_array)
             
         try:
             bulk_conc = float(values['bulk_conc'])
