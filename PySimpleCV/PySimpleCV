@@ -307,10 +307,10 @@ volt_ir_lst = []
 cv_path_lst = []
 cv_name_lst = []
 cv_size_lst = []
-#                            0          1            2         3         4        5        6        7        8         9         10          11         12           13          14         15        16           17         18            19             20             21         22         23
-#                            file name, file_format, cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb, cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa
-fitting_default = np.array([["",        "",          0.,       0.,       0.,      0.,      0.,      0.,      1.,       1.,       100.,       0.,        "max",       "min",      1.,        0.,       0.,          0.,        0.,           0.,            0.,            0.,        0.,        1.]], dtype=object)
-fitting_save_array = np.zeros((2,fitting_default.size), dtype=object) #Do not change the file path and format in index 0 and 1
+#                            0         1         2         3       4         5      6           7         8          9          10           11          12           13        14          15        16            17             18              19        20         21        22           23
+#                            file name,file format, cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb, cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa
+fitting_default = np.array([["",       "",          0.,       0.,       0.,      0.,      0.,      0.,      1.,       1.,       100.,       0.,        "max",       "min",      1.,        0.,       0.,          0.,        0.,           0.,            0.,            0.,        0.,        1.]], dtype=object)
+fitting_save_array = np.zeros((1,fitting_default.size), dtype=object)
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 ir_compen_old = 0
 elec_area_old = 1
@@ -459,7 +459,7 @@ while True:
         except Exception as file_error:
             sg.popup(file_error, keep_on_top=True)
             continue
-        # print(fitting_save_array)
+        
     # if event == 1:
     #     print("===========tab change========")
 
@@ -656,8 +656,8 @@ while True:
         jpc_lns,jpc_lne = switch_val(jpc_lns,jpc_lne)
         
         fitting_save_cv = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb])
+        
         fitting_save_array[cv_name_idx+1][2:19] = fitting_save_cv
-
         if ir_compen != ir_compen_old:
             ir_compen_old = ir_compen
             volt_compen = ir_compen_func(volt,current,ir_compen)
@@ -766,7 +766,6 @@ while True:
         # Plot lines
         volt_lst_len = len(volt_lst)
         for j in np.arange(0,volt_lst_len):
-            print(fitting_save_array[j+1,2],fitting_save_array[j+1,3])
             cutval_s_all = int(fitting_save_array[j+1,2])
             cutval_e_all = int(fitting_save_array[j+1,3])
             ax_cv.plot(np.array(volt_ir_lst[j][cutval_s_all:cutval_e_all]).T, np.array(current_den_lst[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=0.8)
@@ -785,7 +784,8 @@ while True:
         cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, jpc0, peak_volt, trou_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
         cv_results = cv_results.sort_index()
         window['cv_results_dis'].Update(cv_results.to_string(index=False))
-
+        print(fitting_save_array)
+            
         try:
             bulk_conc = float(values['bulk_conc'])
         except ValueError:
@@ -849,7 +849,22 @@ while True:
     if event == 'save_cv_param':
         file_dir = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
         print(file_dir)
-        np.savetxt(file_dir, fitting_save_array, delimiter=',', fmt='%s')
+        np.savetxt(file_dir, fitting_save_array, delimiter=',', fmt='%s')    
+        
+        # if save_cv_dir is None or save_cv_dir == '' or save_cv_dir == ():
+        #     continue
+        # with tarfile.open(save_cv_dir, 'w') as tar:
+        #     txt_buffer = io.BytesIO()
+        #     np.savetxt(txt_buffer, fitting_save_array, delimiter=',', fmt='%s')
+        #     txt_buffer.seek(0)
+        #     tarinfo = tarfile.TarInfo('cv_param'+'.txt')
+        #     tarinfo.size = len(txt_buffer.getvalue())
+        #     tar.addfile(tarinfo, fileobj=txt_buffer)
+        #     for cv_file in cv_path_lst:
+        #         arcname = os.path.basename(cv_file)
+        #         tar.add(cv_file, arcname='cv/'+str(arcname))
+        # tar.close()
+
 
 # array = np.array((1, 2, 3, 4, "apple", 8.913), dtype=object)
 
@@ -899,11 +914,11 @@ while True:
         if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
             cv_name_idx_old = cv_name_idx                    
             # Restore saved values        
-            cutval_s_ecsa_save = int(fitting_save_array[cv_name_idx+1,19])
-            cutval_e_ecsa_save = int(fitting_save_array[cv_name_idx+1,20])               
-            v_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,21])
-            h_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,22])
-            peak_range_ecsa_save = int(fitting_save_array[cv_name_idx+1,23])
+            cutval_s_ecsa_save = int(fitting_save_array[cv_name_idx+1,18])
+            cutval_e_ecsa_save = int(fitting_save_array[cv_name_idx+1,19])               
+            v_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,20])
+            h_ln_ecsa_save = int(fitting_save_array[cv_name_idx+1,21])
+            peak_range_ecsa_save = int(fitting_save_array[cv_name_idx+1,22])
             # Put slider to previous position
             window['sl_cutval_s_ecsa'].Update(cutval_s_ecsa_save)
             window['sl_cutval_e_ecsa'].Update(cutval_e_ecsa_save)
@@ -988,7 +1003,7 @@ while True:
         cutval_s_ecsa,cutval_e_ecsa = switch_val(cutval_s_ecsa,cutval_e_ecsa)
 
         fitting_save_ecsa = np.array([cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa], dtype=object) 
-        fitting_save_array[cv_name_idx+1][19:24] = fitting_save_ecsa
+        fitting_save_array[cv_name_idx+1][18:23] = fitting_save_ecsa
         
         if ir_compen != ir_compen_old:
             ir_compen_old = ir_compen
@@ -1009,8 +1024,8 @@ while True:
         ax_cv_ecsa.cla() ###### Clear plot before redraw
         volt_lst_len = len(volt_lst)
         for j in np.arange(0,volt_lst_len):
-            cutval_s_ecsa_all = int(fitting_save_array[j+1,18])
-            cutval_e_ecsa_all = int(fitting_save_array[j+1,19])
+            cutval_s_ecsa_all = int(fitting_save_array[j+1,17])
+            cutval_e_ecsa_all = int(fitting_save_array[j+1,18])
             ax_cv_ecsa.plot(np.array(volt_ir_lst[j][cutval_s_ecsa_all:cutval_e_ecsa_all]).T, np.array(current_den_lst[j][cutval_s_ecsa_all:cutval_e_ecsa_all]).T, '-', color='black',linewidth=2)
         
         search_mode = 'max' ######### Need new setting
@@ -1078,25 +1093,25 @@ while True:
         window['peak_range'].Update(range=(1, 100))
         window['peak_pos'].Update(range=(1, cv_size-1))
         window['trou_pos'].Update(range=(1, cv_size-1))
-        window['idx_jsp0'].Update(range=(1, cv_size-1))
+        window['idx_jsp0'].Update(range=(1, cv_size-1))     
         # Put slider to previous position, this is just what is shown not real value
-        window['sl_cutval_s'].Update(int(fitting_save_array[cv_name_idx+1,2]))
-        window['sl_cutval_e'].Update(int(fitting_save_array[cv_name_idx+1,3]))           
-        window['sl_jpa_lns'].Update(int(fitting_save_array[cv_name_idx+1,4]))
-        window['sl_jpa_lne'].Update(int(fitting_save_array[cv_name_idx+1,5]))
-        window['sl_jpc_lns'].Update(int(fitting_save_array[cv_name_idx+1,6]))
-        window['sl_jpc_lne'].Update(int(fitting_save_array[cv_name_idx+1,7]))
-        window['peak_pos'].Update(int(fitting_save_array[cv_name_idx+1,8]))
-        window['trou_pos'].Update(int(fitting_save_array[cv_name_idx+1,9]))
-        window['peak_range'].Update(int(fitting_save_array[cv_name_idx+1,10]))
-        window['ir_compen'].Update(float(fitting_save_array[cv_name_idx+1,11]))
-        window['peak_mode_1'].Update(str(fitting_save_array[cv_name_idx+1,12]))
-        window['peak_mode_2'].Update(str(fitting_save_array[cv_name_idx+1,13]))
-        window['elec_area'].Update(float(fitting_save_array[cv_name_idx+1,14]))
-        window['idx_jsp0'].Update(int(fitting_save_array[cv_name_idx+1,15]))
-        window['inv_jpa_jpc'].Update(int(fitting_save_array[cv_name_idx+1,16]))
-        window['scan_rate'].Update(float(fitting_save_array[cv_name_idx+1,17]))
-        window['nicholson_cb'].Update(float(fitting_save_array[cv_name_idx+1,18]))
+        # window['sl_cutval_s'].Update(int(fitting_save_array[cv_name_idx+1,0]))
+        window['sl_cutval_e'].Update(int(fitting_save_array[cv_name_idx+1,1]))           
+        window['sl_jpa_lns'].Update(int(fitting_save_array[cv_name_idx+1,2]))
+        window['sl_jpa_lne'].Update(int(fitting_save_array[cv_name_idx+1,3]))
+        window['sl_jpc_lns'].Update(int(fitting_save_array[cv_name_idx+1,4]))
+        window['sl_jpc_lne'].Update(int(fitting_save_array[cv_name_idx+1,5]))
+        window['peak_pos'].Update(int(fitting_save_array[cv_name_idx+1,6]))
+        window['trou_pos'].Update(int(fitting_save_array[cv_name_idx+1,7]))
+        window['peak_range'].Update(int(fitting_save_array[cv_name_idx+1,8]))
+        window['ir_compen'].Update(float(fitting_save_array[cv_name_idx+1,9]))
+        window['peak_mode_1'].Update(str(fitting_save_array[cv_name_idx+1,10]))
+        window['peak_mode_2'].Update(str(fitting_save_array[cv_name_idx+1,11]))
+        window['elec_area'].Update(float(fitting_save_array[cv_name_idx+1,12]))
+        window['idx_jsp0'].Update(int(fitting_save_array[cv_name_idx+1,13]))
+        window['inv_jpa_jpc'].Update(int(fitting_save_array[cv_name_idx+1,14]))
+        window['scan_rate'].Update(float(fitting_save_array[cv_name_idx+1,15]))
+        window['nicholson_cb'].Update(float(fitting_save_array[cv_name_idx+1,16]))
         # Put actual value             
         values['sl_cutval_s'] = cutval_s_save
         values['sl_cutval_e'] = cutval_e_save           
