@@ -303,7 +303,6 @@ def disable_slider(bool):
     window['sl_h_ln_ecsa_pos'].Update(disabled=bool)
     window['peak_range_ecsa_pos'].Update(disabled=bool)
 
-randles_select = True
 volt_lst = []
 idx_intc_defl_lst = []
 current_lst = []
