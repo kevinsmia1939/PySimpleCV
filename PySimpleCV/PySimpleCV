@@ -1027,13 +1027,8 @@ while True:
         ax_cv_ecsa.vlines(x=peak_volt, ymin=peak_curr, ymax=current_den[h_ln_ecsa], linewidth=2, color='r', linestyle='--')
 
         # Switch position for fill_between and np.trapz
-        # b is always larger than a
-        if peak_real_idx > h_ln_ecsa:
-            a = h_ln_ecsa
-            b = peak_real_idx
-        else:
-            b = h_ln_ecsa
-            a = peak_real_idx
+        # b is always larger than a     
+        a,b = switch_val(peak_real_idx,h_ln_ecsa)
             
         ax_cv_ecsa.fill_between(volt_compen[a:b], current_den[h_ln_ecsa],current_den[a:b],color='orange')
         ax_cv_ecsa.grid()
