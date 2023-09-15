@@ -486,9 +486,6 @@ while True:
         except Exception as file_error:
             sg.popup(file_error, keep_on_top=True)
             continue
-        
-    # if event == 1:
-    #     print("===========tab change========")
 
     if event in ('cv_open_menu','cv_load_cv','cv_combo_cv'): #Change combo also update slider range
         cv_select = values['cv_combo_cv']
@@ -587,7 +584,6 @@ while True:
             scan_rate = scan_rate_save
             nicholson_cb = nicholson_cb_save
             
-        # elif cv_name_idx == cv_name_idx_old: #If combobox does not change, simply read value from slider
     if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area','inv_jpa_jpc', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc', 'elec_n', 'enable_d', 'enable_k','peak_mode_1', 'peak_mode_2'):
         cutval_s = int(values['sl_cutval_s'])
         cutval_e = int(values['sl_cutval_e'])        
