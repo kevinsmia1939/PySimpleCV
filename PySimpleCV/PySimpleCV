@@ -905,6 +905,7 @@ while True:
         #====================================================================================#
         #======================================CV ECSA ======================================#
         #====================================================================================#
+        
     # if event in ('cv_open_menu_ecsa', 'cv_load_ecsa','cv_combo_ecsa'):
         cv_select = values['cv_combo_ecsa']
         if values['cv_combo_ecsa'] == '': #Prevent error when combo box value is empty
@@ -1154,6 +1155,10 @@ while True:
         if save_cv_loc is None or save_cv_loc == '' or save_cv_loc == ():
             continue
         fig_cv.savefig(save_cv_loc)
+        
+        #====================================================================================#
+        #=======================================Battery======================================#
+        #====================================================================================#
         
     if event == 'Open battery file':
         bat_file_new = sg.popup_get_file('Choose battery cycle file (.xls)')
