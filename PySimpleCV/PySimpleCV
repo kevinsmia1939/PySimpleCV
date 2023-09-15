@@ -124,12 +124,12 @@ rde2 = [
      sg.Text('Angular velocity'),sg.Input(default_text=('0'), key='rde_rot',size=(10,5),disabled=True, enable_events=True),sg.Combo(values=('RPM','rad/s'), default_value='RPM', readonly=True, key='rde_rot_unit', enable_events=True)],
     [sg.Text('Trim LSV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s_lsv', disable_number_display=True, enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_cutval_s_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
     [sg.Text('Trim LSV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_cutval_e_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Average Start'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_avg_s_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_v_ln_ecsa_pos',size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Average End'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_avg_e_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_h_ln_ecsa_pos',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Average Start'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_avg_s_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_avg_s_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Average End'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_avg_e_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_avg_e_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
     
     [sg.Frame('Diffusion Coefficienct Calculation',[   
     [sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n_rde',size=(3,5),disabled=True, enable_events=True),sg.Text('Electrode area'), sg.Input(default_text=('1'), key='elec_area_rde',size=(5,5),disabled=True, enable_events=True),sg.Text('cm\u00b2')],
-    [sg.Text('Kinematic viscosity'),sg.Input(default_text=('0'), key='kinvis_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('cm\u00b2/s'),sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc',size=(10,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3')],
+    [sg.Text('Kinematic viscosity'),sg.Input(default_text=('0'), key='kinvis_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('cm\u00b2/s'),sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3')],
     [sg.Text('Diffusion (cm\u00b2/s)'),sg.Input('', key='rde_D', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
     ], key='-frame_rde_D-')]  
     
@@ -331,6 +331,20 @@ def disable_slider(bool):
     window['sl_h_ln_ecsa_pos'].Update(disabled=bool)
     window['peak_range_ecsa_pos'].Update(disabled=bool)
 
+def disable_slider_lsv(bool):
+    window['sl_cutval_s_lsv'].Update(disabled=bool)
+    window['sl_cutval_e_lsv'].Update(disabled=bool)
+    window['sl_avg_s_lsv'].Update(disabled=bool)
+    window['sl_avg_e_lsv'].Update(disabled=bool)
+    window['sl_cutval_s_lsv_pos'].Update(disabled=bool)
+    window['sl_cutval_e_lsv_pos'].Update(disabled=bool)
+    window['sl_avg_s_lsv_pos'].Update(disabled=bool)
+    window['sl_avg_e_lsv_pos'].Update(disabled=bool)
+    window['ir_compen_lsv'].Update(disabled=bool)
+    window['elec_area_rde'].Update(disabled=bool)
+    window['bulk_conc_rde'].Update(disabled=bool)
+    window['elec_n_rde'].Update(disabled=bool)
+    window['kinvis_rde'].Update(disabled=bool)
 
 idx_intc_defl_list = []
 curr_list = []
@@ -546,28 +560,20 @@ while True:
                 
             fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
         
-
         vm_volt = vm_volt_list[vm_name_idx]
         vm_curr = vm_curr_list[vm_name_idx]
         vm_size = vm_size_list[vm_name_idx]
+        
         if event in ('cv_open_menu', 'cv_open_menu_ecsa'):
             disable_slider(False)
+            
+        if event == 'cv_open_menu':
             idx_arr = np.arange(0,vm_size)
             idx_defl_points = np.array(idx_intc_defl_list[vm_name_idx])
-                
-                # window['sl_cutval_s'].Update(range=(0,vm_size-1))
-                # window['sl_cutval_e'].Update(range=(0,vm_size-1))
-                # window['sl_jpa_lns'].Update(range=(0,vm_size-1))
-                # window['sl_jpa_lne'].Update(range=(0,vm_size-1))
-                # window['sl_jpc_lns'].Update(range=(0,vm_size-1))
-                # window['sl_jpc_lne'].Update(range=(0,vm_size-1))
-                # window['peak_range'].Update(range=(1, int(0.05*vm_size)))
-                # window['peak_pos'].Update(range=(1, vm_size-1))
-                # window['trou_pos'].Update(range=(1, vm_size-1))
-                # window['idx_jsp0'].Update(range=(1, vm_size-1))
-        # except Exception as file_error:
-        #     sg.popup(file_error, keep_on_top=True)
-        #     continue
+            
+        elif event == 'rde_open_menu':
+            disable_slider_lsv(False)
+
 
     if event in ('cv_open_menu','cv_load_cv', 'cv_combo_cv'): #Change combo also update slider range
         cv_select = values['cv_combo_cv']
@@ -645,8 +651,7 @@ while True:
             values['idx_jsp0'] = idx_jsp0_save
             values['inv_jpa_jpc'] = inv_jpa_jpc_save
             values['scan_rate'] = scan_rate_save
-            values['nicholson_cb'] = nicholson_cb_save  
-            
+            values['nicholson_cb'] = nicholson_cb_save            
             # Assign the value from saved data
             cutval_s = cutval_s_save
             cutval_e = cutval_e_save
@@ -872,17 +877,16 @@ while True:
         for j in np.arange(0,vm_volt_list_len):
             cutval_s_all = int(fitting_save_array[j+1,2])
             cutval_e_all = int(fitting_save_array[j+1,3])
-            ax_cv.plot(np.array(vm_volt_ir_list[j][cutval_s_all:cutval_e_all]).T, np.array(vm_curr_den_list[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=0.8)
+            ax_cv.plot(np.array(vm_volt_ir_list[j][cutval_s_all:cutval_e_all]).T, np.array(vm_curr_den_list[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=1)
         
         if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
             cv_volt_defl = np.interp([clip_defl], idx_arr, volt_compen_cv)
             curr_defl = np.interp([clip_defl], idx_arr, cv_curr_den)
-      
             ax_cv.plot(cv_volt_defl,curr_defl,'.',color='green')
         ax_cv.grid()
         ax_cv.set_xlabel("Voltage")
-        ax_cv.set_ylabel(cv_curr)       
+        ax_cv.set_ylabel("Current")       
         fig_agg_cv.draw()
 
         cv_results.loc[vm_name_idx] = [cv_select, scan_rate, jpa, jpc, jpc0, peak_cv_volt, trou_cv_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
@@ -1303,7 +1307,6 @@ while True:
             cutval_e_lsv_save = int(fitting_save_array[vm_name_idx+1,25])
             avg_s_lsv_save = int(fitting_save_array[vm_name_idx+1,26])
             avg_e_lsv_save = int(fitting_save_array[vm_name_idx+1,27])
-
             # Put slider to previous position, this is just what is shown not real value
             window['sl_cutval_s_lsv'].Update(cutval_s_lsv_save)
             window['sl_cutval_e_lsv'].Update(cutval_e_lsv_save)           
@@ -1320,7 +1323,7 @@ while True:
             avg_s_lsv = avg_s_lsv_save
             avg_e_lsv = avg_e_lsv_save
       
-    if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde', 'sl_avg_s_lsv', 'sl_avg_e_lsv', 'rde_rot'):
+    if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde','sl_cutval_s_lsv','sl_cutval_e_lsv', 'sl_avg_s_lsv', 'sl_avg_e_lsv','sl_cutval_s_lsv_pos','sl_cutval_e_lsv_pos', 'sl_avg_s_lsv_pos', 'sl_avg_e_lsv_pos', 'rde_rot'):
         cutval_s_lsv = int(values['sl_cutval_s_lsv'])
         cutval_e_lsv = int(values['sl_cutval_e_lsv'])        
         avg_s_lsv = int(values['sl_avg_s_lsv'])
@@ -1383,14 +1386,18 @@ while True:
             vm_curr_den_list[vm_name_idx] = lsv_curr_den
         else:
             lsv_curr_den = vm_curr_den_list[vm_name_idx]
-   
-        ax_cv.cla() ###### Clear plot before redraw       
+        
         vm_volt_list_len = len(vm_volt_list)
+        ax_rde.cla() ###### Clear plot before redraw 
         for j in np.arange(0,vm_volt_list_len):
             cutval_s_lsv_all = int(fitting_save_array[j+1,24])
             cutval_e_lsv_all = int(fitting_save_array[j+1,25])
-            ax_rde.plot(np.array(vm_volt_ir_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, np.array(vm_curr_den_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, '-', color='black',linewidth=2)
- 
+            ax_rde.plot(np.array(vm_volt_ir_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, np.array(vm_curr_den_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, '-', color='black',linewidth=1)
+        
+        ax_rde.grid()
+        ax_rde.set_xlabel("Voltage")
+        ax_rde.set_ylabel("Current")       
+        fig_agg_rde.draw()
         #====================================================================================#
         #=======================================Battery======================================#
         #====================================================================================#
