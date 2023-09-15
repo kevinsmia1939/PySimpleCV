@@ -121,7 +121,7 @@ rde2 = [
     [sg.ButtonMenu("Add/Open LSV file",rde_open_menu,key='rde_open_menu'),sg.Button("Load saved LSV config", key='rde_load'),sg.Combo(values=(), default_value='', readonly=False, key='rde_combo', enable_events=True, size=(30,15)),sg.Button("Delete LSV File", disabled=True)],
     [sg.Text('.csv file with Voltage on 1st colume and current on 2nd column separated by comma')],
     [sg.Text('iR compensation'),sg.Input(default_text=('0'), key='ir_compen_lsv',size=(10,5),disabled=True, enable_events=True),sg.Text('Ω'),
-     sg.Text('Angular velocity'),sg.Input(default_text=('0'), key='rde_rot',size=(10,5),disabled=True, enable_events=True),sg.Combo(values=('RPM','rad/s'), default_value='RPM', readonly=True, key='rde_rot_unit', enable_events=True)],
+     sg.Text('Angular velocity'),sg.Input(default_text=('0'), key='rde_ror',size=(10,5),disabled=True, enable_events=True),sg.Combo(values=('RPM','rad/s'), default_value='RPM', readonly=True, key='rde_ror_unit', enable_events=True)],
     [sg.Text('Trim LSV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s_lsv', disable_number_display=True, enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_cutval_s_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
     [sg.Text('Trim LSV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_cutval_e_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
     [sg.Text('Average Start'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_avg_s_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_avg_s_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
@@ -135,7 +135,10 @@ rde2 = [
     
     ]
 
-rde_layout = [[sg.Column(rde1),sg.Column(rde2)]]
+rde_layout = [
+    [sg.Column(rde1),sg.Column(rde2)],
+    [sg.Multiline('',size=(155,8), disabled=True, key = 'rde_results_dis', font=('DejaVu Sans Mono', 12), no_scrollbar=False, horizontal_scroll=True)], 
+    ]
 
 # Generate layout for battery cycling tab.
 bat_col1=[[sg.Canvas(key='-CANVAS_bat-')]]
@@ -345,6 +348,7 @@ def disable_slider_lsv(bool):
     window['bulk_conc_rde'].Update(disabled=bool)
     window['elec_n_rde'].Update(disabled=bool)
     window['kinvis_rde'].Update(disabled=bool)
+    window['rde_ror'].Update(disabled=bool)
 
 idx_intc_defl_list = []
 curr_list = []
@@ -383,7 +387,7 @@ ir_compen_lsv_old = 0
 elec_area_lsv_old = 1
 
 cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "Jpc0", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_ano", "alpha_cat"])
-rde_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "ang_vel", "Jpa", "Jpc", "Jpc0", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_ano", "alpha_cat"])
+rde_results = pd.DataFrame(columns =  ["file_name", "Rotation", "Ji"])
 while True:
     event, values = window.read()
     # print(event)
@@ -556,7 +560,7 @@ while True:
                 window['rde_combo'].Update(values=vm_name_list) # Update combo list of CVs
                 window['rde_combo'].Update(vm_name) # Update default combo display
                 values['rde_combo'] = vm_name
-                rde_results.loc[vm_name_idx] = [vm_select, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']    
+                rde_results.loc[vm_name_idx] = [vm_select, '0', '0']    
                 
             fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)
         
@@ -1286,11 +1290,14 @@ while True:
         #====================================================================================#
         
     if event in ('rde_open_menu','rde_load', 'rde_combo'): #Change combo also update slider range
-        lsv_select = values['rde_combo']
+        vm_select = values['rde_combo']
         if values['rde_combo'] == '': #Prevent error when combo box value is empty
             vm_name_idx = 0
         else:
-            vm_name_idx = vm_name_list.index(vm_select)  
+            vm_name_idx = vm_name_list.index(vm_select)
+        print(vm_name_list)
+        print(vm_select)
+        print(vm_name_idx)
         lsv_volt = vm_volt_list[vm_name_idx]
         lsv_curr = vm_curr_list[vm_name_idx]
         lsv_size = vm_size_list[vm_name_idx]
@@ -1323,7 +1330,7 @@ while True:
             avg_s_lsv = avg_s_lsv_save
             avg_e_lsv = avg_e_lsv_save
       
-    if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde','sl_cutval_s_lsv','sl_cutval_e_lsv', 'sl_avg_s_lsv', 'sl_avg_e_lsv','sl_cutval_s_lsv_pos','sl_cutval_e_lsv_pos', 'sl_avg_s_lsv_pos', 'sl_avg_e_lsv_pos', 'rde_rot'):
+    if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde','sl_cutval_s_lsv','sl_cutval_e_lsv', 'sl_avg_s_lsv', 'sl_avg_e_lsv','sl_cutval_s_lsv_pos','sl_cutval_e_lsv_pos', 'sl_avg_s_lsv_pos', 'sl_avg_e_lsv_pos', 'rde_ror'):
         cutval_s_lsv = int(values['sl_cutval_s_lsv'])
         cutval_e_lsv = int(values['sl_cutval_e_lsv'])        
         avg_s_lsv = int(values['sl_avg_s_lsv'])
@@ -1332,7 +1339,7 @@ while True:
         # Make sure that proper number format is used
         ir_compen_lsv = check_val(values['ir_compen_lsv'], "float", 0)
         elec_area_lsv = check_val(values['elec_area_rde'], "float", 1)    
-        rde_rot = check_val(values['rde_rot'], "float", 0)
+        rde_ror = check_val(values['rde_ror'], "float", 0)
         cutval_s_lsv_pos = check_val(values['sl_cutval_s_lsv'], "int", 1)
         cutval_e_lsv_pos = check_val(values['sl_cutval_e_lsv'], "int", 1)  
         avg_s_lsv_pos = check_val(values['sl_avg_s_lsv'], "int", 1)
@@ -1367,10 +1374,10 @@ while True:
         avg_s_lsv,avg_e_lsv = switch_val(avg_s_lsv,avg_e_lsv)
         
         # cutval_s_rde, cutval_e_rde, sl_avg_s_lsv,sl_avg_e_lsv, rde rotation rate, ir_compen_lsv
-        
-        fitting_save_rde = np.array([cutval_s_lsv,cutval_e_lsv,avg_s_lsv,avg_e_lsv,rde_rot,ir_compen_lsv])
-        
+        # print(vm_name_idx)
+        fitting_save_rde = np.array([cutval_s_lsv,cutval_e_lsv,avg_s_lsv,avg_e_lsv,rde_ror,ir_compen_lsv])       
         fitting_save_array[vm_name_idx+1][24:30] = fitting_save_rde
+        
         if ir_compen_lsv != ir_compen_lsv_old:
             ir_compen_lsv_old = ir_compen_lsv
             volt_compen_lsv = ir_compen_func(lsv_volt,lsv_curr,ir_compen_lsv)
@@ -1394,10 +1401,18 @@ while True:
             cutval_e_lsv_all = int(fitting_save_array[j+1,25])
             ax_rde.plot(np.array(vm_volt_ir_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, np.array(vm_curr_den_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, '-', color='black',linewidth=1)
         
+        lsv_curr_avg = np.average(lsv_curr_den[avg_s_lsv:avg_e_lsv])
+        ax_rde.axhline(y=lsv_curr_avg, color='blue', linestyle='--')
+        ax_rde.plot(volt_compen_lsv[avg_s_lsv:avg_e_lsv],lsv_curr_den[avg_s_lsv:avg_e_lsv],linewidth=3,linestyle='-', color='blue')
+        
         ax_rde.grid()
         ax_rde.set_xlabel("Voltage")
         ax_rde.set_ylabel("Current")       
         fig_agg_rde.draw()
+        
+        rde_results.loc[vm_name_idx] = [vm_select, rde_ror, lsv_curr_avg]
+        rde_results = rde_results.sort_index()
+        window['rde_results_dis'].Update(rde_results.to_string(index=False))
         #====================================================================================#
         #=======================================Battery======================================#
         #====================================================================================#
