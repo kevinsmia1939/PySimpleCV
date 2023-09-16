@@ -10,7 +10,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import shutil
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_diffusion
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_diffusion, RDE_kin_curr
 # from PySimpleCV_main_func import *
 
 if not sys.warnoptions:
@@ -132,7 +132,7 @@ rde2 = [
     [sg.Frame('Diffusion Coefficienct Calculation',[   
     [sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n_rde',size=(3,5),disabled=True, enable_events=True),sg.Text('Electrode area'), sg.Input(default_text=('1'), key='elec_area_rde',size=(5,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),sg.Text('',key='kinvis_rde_err',enable_events=True)],
     [sg.Text('Kinematic viscosity'),sg.Input(default_text=('1'), key='kinvis_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('cm\u00b2/s'),sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3')],
-    [sg.Text('Diffusion (cm\u00b2/s)'),sg.Input('', key='rde_D', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(20,5),disabled=True, enable_events=True)],
+    [sg.Text('Diffusion (cm\u00b2/s)'),sg.Input('', key='rde_D', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(20,5),disabled=True, enable_events=True),sg.Text('Kinetic Current (A)'),sg.Input('', key='rde_kin_curr', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(20,5),disabled=True, enable_events=True)],
     ], key='-frame_rde_D-')]  
     ]
 
@@ -1350,7 +1350,7 @@ while True:
             ir_compen_lsv = ir_compen_lsv_save
             rde_ror_unit = rde_ror_unit_save
       
-    if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde','kinvis_rde','elec_n_rde','sl_cutval_s_lsv','sl_cutval_e_lsv', 'sl_avg_s_lsv', 'sl_avg_e_lsv','sl_cutval_s_lsv_pos','sl_cutval_e_lsv_pos', 'sl_avg_s_lsv_pos', 'sl_avg_e_lsv_pos', 'rde_ror','rde_ror_unit','rde_D_layout_key'):
+    if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde', 'bulk_conc_rde','kinvis_rde','elec_n_rde','sl_cutval_s_lsv','sl_cutval_e_lsv', 'sl_avg_s_lsv', 'sl_avg_e_lsv','sl_cutval_s_lsv_pos','sl_cutval_e_lsv_pos', 'sl_avg_s_lsv_pos', 'sl_avg_e_lsv_pos', 'rde_ror','rde_ror_unit','rde_D_layout_key'):
         cutval_s_lsv = int(values['sl_cutval_s_lsv'])
         cutval_e_lsv = int(values['sl_cutval_e_lsv'])        
         avg_s_lsv = int(values['sl_avg_s_lsv'])
@@ -1443,9 +1443,11 @@ while True:
         
         rde_ror_arr = np.asarray(rde_results.loc[:,'Rotation'].to_numpy(), dtype=float)
         lim_curr_arr = np.asarray(rde_results.loc[:,'Lim curr'].to_numpy(), dtype=float)
-        sqrt_ror, jl_fit ,diffusion ,rde_r2 = RDE_diffusion(rde_ror_arr,lim_curr_arr,bulk_conc_rde,elec_n_rde,kinvis_rde)
-        window['rde_D'].Update(diffusion)
-        
+        sqrt_ror, jl_fit ,diffusion ,rde_r2_D = RDE_diffusion(rde_ror_arr,lim_curr_arr,bulk_conc_rde,elec_n_rde,kinvis_rde)
+        window['rde_D'].Update(diffusion)     
+        inv_sqrt_ror, j_inv_fit, j_kin ,rde_r2_kin_curr = RDE_kin_curr(rde_ror_arr,lim_curr_arr)
+        window['rde_kin_curr'].Update(j_kin)
+
         if values[1] == 'rde_D_layout_key':
             ax_rde_D.cla()
             ax_rde_D.plot(sqrt_ror,lim_curr_arr,'o',markersize=10)           
@@ -1457,7 +1459,8 @@ while True:
             
         if values[1] == 'rde_kin_curr_layout_key':
             ax_rde_kin_curr.cla()
-            ax_rde_kin_curr.plot(1/sqrt_ror,1/lim_curr_arr,'o',markersize=10)
+            ax_rde_kin_curr.plot(inv_sqrt_ror,1/lim_curr_arr,'o',markersize=10)
+            ax_rde_kin_curr.plot(inv_sqrt_ror,j_inv_fit,linewidth=3,linestyle='-', color='red')   
             ax_rde_kin_curr.grid()
             ax_rde_kin_curr.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
             ax_rde_kin_curr.set_ylabel("Current$^{-1}$",fontsize=14)

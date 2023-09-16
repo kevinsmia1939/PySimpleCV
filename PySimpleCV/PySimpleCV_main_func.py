@@ -418,12 +418,33 @@ def RDE_diffusion(ror,lim_curr,conc_bulk,n,kinvis):
         slope = jl_lnfit[1]
         F = 96485.332 #Faraday constant
         diffusion = (slope/(0.62*n*F*kinvis**(-1/6)*conc_bulk))**(3/2) #cathodic where slope is negative
+        # Calculate R2
+        jl_fit = jl_arr_poly(sqrt_ror)
+        residuals = lim_curr - jl_fit
+        ssr = np.sum(residuals ** 2)
+        sst = np.sum((lim_curr - np.mean(lim_curr)) ** 2)
+        r2 = (1 - (ssr / sst))    
     except SystemError:
-        pass
-    # Calculate R2
-    jl_fit = jl_arr_poly(sqrt_ror)
-    residuals = lim_curr - jl_fit
-    ssr = np.sum(residuals ** 2)
-    sst = np.sum((lim_curr - np.mean(lim_curr)) ** 2)
-    r2 = (1 - (ssr / sst))
+        jl_fit=0
+        diffusion=0 
+        r2=0
     return sqrt_ror, jl_fit ,diffusion ,r2
+
+def RDE_kin_curr(ror,lim_curr):
+    inv_sqrt_ror = 1/np.sqrt(ror)
+    inv_lim_curr = 1/lim_curr
+    try:     
+        j_inv_lnfit, _ = poly.polyfit(inv_sqrt_ror,inv_lim_curr,1,full=True)
+        j_inv_arr_poly = poly.Polynomial(j_inv_lnfit)
+        j_kin = 1/j_inv_lnfit[0]
+        # Calculate R2
+        j_inv_fit = j_inv_arr_poly(inv_sqrt_ror)
+        residuals = inv_lim_curr - j_inv_fit
+        ssr = np.sum(residuals ** 2)
+        sst = np.sum((inv_lim_curr - np.mean(inv_lim_curr)) ** 2)
+        r2 = (1 - (ssr / sst))
+    except SystemError:
+        j_kin=0
+        r2=0
+        j_inv_fit=0
+    return inv_sqrt_ror, j_inv_fit, j_kin ,r2
