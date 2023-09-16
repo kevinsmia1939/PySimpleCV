@@ -133,8 +133,8 @@ def search_pattern(lst, pattern):
 def get_CV_init(df_CV):
     volt = df_CV[:,0]
     current = df_CV[:,1]
-    volt = volt[~np.isnan(volt)]
-    current = current[~np.isnan(current)]
+    volt = volt[np.isfinite(volt)]
+    current = current[np.isfinite(current)]
     cv_size = len(volt)
     return cv_size, volt, current
 
@@ -258,7 +258,7 @@ def lowess_func(x,y,frac):
 def diff(x,y):
     diff_y = np.gradient(y,x)
     # Find indices where x is not NaN
-    valid_indices = ~np.isnan(diff_y)
+    valid_indices = np.isfinite(diff_y)
     # Use boolean indexing to select values in y corresponding to valid x values
     x = x[valid_indices]
     diff_y = diff_y[valid_indices]
@@ -276,6 +276,7 @@ def deflection(cv_size,volt,current):
     _,smh_curr = lowess_func(idx_arr,current,frac)
     _,smh_volt = lowess_func(idx_arr,volt,frac)
     smh_volt,diff1_curr = diff(smh_volt,smh_curr) #First diff, find peaks (slope = 0)
+    idx_arr = np.arange(0,len(smh_volt)) # Recalculate size of idx_arr because NaN and inf removed
     smh_volt,diff2_curr = lowess_diff(idx_arr,smh_volt,diff1_curr,0.05)
     smh_volt,diff3_curr = lowess_diff(idx_arr,smh_volt,diff2_curr,0) #Detect deflection
     idx_intc_peak = idx_intercept(0,diff1_curr)
@@ -406,3 +407,23 @@ def switch_val(a,b):
         b = a
         a = b_old
     return a,b
+
+def RDE_diffusion(ror,lim_curr,conc_bulk,n,kinvis):
+    if kinvis <= 0:
+        kinvis = 1
+    sqrt_ror = np.sqrt(ror)
+    try:     
+        jl_lnfit, _ = poly.polyfit(sqrt_ror,lim_curr,1,full=True)
+        jl_arr_poly = poly.Polynomial(jl_lnfit)
+        slope = jl_lnfit[1]
+        F = 96485.332 #Faraday constant
+        diffusion = (slope/(0.62*n*F*kinvis**(-1/6)*conc_bulk))**(3/2) #cathodic where slope is negative
+    except SystemError:
+        pass
+    # Calculate R2
+    jl_fit = jl_arr_poly(sqrt_ror)
+    residuals = lim_curr - jl_fit
+    ssr = np.sum(residuals ** 2)
+    sst = np.sum((lim_curr - np.mean(lim_curr)) ** 2)
+    r2 = (1 - (ssr / sst))
+    return sqrt_ror, jl_fit ,diffusion ,r2
