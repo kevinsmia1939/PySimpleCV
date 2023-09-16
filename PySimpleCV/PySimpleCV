@@ -117,6 +117,7 @@ cv_ecsa_layout = [[sg.Column(cv_ecsa1),sg.Column(cv_ecsa2)]]
 
 rde1 =[[sg.Canvas(key='-CANVAS_rde-')]]
 rde1_D =[[sg.Canvas(key='-CANVAS_rde_D-')]]
+rde1_kin_curr =[[sg.Canvas(key='-CANVAS_rde_kin_curr-')]]
 rde2 = [
     [sg.Text('Rotating Disc Electrode, use slider to find limiting current (Jl)')],
     [sg.ButtonMenu("Add/Open LSV file",rde_open_menu,key='rde_open_menu'),sg.Button("Load saved LSV config", key='rde_load'),sg.Combo(values=(), default_value='', readonly=False, key='rde_combo', enable_events=True, size=(30,15)),sg.Button("Delete LSV File", disabled=True)],
@@ -135,7 +136,7 @@ rde2 = [
     ], key='-frame_rde_D-')]  
     ]
 
-rde_D_tab = sg.TabGroup([[sg.Tab('RDE', rde1, key='rde_layout_key'), sg.Tab('Diffusion', rde1_D , key='rde_D_layout_key')]], enable_events=True)
+rde_D_tab = sg.TabGroup([[sg.Tab('RDE', rde1, key='rde_layout_key'), sg.Tab('Diffusion', rde1_D , key='rde_D_layout_key'), sg.Tab('Kinetic Current', rde1_kin_curr , key='rde_kin_curr_layout_key')]], enable_events=True)
 
 rde_layout = [
     [rde_D_tab,sg.Column(rde2)],
@@ -175,6 +176,7 @@ canvas_cv_k = window['-CANVAS_cv_k-'].tk_canvas
 canvas_cv_ecsa = window['-CANVAS_cv_ecsa-'].tk_canvas
 canvas_rde = window['-CANVAS_rde-'].tk_canvas
 canvas_rde_D = window['-CANVAS_rde_D-'].tk_canvas
+canvas_rde_kin_curr = window['-CANVAS_rde_kin_curr-'].tk_canvas
 canvas_bat = window['-CANVAS_bat-'].tk_canvas
 
 # Generate initial empty plot.
@@ -218,10 +220,17 @@ fig_agg_rde = draw_figure(canvas_rde, fig_rde)
 
 fig_rde_D = Figure(figsize=(9,9))
 ax_rde_D = fig_rde_D.add_subplot(111)
-ax_rde_D.set_xlabel("Rate of Rotation 1/2",fontsize=14)
+ax_rde_D.set_xlabel("Rate of Rotation$^{1/2}$",fontsize=14)
 ax_rde_D.set_ylabel("Current",fontsize=14)
 ax_rde_D.grid()
 fig_agg_rde_D = draw_figure(canvas_rde_D, fig_rde_D)
+
+fig_rde_kin_curr = Figure(figsize=(9,9))
+ax_rde_kin_curr = fig_rde_kin_curr.add_subplot(111)
+ax_rde_kin_curr.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
+ax_rde_kin_curr.set_ylabel("Current$^{-1}$",fontsize=14)
+ax_rde_kin_curr.grid()
+fig_agg_rde_kin_curr = draw_figure(canvas_rde_kin_curr, fig_rde_kin_curr)
 
 fig_bat = Figure(figsize=(10,10))
 ax_bat_volt = fig_bat.add_subplot(111)
@@ -1439,12 +1448,20 @@ while True:
         
         if values[1] == 'rde_D_layout_key':
             ax_rde_D.cla()
-            ax_rde_D.plot(sqrt_ror,lim_curr_arr,'o',markersize=10)
+            ax_rde_D.plot(sqrt_ror,lim_curr_arr,'o',markersize=10)           
             ax_rde_D.plot(sqrt_ror,jl_fit,linewidth=3,linestyle='-', color='blue')
             ax_rde_D.grid()
-            ax_rde_D.set_xlabel("Rate of Rotation 1/2",fontsize=14)
+            ax_rde_D.set_xlabel("Rate of Rotation$^1/2$",fontsize=14)
             ax_rde_D.set_ylabel("Current",fontsize=14)
             fig_agg_rde_D.draw() 
+            
+        if values[1] == 'rde_kin_curr_layout_key':
+            ax_rde_kin_curr.cla()
+            ax_rde_kin_curr.plot(1/sqrt_ror,1/lim_curr_arr,'o',markersize=10)
+            ax_rde_kin_curr.grid()
+            ax_rde_kin_curr.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
+            ax_rde_kin_curr.set_ylabel("Current$^{-1}$",fontsize=14)
+            fig_agg_rde_kin_curr.draw()             
 
     if event == 'save_rde_param':
         rde_param = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
