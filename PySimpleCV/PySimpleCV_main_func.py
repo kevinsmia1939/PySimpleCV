@@ -3,7 +3,6 @@ import numpy.polynomial.polynomial as poly
 import pandas as pd
 import re
 import statsmodels.api as sm
-from scipy import interpolate
 
 def search_string_in_file(file_name, string_to_search):
     line_number = 0
@@ -289,8 +288,8 @@ def idx_intercept(yint,y):
     for i in np.arange(1,y.size):
         if y[i] == yint:
             idx_intc.append(i)
-        if y[i] < yint and y[i-1] > yint or y[i] > yint and y[i-1] < yint: #in negative
-            new_x = interpolate.interp1d(y[i-1:i+1], [i-1,i])(yint).item() #Give float value rather than np array
+        elif y[i] < yint and y[i-1] > yint or y[i] > yint and y[i-1] < yint: #in negative
+            new_x = np.interp(yint, y[i-1:i+1], [i-1,i])
             idx_intc.append(new_x)
     return list(idx_intc)
 
