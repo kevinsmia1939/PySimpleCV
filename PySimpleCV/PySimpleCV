@@ -470,6 +470,8 @@ while True:
             # fitting_save_array = np.vectorize(custom_convert)(fitting_save_array)
             
             print(df_save)
+            file_name_load_mult = df_save['file name'][1]
+            print(file_name_load_mult)
             stop
             # fitting_save_array_x = np.array(fitting_save_array)
             # print(fitting_save_array_x,"&&&&&&&&&7")
@@ -633,6 +635,8 @@ while True:
                 rde_results.loc[vm_name_idx] = [vm_select, '0', 'RPM','0']       
             fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)  
         
+        fitting_save_array = np.delete(fitting_save_array, (0), axis=0)
+        print(fitting_save_array)
         vm_volt = vm_volt_list[vm_name_idx]
         vm_curr = vm_curr_list[vm_name_idx]
         vm_size = vm_size_list[vm_name_idx]
