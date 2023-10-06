@@ -134,7 +134,7 @@ def get_CV_init(df_CV):
     current = df_CV[:,1]
     volt = volt[np.isfinite(volt)]
     current = current[np.isfinite(current)]
-    cv_size = len(volt)
+    cv_size = int(len(volt))
     return cv_size, volt, current
 
 def ir_compen_func(volt,current,ir_compen):
