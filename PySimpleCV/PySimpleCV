@@ -447,24 +447,29 @@ while True:
         try:
             # cv_save_dtypes = [('col1', 'U100'), ('col2', 'U100'), ('col3', int), ('col4', int), ('col5', int), ('col6', int), ('col7', int), ('col8', int), ('col9', int), ('col10', int), ('col11', int), ('col12', float), ('col13', 'U100'), ('col14', 'U100'), ('col15', float), ('col16', int), ('col17', int), ('col18', int), ('col19', int), ('col20', int), ('col21', float), ('col22', int), ('col23', int), ('col24', int), ('col25', int), ('col26', int), ('col27', int), ('col28', int), ('col29', float), ('col30', float), ('col31', 'U100')]
             fitting_save_array = np.loadtxt(load_cv_dir,dtype=object, delimiter=',')
+            df_save = pd.DataFrame(fitting_save_array,columns=['file name','file format', 'cutval_s', 'cutval_e', 'jpa_lns', 'jpa_lne', 'jpc_lns', 'jpc_lne', 'peak_pos', 'trou_pos', 'peak_range', 'ir_compen', 'peak_mode_1', 'peak_mode_2','elec_area', 'idx_jsp0', 'inv_jpa_jpc', 'scan_rate', 'nicholson_cb', 'cutval_s_ecsa', 'cutval_e_ecsa', 'v_ln_ecsa', 'h_ln_ecsa', 'peak_range_ecsa', 'cutval_s_rde', 'cutval_e_rde', 'sl_avg_s_lsv','sl_avg_e_lsv', 'rde rotation rate', 'ir_compen_lsv', 'rde_ror_unit'])
+            # for i in fitting_save_array:
+            #     print(i,"$#$$")
+            #     cv_save_dtypes = [('col1', 'U100'), ('col2', 'U100'), ('col3', int), ('col4', int), ('col5', int), ('col6', int), ('col7', int), ('col8', int), ('col9', int), ('col10', int), ('col11', int), ('col12', float), ('col13', 'U100'), ('col14', 'U100'), ('col15', float), ('col16', int), ('col17', int), ('col18', int), ('col19', int), ('col20', int), ('col21', float), ('col22', int), ('col23', int), ('col24', int), ('col25', int), ('col26', int), ('col27', int), ('col28', int), ('col29', float), ('col30', float), ('col31', 'U100')]
+            #     eer = np.array((i),dtype=cv_save_dtypes)
+            #     print(eer,"#######")
+            # def custom_convert(value):
+            #     try:
+            #         # Try to convert the value to an integer
+            #         return float(value)
+            #     except ValueError:
+            #         return value
             
-            def custom_convert(value):
-                try:
-                    # Try to convert the value to an integer
-                    return float(value)
-                except ValueError:
-                    return value
+            # # Your data as a list of tuples
+            # # data_list = [('0', '0', '0', '1.3', '100', '2.5', '3.7')]
             
-            # Your data as a list of tuples
-            # data_list = [('0', '0', '0', '1.3', '100', '2.5', '3.7')]
+            # # Convert the list of tuples to a 2D NumPy array
+            # # data_array = np.array(data_list)
             
-            # Convert the list of tuples to a 2D NumPy array
-            # data_array = np.array(data_list)
+            # # Apply the custom conversion function to each element of the array
+            # fitting_save_array = np.vectorize(custom_convert)(fitting_save_array)
             
-            # Apply the custom conversion function to each element of the array
-            fitting_save_array = np.vectorize(custom_convert)(fitting_save_array)
-            
-            print(fitting_save_array,"*****")
+            print(df_save)
             stop
             # fitting_save_array_x = np.array(fitting_save_array)
             # print(fitting_save_array_x,"&&&&&&&&&7")
@@ -488,6 +493,8 @@ while True:
             
             file_name_load_mult = fitting_save_array[1:,0]
             file_form_load_mult = fitting_save_array[1:,1]
+            
+            
             for i in np.arange(0,len(file_name_load_mult)):
                 vm_file = file_name_load_mult[i]
                 file_format = file_form_load_mult[i]
