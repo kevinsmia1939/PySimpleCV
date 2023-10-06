@@ -395,7 +395,7 @@ lsv_volt_list = []
 lsv_curr_list = []
 #                            0         1         2         3       4         5      6           7         8          9          10           11          12           13        14          15        16            17             18              19        20         21        22           23               24            25            26           27            28                 29             30
 #                            file name,file format, cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb, cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa, cutval_s_rde, cutval_e_rde, sl_avg_s_lsv,sl_avg_e_lsv, rde rotation rate, ir_compen_lsv, rde_ror_unit
-fitting_default = np.array([["",       "",          0.,       0.,       0.,      0.,      0.,      0.,      1.,       1.,       100.,       0.,        "max",       "min",      1.,        0.,       0.,          0.,        False,           0.,            0.,            0.,        0.,        1.,           0.,           0.,           0.,          0.,           0.,                0.,            "RPM"]], dtype=object)
+fitting_default = np.array([["",       "",          0,        0,        0,       0,       0,       0,       1,        1,        100,        0.,        "max",       "min",      1.,        0,        0,           0.,        0,            0,             0,             0,         0,         1,               0,            0,            0,           0,            0.,                0.,            "RPM"]], dtype=object)
 fitting_save_array = np.zeros((1,fitting_default.size), dtype=object)
 
 vm_name_idx_old = -1 #set to -1 so that vm_name_idx != vm_name_idx_old will trigger the first time
@@ -425,6 +425,12 @@ while True:
 
     if event in ('cv_load_cv', 'cv_load_ecsa', 'rde_load'):
         load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
+        if load_cv_dir is None or load_cv_dir == '' or load_cv_dir == ():
+            continue
+        if not load_cv_dir.endswith('.txt'):
+           sg.popup("Wrong file extension, is it .txt?", keep_on_top=True)
+           continue
+       
         if not load_cv_dir.endswith('.txt'):
            sg.popup("Wrong file extension, is it .txt?", keep_on_top=True)
            continue         
@@ -439,7 +445,45 @@ while True:
         if load_cv_dir is None or load_cv_dir == '' or load_cv_dir == ():
             continue
         try:
-            fitting_save_array = np.loadtxt(load_cv_dir,dtype=object, delimiter=',')     
+            # cv_save_dtypes = [('col1', 'U100'), ('col2', 'U100'), ('col3', int), ('col4', int), ('col5', int), ('col6', int), ('col7', int), ('col8', int), ('col9', int), ('col10', int), ('col11', int), ('col12', float), ('col13', 'U100'), ('col14', 'U100'), ('col15', float), ('col16', int), ('col17', int), ('col18', int), ('col19', int), ('col20', int), ('col21', float), ('col22', int), ('col23', int), ('col24', int), ('col25', int), ('col26', int), ('col27', int), ('col28', int), ('col29', float), ('col30', float), ('col31', 'U100')]
+            fitting_save_array = np.loadtxt(load_cv_dir,dtype=object, delimiter=',')
+            
+            def custom_convert(value):
+                try:
+                    # Try to convert the value to an integer
+                    return float(value)
+                except ValueError:
+                    return value
+            
+            # Your data as a list of tuples
+            # data_list = [('0', '0', '0', '1.3', '100', '2.5', '3.7')]
+            
+            # Convert the list of tuples to a 2D NumPy array
+            # data_array = np.array(data_list)
+            
+            # Apply the custom conversion function to each element of the array
+            fitting_save_array = np.vectorize(custom_convert)(fitting_save_array)
+            
+            print(fitting_save_array,"*****")
+            stop
+            # fitting_save_array_x = np.array(fitting_save_array)
+            # print(fitting_save_array_x,"&&&&&&&&&7")
+            
+            # def str_to_bool(s):
+            #     return s.lower() == 'true'
+            
+            # # Apply the conversion function to the appropriate column(s)
+            # # Assuming the boolean values are in column 19 (0-based index)
+            # fitting_save_array[:, 19] = np.vectorize(str_to_bool)(fitting_save_array[:, 19])
+            
+            # print(fitting_save_array,"JKKKKKKKKKKKKkkk")
+            # print(fitting_save_array.type,"UUUUUUUU")
+            # test1 = np.array(fitting_save_array[1])
+            # print(test1)
+            # print(type(test1))
+            # print(fitting_save_array[:,1],"YYYYYYYY")
+            # This load bool and int as string
+            
             cv_results = pd.read_excel(cv_result_path, index_col=0) #Use first column as index
             
             file_name_load_mult = fitting_save_array[1:,0]
@@ -479,7 +523,10 @@ while True:
              
         cv_volt = vm_volt_list[vm_name_idx]
         cv_curr = vm_curr_list[vm_name_idx]
-        cv_size = cv_size_list[vm_name_idx]
+        print(vm_name_idx)
+        print(vm_size_list)
+        cv_size = vm_size_list[vm_name_idx]
+        
         idx_arr = np.arange(0,cv_size)
         idx_defl_points = np.array(idx_intc_defl_list[vm_name_idx])       
         window['sl_cutval_s'].Update(range=(0,cv_size-1))
@@ -634,8 +681,8 @@ while True:
             idx_jsp0_save = int(fitting_save_array[vm_name_idx+1,15])
             inv_jpa_jpc_save = int(fitting_save_array[vm_name_idx+1,16])
             scan_rate_save = float(fitting_save_array[vm_name_idx+1,17])
-            nicholson_cb_save = bool(fitting_save_array[vm_name_idx+1,18])
-
+            nicholson_cb_save = int(fitting_save_array[vm_name_idx+1,18])
+            print(fitting_save_array,"PPPPPPPPPPPPP")
             # Put slider to previous position, this is just what is shown not real value
             window['sl_cutval_s'].Update(cutval_s_save)
             window['sl_cutval_e'].Update(cutval_e_save)           
@@ -689,6 +736,7 @@ while True:
             idx_jsp0 = idx_jsp0_save
             inv_jpa_jpc = inv_jpa_jpc_save
             scan_rate = scan_rate_save
+            print(nicholson_cb_save)
             nicholson_cb = nicholson_cb_save
             
     if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area','inv_jpa_jpc', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc_cv', 'elec_n_cv', 'enable_d', 'enable_k','peak_mode_1', 'peak_mode_2'):
@@ -705,7 +753,7 @@ while True:
         peak_mode_2 = str(values['peak_mode_2'])
         idx_jsp0 = int(values['idx_jsp0'])
         inv_jpa_jpc = int(values['inv_jpa_jpc'])
-        nicholson_cb = bool(values['nicholson_cb'])
+        nicholson_cb = int(values['nicholson_cb'])
         # Make sure that proper number format is used
         ir_compen = check_val(values['ir_compen'], "float", 0)
         scan_rate = check_val(values['scan_rate'], "float", 0)
@@ -815,7 +863,7 @@ while True:
             trou_pos = int(trou_pos)
             
         ax_cv.cla() ###### Clear plot before redraw    
-        if nicholson_cb == False:
+        if nicholson_cb == 0:
             low_range_a, high_range_a, peak_cv_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, cv_volt, cv_curr, peak_range, peak_pos, jpa_lns, jpa_lne)
             low_range_c, high_range_c, trou_cv_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, cv_volt, cv_curr, peak_range, trou_pos, jpc_lns, jpc_lne)                
             
@@ -846,7 +894,7 @@ while True:
             ax_cv.plot(np.array([volt_compen_cv[jpc_lns],trou_cv_volt]),np.array([jpc_poly1d(volt_compen_cv[jpc_lns]),jpc_poly1d(trou_cv_volt)]),'--', color='blue')
             jpc0 = 0 #Only with Nicholson method
             jpc = np.abs(jpc) # Report positive value
-        elif nicholson_cb == True:
+        elif nicholson_cb == 1:
             if values['inv_jpa_jpc'] == True: 
                 jp1_text = 'jpc'
                 jp2_text = 'jpa0'
@@ -972,10 +1020,10 @@ while True:
     if event == 'Export CV data':
         cv_data_path = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("ODS Files", "*.ods"), ("All Files", "*.*")))
         # Find the maximum length among all arrays
-        cv_max_length = max(len(x) for x in vm_volt_list + curr_list)     
+        cv_max_length = max(len(x) for x in vm_volt_list + vm_curr_list)     
         # Create dictionaries with padding to max_length
         cv_data = {}
-        for i, (x, y) in enumerate(zip(vm_volt_list, curr_list), start=1):
+        for i, (x, y) in enumerate(zip(vm_volt_list, vm_curr_list), start=1):
             padded_x = np.pad(x.astype(float), (0, cv_max_length - len(x)), constant_values=np.nan)
             padded_y = np.pad(y.astype(float), (0, cv_max_length - len(y)), constant_values=np.nan)
             cv_data[f'{vm_name_list[i-1]}_cv_volt_{i}'] = padded_x
@@ -1008,7 +1056,7 @@ while True:
             vm_name_idx = vm_name_list.index(cv_select)
         cv_volt = vm_volt_list[vm_name_idx]
         cv_curr = vm_curr_list[vm_name_idx]
-        cv_size = cv_size_list[vm_name_idx]
+        cv_size = vm_size_list[vm_name_idx]
         idx_arr = np.arange(0,cv_size)
         idx_defl_points = np.array(idx_intc_defl_list[vm_name_idx]) 
         window['sl_cutval_s_ecsa'].Update(range=(0,cv_size-1))
@@ -1216,7 +1264,7 @@ while True:
             window['idx_jsp0'].Update(int(0))
             window['inv_jpa_jpc'].Update(int(0))
             window['scan_rate'].Update(float(0))
-            window['nicholson_cb'].Update(False)
+            window['nicholson_cb'].Update(bool(0))
             # Put actual value             
             values['sl_cutval_s'] = 0
             values['sl_cutval_e'] = 0        
@@ -1234,7 +1282,7 @@ while True:
             values['idx_jsp0'] = 0
             values['inv_jpa_jpc'] = 0
             values['scan_rate'] = 0
-            values['nicholson_cb'] = False
+            values['nicholson_cb'] = 0
             continue
         elif len(vm_name_list) >= 1:
             window['cv_combo_cv'].Update(vm_name_list)     
@@ -1271,7 +1319,7 @@ while True:
             window['idx_jsp0'].Update(int(fitting_save_array[vm_name_idx+1,15]))
             window['inv_jpa_jpc'].Update(int(fitting_save_array[vm_name_idx+1,16]))
             window['scan_rate'].Update(float(fitting_save_array[vm_name_idx+1,17]))
-            window['nicholson_cb'].Update(bool(fitting_save_array[vm_name_idx+1,18]))
+            window['nicholson_cb'].Update(int(fitting_save_array[vm_name_idx+1,18]))
             # Put actual value             
             values['sl_cutval_s'] = cutval_s_save
             values['sl_cutval_e'] = cutval_e_save           
