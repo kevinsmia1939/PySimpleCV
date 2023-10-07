@@ -87,7 +87,7 @@ cv_settings = [
     [sg.Text('Ano k (cm/s)'),sg.Input('', key='k_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat k (cm/s)'),sg.Input('', key='k_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
     ], key='-frame_D_k-')],
     
-    [sg.Button('Save parameters', key='save_cv_param'),sg.Button('Save plot', key='save_cv'),sg.Button('Export CV data'),sg.Button('About PySimpleCV'),sg.Button('Exit', key='exit')]
+    [sg.Button('Save parameters and results', key='save_cv_param', disabled=True),sg.Button('Save plot', key='save_cv', disabled=True),sg.Button('Export CV data', disabled=True),sg.Button('About PySimpleCV'),sg.Button('Exit', key='exit')]
 ]
 cv_D_k_tab = sg.TabGroup([[sg.Tab('CV', cv_cv, key='cv_cv_layout_key'), sg.Tab('Diffusion', cv_diff, key='cv_diff_layout_key'),sg.Tab('Kinetics', cv_kin, key='cv_kin_layout_key')]], enable_events=True)
              
@@ -339,6 +339,9 @@ def disable_slider(bool):
     window['peak_pos_pos'].Update(disabled=bool)
     window['trou_pos_pos'].Update(disabled=bool)
     window['idx_jsp0_pos'].Update(disabled=bool)
+    window['save_cv_param'].Update(disabled=bool)
+    window['save_cv'].Update(disabled=bool)
+    window['Export CV data'].Update(disabled=bool)
 
     window['sl_cutval_s_ecsa'].Update(disabled=bool)
     window['sl_cutval_e_ecsa'].Update(disabled=bool)    
@@ -404,11 +407,14 @@ elec_area_old = 1
 ir_compen_lsv_old = 0
 elec_area_lsv_old = 1
 
+all_vm_deleted = True
+
 cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "Jpc0", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_ano", "alpha_cat"])
 rde_results = pd.DataFrame(columns =  ["file_name", "Rotation", "Unit", "Lim curr"])
 while True:
     event, values = window.read()
-    print(event)
+    print(event,"TOOOOOOOOOOOOoPPPPPPPPPPPPPPPPP")
+    # print(values)
     # print(values)
     # print(values[1]) #This print active tab
     # print(values[0])
@@ -499,6 +505,11 @@ while True:
         window['trou_pos'].Update(range=(1, cv_size-1))
         window['idx_jsp0'].Update(range=(1, cv_size-1))
         
+        #Set flag to track if files are delete or not
+        if len(vm_name_list) >= 1:
+            all_vm_deleted = False
+        
+        
     if event in ('cv_open_menu', 'cv_open_menu_ecsa', 'rde_open_menu'):
         # vm = voltammogram
         if values['cv_open_menu'] == "VersaSTAT4 (.par)" or values['cv_open_menu_ecsa'] == "VersaSTAT4 (.par)" or values['rde_open_menu'] == "VersaSTAT4 (.par)":              
@@ -507,32 +518,32 @@ while True:
             if vm_file_new is None or vm_file_new == '' or vm_file_new == ():
                 continue
             if not vm_file_new.endswith('.par'):
-               sg.popup("Wrong file extension, is it .par?", keep_on_top=True)
-               continue 
+                sg.popup("Wrong file extension, is it .par?", keep_on_top=True)
+                continue 
         elif values['cv_open_menu'] == "CorrWare (.cor)" or values['cv_open_menu_ecsa'] == "CorrWare (.cor)" or values['rde_open_menu'] == "CorrWare (.cor)":
             file_format = "CorrWare"
             vm_file_new = sg.popup_get_file('Choose CorrWare CV file',multiple_files=True)
             if vm_file_new is None or vm_file_new == '' or vm_file_new == ():
                 continue
             if not vm_file_new.endswith('.cor'):
-               sg.popup("Wrong file extension, is it .cor?", keep_on_top=True)
-               continue
+                sg.popup("Wrong file extension, is it .cor?", keep_on_top=True)
+                continue
         elif values['cv_open_menu'] == "CSV (.csv)" or values['cv_open_menu_ecsa'] == "CSV (.csv)" or values['rde_open_menu'] == "CSV (.csv)":
             file_format = "CSV"
             vm_file_new = sg.popup_get_file('Choose CSV CV file',multiple_files=True)
             if vm_file_new is None or vm_file_new == '' or vm_file_new == ():
                 continue
             if not vm_file_new.endswith('.csv'):
-               sg.popup("Wrong file extension, is it .csv?", keep_on_top=True)
-               continue 
+                sg.popup("Wrong file extension, is it .csv?", keep_on_top=True)
+                continue 
         elif values['cv_open_menu'] == "text (.txt)" or values['cv_open_menu_ecsa'] == "text (.txt)" or values['rde_open_menu'] == "text (.txt)":
             file_format = "text"
             vm_file_new = sg.popup_get_file('Choose text CV file',multiple_files=True)
             if vm_file_new is None or vm_file_new == '' or vm_file_new == ():
                 continue
             if not vm_file_new.endswith('.txt'):
-               sg.popup("Wrong file extension, is it .txt?", keep_on_top=True)
-               continue 
+                sg.popup("Wrong file extension, is it .txt?", keep_on_top=True)
+                continue 
             
         vm_file_multiple = vm_file_new     
         for vm_file in vm_file_multiple.split(';'):      
@@ -600,6 +611,10 @@ while True:
             
         elif event == 'rde_open_menu':
             disable_slider_lsv(False)
+            
+        #Set flag to track if files are delete or not    
+        if len(vm_name_list) >= 1:
+            all_vm_deleted = False
 
 
     if event in ('cv_open_menu','cv_load_cv', 'cv_combo_cv'): #Change combo also update slider range
@@ -697,11 +712,14 @@ while True:
             inv_jpa_jpc = inv_jpa_jpc_save
             scan_rate = scan_rate_save
             nicholson_cb = nicholson_cb_save
-    
             
-    # print(event)
-    if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area','inv_jpa_jpc', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc_cv', 'elec_n_cv', 'enable_d', 'enable_k','peak_mode_1', 'peak_mode_2'):
+        #Set flag to track if files are delete or not    
+        if len(vm_name_list) >= 1:
+            all_vm_deleted = False
+            
+    if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area','inv_jpa_jpc', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc_cv', 'elec_n_cv', 'enable_d', 'enable_k','peak_mode_1', 'peak_mode_2') and all_vm_deleted == False:
         print("UUUUUUUUUUUUUUUUUUUUUUUUU")
+        print(event)
         cutval_s = int(values['sl_cutval_s'])
         cutval_e = int(values['sl_cutval_e'])        
         jpa_lns = int(values['sl_jpa_lns'])
@@ -722,8 +740,7 @@ while True:
         elec_area = check_val(values['elec_area'], "float", 1)    
         bulk_conc_cv = check_val(values['bulk_conc_cv'], "float", 0) 
         elec_n_cv = check_val(values['elec_n_cv'], "int", 1) 
-        
-        
+         
         cutval_s_pos = check_val(values['sl_cutval_s_pos'], "int", 1)
         cutval_e_pos = check_val(values['sl_cutval_e_pos'], "int", 1)  
         jpa_lns_pos = check_val(values['sl_jpa_lns_pos'], "int", 1)
@@ -799,7 +816,7 @@ while True:
         jpc_lns,jpc_lne = switch_val(jpc_lns,jpc_lne)
         
         fitting_save_cv = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb], dtype=object)
-        print(vm_name_idx)
+
         fitting_save_array[vm_name_idx][2:19] = fitting_save_cv
         if ir_compen != ir_compen_old:
             ir_compen_old = ir_compen
@@ -988,6 +1005,10 @@ while True:
             fig_cv_kin.legend()
             fig_agg_cv_k.draw()
             
+        #Set flag to track if files are delete or not    
+        if len(vm_name_list) >= 1:
+            all_vm_deleted = False
+            
     if event == 'Export CV data':
         cv_data_path = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("ODS Files", "*.ods"), ("All Files", "*.*")))
         # Find the maximum length among all arrays
@@ -1077,6 +1098,10 @@ while True:
             v_ln_ecsa_pos = v_ln_ecsa_save
             h_ln_ecsa_pos = h_ln_ecsa_save
             peak_range_ecsa = peak_range_ecsa_save
+    
+        #Set flag to track if files are delete or not    
+        if len(vm_name_list) >= 1:
+            all_vm_deleted = False
         
     if event in ('cv_open_menu_ecsa', 'sl_v_ln_ecsa', 'sl_h_ln_ecsa', 'sl_cutval_s_ecsa', 'sl_cutval_e_ecsa', 'peak_range_ecsa', 'ir_compen_ecsa', 'sl_cutval_s_ecsa_pos', 'sl_cutval_e_ecsa_pos', 'sl_v_ln_ecsa_pos', 'sl_h_ln_ecsa_pos', 'peak_range_ecsa_pos'):
         cutval_s_ecsa = int(values['sl_cutval_s_ecsa'])
@@ -1178,6 +1203,10 @@ while True:
         sq_area = (cv_curr_den[h_ln_ecsa]) * abs(volt_compen_ecsa[h_ln_ecsa]-peak_cv_volt)
         VA_area = abs(cv_ecsa_area-sq_area)
         window['VA_ecsa'].Update(f"{VA_area:e}")
+        
+        #Set flag to track if files are delete or not    
+        if len(vm_name_list) >= 1:
+            all_vm_deleted = False
 
     if event == 'Delete CV File':
         del vm_curr_list[vm_name_idx]
@@ -1188,8 +1217,6 @@ while True:
         del idx_intc_defl_list[vm_name_idx]
         del vm_volt_list[vm_name_idx]
         del vm_volt_ir_list[vm_name_idx]         
-        print(fitting_save_array,"OOOOOOOOOOOOOOOOOOOOOOOOO")
-        print(vm_name_list)
         fitting_save_array = np.delete(fitting_save_array,vm_name_idx,0)
         cv_results = cv_results.drop([vm_name_idx])
         cv_results.reset_index(inplace=True)
@@ -1204,7 +1231,14 @@ while True:
             window['cv_results_dis'].Update(cv_results.to_string(index=False))
         print(len(vm_name_list))
         if len(vm_name_list) <= 0: # If CV all delete, make combo empty and disable slider
-            print("no more cv   KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+            all_vm_deleted = True
+            
+            # Clear plot
+            ax_cv.cla()
+            ax_cv.set_xlabel("Voltage",fontsize=14)
+            ax_cv.set_ylabel("Current",fontsize=14)
+            fig_agg_cv.draw()
+            
             window['cv_combo_cv'].Update('')
             disable_slider(True)
             window['Delete CV File'].Update(disabled=True) # Disable delete button if empty
@@ -1255,8 +1289,8 @@ while True:
             values['inv_jpa_jpc'] = 0
             values['scan_rate'] = 0
             values['nicholson_cb'] = 0
-            print(event,"EEEEEEEEEEEEVVVVVVVVv")
         elif len(vm_name_list) >= 1:
+            all_vm_deleted = False
             window['cv_combo_cv'].Update(vm_name_list)     
             cv_select = vm_name_list[vm_name_idx]
             window['cv_combo_cv'].Update(cv_select)
