@@ -28,7 +28,6 @@ def About_PySimpleCV():
     'pandas - https://pandas.pydata.org/',
     'Matplotlib - https://matplotlib.org/',
     'PySimpleGUI - https://www.pysimplegui.org',
-    'impedance.py - https://impedancepy.readthedocs.io/en/latest/',
     'statsmodels - https://www.statsmodels.org',
     
     'Abbreviation',
@@ -409,7 +408,7 @@ cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "J
 rde_results = pd.DataFrame(columns =  ["file_name", "Rotation", "Unit", "Lim curr"])
 while True:
     event, values = window.read()
-    # print(event)
+    print(event)
     # print(values)
     # print(values[1]) #This print active tab
     # print(values[0])
@@ -446,58 +445,9 @@ while True:
         if load_cv_dir is None or load_cv_dir == '' or load_cv_dir == ():
             continue
         try:
-            # cv_save_dtypes = [('col1', 'U100'), ('col2', 'U100'), ('col3', int), ('col4', int), ('col5', int), ('col6', int), ('col7', int), ('col8', int), ('col9', int), ('col10', int), ('col11', int), ('col12', float), ('col13', 'U100'), ('col14', 'U100'), ('col15', float), ('col16', int), ('col17', int), ('col18', int), ('col19', int), ('col20', int), ('col21', float), ('col22', int), ('col23', int), ('col24', int), ('col25', int), ('col26', int), ('col27', int), ('col28', int), ('col29', float), ('col30', float), ('col31', 'U100')]
             fitting_save_array = np.loadtxt(load_cv_dir,dtype=object, delimiter=',')
             df_fitting_save_array = pd.DataFrame(fitting_save_array,columns=['file name','file format', 'cutval_s', 'cutval_e', 'jpa_lns', 'jpa_lne', 'jpc_lns', 'jpc_lne', 'peak_pos', 'trou_pos', 'peak_range', 'ir_compen', 'peak_mode_1', 'peak_mode_2','elec_area', 'idx_jsp0', 'inv_jpa_jpc', 'scan_rate', 'nicholson_cb', 'cutval_s_ecsa', 'cutval_e_ecsa', 'v_ln_ecsa', 'h_ln_ecsa', 'peak_range_ecsa', 'cutval_s_rde', 'cutval_e_rde', 'sl_avg_s_lsv','sl_avg_e_lsv', 'rde rotation rate', 'ir_compen_lsv', 'rde_ror_unit'])
-            # for i in fitting_save_array:
-            #     print(i,"$#$$")
-            #     cv_save_dtypes = [('col1', 'U100'), ('col2', 'U100'), ('col3', int), ('col4', int), ('col5', int), ('col6', int), ('col7', int), ('col8', int), ('col9', int), ('col10', int), ('col11', int), ('col12', float), ('col13', 'U100'), ('col14', 'U100'), ('col15', float), ('col16', int), ('col17', int), ('col18', int), ('col19', int), ('col20', int), ('col21', float), ('col22', int), ('col23', int), ('col24', int), ('col25', int), ('col26', int), ('col27', int), ('col28', int), ('col29', float), ('col30', float), ('col31', 'U100')]
-            #     eer = np.array((i),dtype=cv_save_dtypes)
-            #     print(eer,"#######")
-            # def custom_convert(value):
-            #     try:
-            #         # Try to convert the value to an integer
-            #         return float(value)
-            #     except ValueError:
-            #         return value
-            
-            # # Your data as a list of tuples
-            # # data_list = [('0', '0', '0', '1.3', '100', '2.5', '3.7')]
-            
-            # # Convert the list of tuples to a 2D NumPy array
-            # # data_array = np.array(data_list)
-            
-            # # Apply the custom conversion function to each element of the array
-            # fitting_save_array = np.vectorize(custom_convert)(fitting_save_array)
-            
-            # print(df_fitting_save_array)
-            
-            # file_name_load_mult = df_save['file name'][0]
-            # print(file_name_load_mult)
-            # stop
-            # fitting_save_array_x = np.array(fitting_save_array)
-            # print(fitting_save_array_x,"&&&&&&&&&7")
-            
-            # def str_to_bool(s):
-            #     return s.lower() == 'true'
-            
-            # # Apply the conversion function to the appropriate column(s)
-            # # Assuming the boolean values are in column 19 (0-based index)
-            # fitting_save_array[:, 19] = np.vectorize(str_to_bool)(fitting_save_array[:, 19])
-            
-            # print(fitting_save_array,"JKKKKKKKKKKKKkkk")
-            # print(fitting_save_array.type,"UUUUUUUU")
-            # test1 = np.array(fitting_save_array[1])
-            # print(test1)
-            # print(type(test1))
-            # print(fitting_save_array[:,1],"YYYYYYYY")
-            # This load bool and int as string
-            
             cv_results = pd.read_excel(cv_result_path, index_col=0) #Use first column as index
-            
-            # file_name_load_mult = fitting_save_array[1:,0]
-            # file_form_load_mult = fitting_save_array[1:,1]
-            
             
             for i in list(range(df_fitting_save_array.shape[0])):
                 vm_file = df_fitting_save_array['file name'][i]
@@ -636,7 +586,7 @@ while True:
             fitting_save_array = np.append(fitting_save_array,fitting_default,axis=0)  
         
         fitting_save_array = np.delete(fitting_save_array, (0), axis=0)
-        print(fitting_save_array)
+        # print(fitting_save_array)
         vm_volt = vm_volt_list[vm_name_idx]
         vm_curr = vm_curr_list[vm_name_idx]
         vm_size = vm_size_list[vm_name_idx]
@@ -747,8 +697,11 @@ while True:
             inv_jpa_jpc = inv_jpa_jpc_save
             scan_rate = scan_rate_save
             nicholson_cb = nicholson_cb_save
+    
             
+    # print(event)
     if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area','inv_jpa_jpc', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc_cv', 'elec_n_cv', 'enable_d', 'enable_k','peak_mode_1', 'peak_mode_2'):
+        print("UUUUUUUUUUUUUUUUUUUUUUUUU")
         cutval_s = int(values['sl_cutval_s'])
         cutval_e = int(values['sl_cutval_e'])        
         jpa_lns = int(values['sl_jpa_lns'])
@@ -846,7 +799,7 @@ while True:
         jpc_lns,jpc_lne = switch_val(jpc_lns,jpc_lne)
         
         fitting_save_cv = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb], dtype=object)
-        
+        print(vm_name_idx)
         fitting_save_array[vm_name_idx][2:19] = fitting_save_cv
         if ir_compen != ir_compen_old:
             ir_compen_old = ir_compen
@@ -1075,8 +1028,8 @@ while True:
         cv_volt = vm_volt_list[vm_name_idx]
         cv_curr = vm_curr_list[vm_name_idx]
         cv_size = vm_size_list[vm_name_idx]
-        idx_arr = np.arange(0,cv_size)
-        idx_defl_points = np.array(idx_intc_defl_list[vm_name_idx]) 
+        # idx_arr = np.arange(0,cv_size)
+        # idx_defl_points = np.array(idx_intc_defl_list[vm_name_idx]) 
         window['sl_cutval_s_ecsa'].Update(range=(0,cv_size-1))
         window['sl_cutval_e_ecsa'].Update(range=(0,cv_size-1))
         window['sl_v_ln_ecsa'].Update(range=(0,cv_size-1))
@@ -1198,7 +1151,7 @@ while True:
         for j in np.arange(0,vm_volt_list_len):
             cutval_s_ecsa_all = int(fitting_save_array[j,19])
             cutval_e_ecsa_all = int(fitting_save_array[j,20])
-            ax_cv_ecsa.plot(np.array(vm_volt_ir_list[j][cutval_s_ecsa_all:cutval_e_ecsa_all]).T, np.array(vm_curr_den_list[j][cutval_s_ecsa_all:cutval_e_ecsa_all]).T, '-', color='black',linewidth=2)
+            ax_cv_ecsa.plot(np.array(vm_volt_ir_list[j][cutval_s_ecsa_all:cutval_e_ecsa_all]).T, np.array(vm_curr_den_list[j][cutval_s_ecsa_all:cutval_e_ecsa_all]).T, '-', color='black',linewidth=1)
         
         search_mode = 'max' ######### Need new setting
         high_range_a, low_range_a, peak_cv_volt, peak_curr, peak_real_idx = min_max_peak(search_mode, cv_size, cv_volt, cv_curr, peak_range_ecsa, v_ln_ecsa)
@@ -1215,7 +1168,7 @@ while True:
         ax_cv_ecsa.fill_between(volt_compen_ecsa[a:b], cv_curr_den[h_ln_ecsa],cv_curr_den[a:b],color='orange')
         ax_cv_ecsa.grid()
         ax_cv_ecsa.set_xlabel("Voltage")
-        ax_cv_ecsa.set_ylabel(cv_curr)  
+        ax_cv_ecsa.set_ylabel("Current")  
         fig_agg_cv_ecsa.draw()
 
         cv_volt_ecsa = volt_compen_ecsa[a:b]
@@ -1234,8 +1187,10 @@ while True:
         del vm_size_list[vm_name_idx]
         del idx_intc_defl_list[vm_name_idx]
         del vm_volt_list[vm_name_idx]
-        del vm_volt_ir_list[vm_name_idx]           
-        fitting_save_array = np.delete(fitting_save_array,1+vm_name_idx,0)
+        del vm_volt_ir_list[vm_name_idx]         
+        print(fitting_save_array,"OOOOOOOOOOOOOOOOOOOOOOOOO")
+        print(vm_name_list)
+        fitting_save_array = np.delete(fitting_save_array,vm_name_idx,0)
         cv_results = cv_results.drop([vm_name_idx])
         cv_results.reset_index(inplace=True)
         cv_results = cv_results.drop('index',axis=1)      
@@ -1247,12 +1202,12 @@ while True:
             window['cv_results_dis'].Update('')
         else:
             window['cv_results_dis'].Update(cv_results.to_string(index=False))
-        
+        print(len(vm_name_list))
         if len(vm_name_list) <= 0: # If CV all delete, make combo empty and disable slider
-            window['cv_combo_cv'].Update()
+            print("no more cv   KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK")
+            window['cv_combo_cv'].Update('')
             disable_slider(True)
             window['Delete CV File'].Update(disabled=True) # Disable delete button if empty
-            window['cv_combo_cv'].Update('')
             values['cv_combo_cv'] = ''
             window['sl_cutval_s'].Update(range=(0,0))
             window['sl_cutval_e'].Update(range=(0,0))
@@ -1300,13 +1255,13 @@ while True:
             values['inv_jpa_jpc'] = 0
             values['scan_rate'] = 0
             values['nicholson_cb'] = 0
-            continue
+            print(event,"EEEEEEEEEEEEVVVVVVVVv")
         elif len(vm_name_list) >= 1:
             window['cv_combo_cv'].Update(vm_name_list)     
             cv_select = vm_name_list[vm_name_idx]
             window['cv_combo_cv'].Update(cv_select)
             values['cv_combo_cv'] = cv_select    
-            window['cv_combo_cv'].Update(values=vm_name_list)       
+            # window['cv_combo_cv'].Update(values=vm_name_list)       
             # Change Slider range
             cv_size = len(vm_volt_list[vm_name_idx])
             window['sl_cutval_s'].Update(range=(0,cv_size-1))
