@@ -8,6 +8,7 @@ License: GPLv3
 # Features
 
 Feel free to make a bug report for new features
+
 **Cyclic voltammetry**
 
 Currently supports VersaStudio (.par), Correware(.cor), .csv, and.txt.
@@ -21,9 +22,11 @@ Plot peak current vs. peak separation for rate of reaction.
 Export results and save file.
 
 **Cyclic voltammetry ECSA**
+
 Calculate electrochemical active surface area (ECSA) with selected area.
 
 **Rotating Disk Electrode**
+
 Calculate diffusion coefficient and kinetic current
 
 **Battery cycling**
@@ -36,6 +39,7 @@ CE - Coulombic Efficiency
 EE - Energy Efficiency
 
 **Requirement**
+
 Requires Python 3.10 and above.
 Required Python modules: Numpy, Matplotlib, PySimpleGUI, pandas, scipy, statsmodels.
 
