@@ -94,7 +94,7 @@ cv_D_k_tab = sg.TabGroup([[sg.Tab('CV', cv_cv, key='cv_cv_layout_key'), sg.Tab('
 cv_layout = [
             [sg.Checkbox('Plot Jp vs √scanrate for diffusion', default=False, key='enable_d', disabled=False, enable_events=True),sg.Checkbox('Plot Jp vs Ep-E0 for kinetic', default=False, key='enable_k', disabled=False, enable_events=True)],
             [cv_D_k_tab,sg.Column(cv_settings)],
-            [sg.Multiline('',size=(155,8), disabled=True, key = 'cv_results_dis', font=('DejaVu Sans Mono', 12), no_scrollbar=False, horizontal_scroll=True)],  
+            [sg.Multiline('',size=(155,5), disabled=True, key = 'cv_results_dis', font=('DejaVu Sans Mono', 12), no_scrollbar=False, horizontal_scroll=True)],  
             ]
 
 cv_ecsa1 =[[sg.Canvas(key='-CANVAS_cv_ecsa-')]]
@@ -403,8 +403,8 @@ lsv_volt_list = []
 lsv_curr_list = []
 #                            0         1         2         3       4         5      6           7         8          9          10           11          12           13        14          15        16            17             18              19        20         21        22           23               24            25            26           27            28                 29             30
 #                            file name,file format, cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb, cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa, cutval_s_rde, cutval_e_rde, sl_avg_s_lsv,sl_avg_e_lsv, rde rotation rate, ir_compen_lsv, rde_ror_unit
-fitting_default = np.array([["",       "",          0,        0,        0,       0,       0,       0,       1,        1,        100,        0.,        "max",       "min",      1.,        0,        0,           0.,        0,            0,             0,             0,         0,         1,               0,            0,            0,           0,            0.,                0.,            "RPM"]], dtype=object)
-fitting_cv_save_array = np.zeros((1,fitting_default.size), dtype=object)
+fitting_cv_default = np.array([["",       "",          0,        0,        0,       0,       0,       0,       1,        1,        100,        0.,        "max",       "min",      1.,        0,        0,           0.,        0,            0,             0,             0,         0,         1,               0,            0,            0,           0,            0.,                0.,            "RPM"]], dtype=object)
+fitting_cv_save_array = np.zeros((1,fitting_cv_default.size), dtype=object)
 #                                0         1            2             3             4            5             6                  7              8             9          
 #                                file name,file format, cutval_s_rde, cutval_e_rde, sl_avg_s_lsv,sl_avg_e_lsv, rde rotation rate, ir_compen_lsv, rde_ror_unit, elec_area_rde
 fitting_rde_default = np.array([["",       "",          0,            0,            0,           0,            0,                 0,             "RPM",        1]], dtype=object)
@@ -574,40 +574,40 @@ while True:
             
             ###############################################################################
             # Add new value from the CV file to save data array
-            fitting_default[:,0] = vm_file
-            fitting_default[:,1] = file_format
-            fitting_default[:,3] = vm_size
-            # fitting_default[:,4] = int(cv_size/10)
+            fitting_cv_default[:,0] = vm_file
+            fitting_cv_default[:,1] = file_format
+            fitting_cv_default[:,3] = vm_size
+            # fitting_cv_default[:,4] = int(cv_size/10)
             ###############################################################################
             
             vm_select = vm_name    
             cv_name_idx = vm_name_list.index(vm_select)
 
             if event == 'cv_open_menu':
-                fitting_default[:,3] = vm_size
-                fitting_default[:,17] = file_scan_rate  #Trim end
+                fitting_cv_default[:,3] = vm_size
+                fitting_cv_default[:,17] = file_scan_rate  #Trim end
                 window['cv_combo_cv'].Update(values=vm_name_list) # Update combo list of CVs
                 window['cv_combo_cv'].Update(vm_name) # Update default combo display
                 values['cv_combo_cv'] = vm_name
                 cv_results.loc[cv_name_idx] = [vm_select, file_scan_rate, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
-                fitting_cv_save_array = np.append(fitting_cv_save_array,fitting_default,axis=0)
+                fitting_cv_save_array = np.append(fitting_cv_save_array,fitting_cv_default,axis=0)
                 # fitting_cv_save_array = np.delete(fitting_cv_save_array, (0), axis=0)
             elif event == 'cv_open_menu_ecsa':
-                fitting_default[:,17] = file_scan_rate
-                fitting_default[:,20] = vm_size #Trim end
+                fitting_cv_default[:,17] = file_scan_rate
+                fitting_cv_default[:,20] = vm_size #Trim end
                 window['cv_combo_ecsa'].Update(values=vm_name_list) # Update combo list of CVs
                 window['cv_combo_ecsa'].Update(vm_name) # Update default combo display
                 values['cv_combo_ecsa'] = vm_name
                 cv_results.loc[cv_name_idx] = [vm_select, file_scan_rate, '0', '0', '0', '0', '0', '0', '0', '0', '0', '0']
-                fitting_cv_save_array = np.append(fitting_cv_save_array,fitting_default,axis=0)
+                fitting_cv_save_array = np.append(fitting_cv_save_array,fitting_cv_default,axis=0)
                 # fitting_cv_save_array = np.delete(fitting_cv_save_array, (0), axis=0)
             elif event == 'rde_open_menu':
-                fitting_default[:,25] = vm_size #Trim end
+                fitting_rde_default[:,25] = vm_size #Trim end
                 window['rde_combo'].Update(values=vm_name_list) # Update combo list of CVs
                 window['rde_combo'].Update(vm_name) # Update default combo display
                 values['rde_combo'] = vm_name
                 rde_results.loc[cv_name_idx] = [vm_select, '0', 'RPM','0']   
-                fitting_rde_save_array = np.append(fitting_rde_save_array,fitting_default,axis=0)
+                fitting_rde_save_array = np.append(fitting_rde_save_array,fitting_rde_default,axis=0)
                 
         if event == 'cv_open_menu':
             fitting_cv_save_array = np.delete(fitting_cv_save_array, (0), axis=0)
@@ -1454,11 +1454,6 @@ while True:
         if rde_name_idx != rde_name_idx_old: #If the option index change (combo box change), update slider
             rde_name_idx_old = rde_name_idx                    
             # Restore saved values
-            
-            #                                0         1            2             3             4            5             6                  7              8             9          
-            #                                file name,file format, cutval_s_rde, cutval_e_rde, sl_avg_s_lsv,sl_avg_e_lsv, rde rotation rate, ir_compen_lsv, rde_ror_unit, elec_area_rde
-            
-            
             cutval_s_lsv_save = int(fitting_rde_save_array[rde_name_idx,2])
             cutval_e_lsv_save = int(fitting_rde_save_array[rde_name_idx,3])
             avg_s_lsv_save = int(fitting_rde_save_array[rde_name_idx,4])
@@ -1568,8 +1563,8 @@ while True:
         vm_volt_list_len = len(vm_volt_list)
         ax_rde.cla() ###### Clear plot before redraw 
         for j in np.arange(0,vm_volt_list_len):
-            cutval_s_lsv_all = int(fitting_rde_save_array[j,24])
-            cutval_e_lsv_all = int(fitting_rde_save_array[j,25])
+            cutval_s_lsv_all = int(fitting_rde_save_array[j,2])
+            cutval_e_lsv_all = int(fitting_rde_save_array[j,3])
             ax_rde.plot(np.array(vm_volt_ir_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, np.array(vm_curr_den_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, '-', color='black',linewidth=1)
         
         lsv_curr_avg = np.average(lsv_curr_den[avg_s_lsv:avg_e_lsv])
@@ -1641,7 +1636,7 @@ while True:
             window['rde_results_dis'].Update('')
         else:
             window['rde_results_dis'].Update(cv_results.to_string(index=False))
-        print(len(vm_name_list))
+
         if len(vm_name_list) <= 0: # If CV all delete, make combo empty and disable slider
             all_rde_deleted = True
             
@@ -1666,15 +1661,15 @@ while True:
             window['sl_avg_s_lsv'].Update(int(0))
             window['sl_avg_e_lsv'].Update(int(0))
 
-            window['ir_compen'].Update(float(0))
-            window['elec_area'].Update(float(0))
+            window['ir_compen_lsv'].Update(float(0))
+            window['elec_area_rde'].Update(float(0))
             # Put actual value             
             values['sl_cutval_s_lsv'] = 0
             values['sl_cutval_e_lsv'] = 0        
             values['sl_avg_s_lsv'] = 0
             values['sl_avg_e_lsv'] = 0
-            values['ir_compen'] = 0
-            values['elec_area'] = 1
+            values['ir_compen_lsv'] = 0
+            values['elec_area_rde'] = 1
         elif len(vm_name_list) >= 1:
             all_rde_deleted = False
             window['rde_combo'].Update(lsv_name_list)     
@@ -1693,15 +1688,15 @@ while True:
             window['sl_cutval_e_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,3]))           
             window['sl_avg_s_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,4]))
             window['sl_avg_e_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,5]))
-            window['ir_compen'].Update(float(fitting_rde_save_array[rde_name_idx,11]))
-            window['elec_area'].Update(float(fitting_rde_save_array[rde_name_idx,14]))
+            window['ir_compen_lsv'].Update(float(fitting_rde_save_array[rde_name_idx,11]))
+            window['elec_area_rde'].Update(float(fitting_rde_save_array[rde_name_idx,14]))
             # Put actual value             
             values['sl_cutval_s_lsv'] = cutval_s_lsv_save
             values['sl_cutval_e_lsv'] = cutval_e_lsv_save           
             values['sl_avg_s_lsv'] = avg_s_lsv_save
             values['sl_avg_e_lsv'] = avg_e_lsv_save
             values['ir_compen_lsv'] = ir_compen_lsv_save
-            values['elec_area'] = elec_area_save
+            values['elec_area_rde'] = elec_area_rde_save
 
         #====================================================================================#
         #=======================================Battery======================================#
