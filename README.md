@@ -35,7 +35,9 @@ Battery cycling support .xls files with state (C_CC, D_CC, R) columns from Versa
 Support copy-paste battery efficiency.
 
 VE - Voltage Efficiency
+
 CE - Coulombic Efficiency
+
 EE - Energy Efficiency
 
 **Requirement**
