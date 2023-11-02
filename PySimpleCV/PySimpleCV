@@ -401,7 +401,7 @@ lsv_name_list = []
 lsv_size_list = []
 lsv_volt_list = []
 lsv_curr_list = []
-#                            0         1         2         3       4         5      6           7         8          9          10           11          12           13        14          15        16            17             18              19        20         21        22           23               24            25            26           27            28                 29             30
+#                            0         1            2         3       4         5      6           7         8          9          10           11          12           13        14          15        16            17             18              19        20         21        22           23               24            25            26           27            28                 29             30
 #                            file name,file format, cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb, cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa, cutval_s_rde, cutval_e_rde, sl_avg_s_lsv,sl_avg_e_lsv, rde rotation rate, ir_compen_lsv, rde_ror_unit
 fitting_cv_default = np.array([["",       "",          0,        0,        0,       0,       0,       0,       1,        1,        100,        0.,        "max",       "min",      1.,        0,        0,           0.,        0,            0,             0,             0,         0,         1,               0,            0,            0,           0,            0.,                0.,            "RPM"]], dtype=object)
 fitting_cv_save_array = np.zeros((1,fitting_cv_default.size), dtype=object)
@@ -573,11 +573,16 @@ while True:
                 idx_intc_defl_list.append(idx_intc_defl)
             
             ###############################################################################
-            # Add new value from the CV file to save data array
-            fitting_cv_default[:,0] = vm_file
-            fitting_cv_default[:,1] = file_format
-            fitting_cv_default[:,3] = vm_size
-            # fitting_cv_default[:,4] = int(cv_size/10)
+            if event == 'cv_open_menu' or event == 'cv_open_menu_ecsa':
+                # Add new value from the CV file to save data array
+                fitting_cv_default[:,0] = vm_file
+                fitting_cv_default[:,1] = file_format
+                fitting_cv_default[:,3] = vm_size
+                # fitting_cv_default[:,4] = int(cv_size/10)
+            elif event == 'rde_open_menu':
+                fitting_rde_default[:,0] = vm_file
+                fitting_rde_default[:,1] = file_format
+                fitting_rde_default[:,3] = vm_size
             ###############################################################################
             
             vm_select = vm_name    
@@ -602,7 +607,7 @@ while True:
                 fitting_cv_save_array = np.append(fitting_cv_save_array,fitting_cv_default,axis=0)
                 # fitting_cv_save_array = np.delete(fitting_cv_save_array, (0), axis=0)
             elif event == 'rde_open_menu':
-                fitting_rde_default[:,25] = vm_size #Trim end
+                fitting_rde_default[:,3] = vm_size #Trim end
                 window['rde_combo'].Update(values=vm_name_list) # Update combo list of CVs
                 window['rde_combo'].Update(vm_name) # Update default combo display
                 values['rde_combo'] = vm_name
@@ -610,11 +615,20 @@ while True:
                 fitting_rde_save_array = np.append(fitting_rde_save_array,fitting_rde_default,axis=0)
                 
         if event == 'cv_open_menu':
-            fitting_cv_save_array = np.delete(fitting_cv_save_array, (0), axis=0)
+            if fitting_cv_save_array[0][0] == 0: #remove the first row only if it is the default 0 values
+                fitting_cv_save_array = np.delete(fitting_cv_save_array, (0), axis=0)
+            if len(vm_name_list) >= 1:
+                all_cv_deleted = False
         elif event == 'cv_open_menu_ecsa':
-            fitting_cv_save_array = np.delete(fitting_cv_save_array, (0), axis=0)
+            if fitting_cv_save_array[0][0] == 0:
+                fitting_cv_save_array = np.delete(fitting_cv_save_array, (0), axis=0)
+            if len(vm_name_list) >= 1:
+                all_cv_deleted = False
         elif event == 'rde_open_menu':
-            fitting_rde_save_array = np.delete(fitting_rde_save_array, (0), axis=0)
+            if fitting_rde_save_array[0][0] == 0:
+                fitting_rde_save_array = np.delete(fitting_rde_save_array, (0), axis=0)
+            if len(vm_name_list) >= 1:
+                all_rde_deleted = False
         
         # fitting_cv_save_array = np.delete(fitting_cv_save_array, (0), axis=0)
         # print(fitting_cv_save_array)
@@ -633,9 +647,9 @@ while True:
             disable_slider_lsv(False)
             
         #Set flag to track if files are delete or not    
-        if len(vm_name_list) >= 1:
-            all_cv_deleted = False
-
+        # if len(vm_name_list) >= 1:
+        #     all_cv_deleted = False
+        print(vm_name_list)
 
     if event in ('cv_open_menu','cv_load_cv', 'cv_combo_cv'): #Change combo also update slider range
         cv_select = values['cv_combo_cv']
@@ -661,6 +675,8 @@ while True:
         if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
             cv_name_idx_old = cv_name_idx                    
             # Restore saved values
+            # print(cv_name_idx)
+            # print(fitting_cv_save_array)
             cutval_s_save = int(fitting_cv_save_array[cv_name_idx,2])
             cutval_e_save = int(fitting_cv_save_array[cv_name_idx,3])
             jpa_lns_save = int(fitting_cv_save_array[cv_name_idx,4])
@@ -1438,6 +1454,7 @@ while True:
             
     if event in ('rde_open_menu','rde_load','rde_combo'): #Change combo also update slider range
         rde_select = values['rde_combo']
+        
         if values['rde_combo'] == '': #Prevent error when combo box value is empty
             rde_name_idx = 0
         else:
@@ -1489,7 +1506,7 @@ while True:
             ir_compen_lsv = ir_compen_lsv_save
             rde_ror_unit = rde_ror_unit_save
             elec_area_rde = elec_area_rde_save
-      
+
     if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde', 'bulk_conc_rde','kinvis_rde','elec_n_rde','sl_cutval_s_lsv','sl_cutval_e_lsv', 'sl_avg_s_lsv', 'sl_avg_e_lsv','sl_cutval_s_lsv_pos','sl_cutval_e_lsv_pos', 'sl_avg_s_lsv_pos', 'sl_avg_e_lsv_pos', 'rde_ror','rde_ror_unit','rde_D_layout_key') and all_rde_deleted == False:
         cutval_s_lsv = int(values['sl_cutval_s_lsv'])
         cutval_e_lsv = int(values['sl_cutval_e_lsv'])        
@@ -1648,7 +1665,7 @@ while True:
             
             window['rde_combo'].Update('')
             disable_slider_cv(True)
-            window['Delete RDE File'].Update(disabled=True) # Disable delete button if empty
+            window['Delete LSV File'].Update(disabled=True) # Disable delete button if empty
             values['rde_combo'] = ''
             window['sl_cutval_s_lsv'].Update(range=(0,0))
             window['sl_cutval_e_lsv'].Update(range=(0,0))
