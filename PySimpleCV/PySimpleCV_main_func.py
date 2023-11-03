@@ -407,16 +407,22 @@ def switch_val(a,b):
         a = b_old
     return a,b
 
-def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit):
-    if kinvis <= 0:
-        kinvis = 1
-    if ror_unit == "RPM":
-        ror = ror * 0.104719755 #convert to rad/s
+def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit_arr):
+
+    
+    unit_mapping = {'RPM': 0.104719755,'rad/s': 1}
+    conv_unit_arr = [unit_mapping.get(item, item) for item in ror_unit_arr] #Convert RPM to rad/s
+    ror = ror * conv_unit_arr
+    # print(ror)
+
     inv_sqrt_ror = 1/np.sqrt(ror)
     inv_lim_curr = 1/lim_curr
-    try:     
+    
+    try:
+        if kinvis <= 0:
+            kinvis = np.NaN
         j_inv_lnfit, _ = poly.polyfit(inv_sqrt_ror,inv_lim_curr,1,full=True)
-        j_inv_arr_poly = poly.Polynomial(j_inv_lnfit)
+        kou_lev_polyfit = poly.Polynomial(j_inv_lnfit)
         j_kin = 1/j_inv_lnfit[0]
         
         slope = 1/j_inv_lnfit[1]
@@ -424,7 +430,12 @@ def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit):
         # Levich equation
         diffusion = (slope/(0.62*n*F*kinvis**(-1/6)*conc_bulk))**(3/2) #cathodic where slope is negative
         # Calculate R2
-        j_inv_fit = j_inv_arr_poly(inv_sqrt_ror)
+        j_inv_fit = kou_lev_polyfit(inv_sqrt_ror)
+        # print(inv_sqrt_ror)
+        # print(kou_lev_polyfit)
+        # print(np.array[0,max(inv_sqrt_ror)])
+        # j_inv_fit = kou_lev_polyfit(np.array[0,max(inv_sqrt_ror)])
+        
         residuals = inv_lim_curr - j_inv_fit
         ssr = np.sum(residuals ** 2)
         sst = np.sum((inv_lim_curr - np.mean(inv_lim_curr)) ** 2)
@@ -435,4 +446,5 @@ def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit):
         j_inv_fit = []
         inv_sqrt_ror = []
         diffusion = np.NaN
-    return inv_sqrt_ror, j_inv_fit, diffusion, j_kin ,r2
+        kou_lev_polyfit = np.NaN
+    return inv_sqrt_ror, j_inv_fit, diffusion, j_kin, kou_lev_polyfit, r2

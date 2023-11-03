@@ -1580,19 +1580,19 @@ while True:
         
         rde_ror_arr = np.asarray(rde_results.loc[:,'Rotation'].to_numpy(), dtype=float)
         lim_curr_arr = np.asarray(rde_results.loc[:,'Lim curr'].to_numpy(), dtype=float)
+        ror_unit_arr = np.asarray(rde_results.loc[:,'Unit'].to_numpy(), dtype=str)
    
-        inv_sqrt_ror, j_inv_fit, diffusion, j_kin ,rde_r2_kou_lev = RDE_kou_lev(rde_ror_arr,lim_curr_arr,bulk_conc_rde,elec_n_rde,kinvis_rde,rde_ror_unit)
+        inv_sqrt_ror, j_inv_fit, diffusion, j_kin , kou_lev_polyfit, rde_r2_kou_lev = RDE_kou_lev(rde_ror_arr,lim_curr_arr,bulk_conc_rde,elec_n_rde,kinvis_rde,ror_unit_arr)
         
         window['rde_D'].Update(f'{diffusion:.8}')     
         window['rde_kou_lev'].Update(f'{j_kin:.8f}')
-        if values[1] == 'rde_kou_lev_layout_key':
+        if values[1] == 'rde_kou_lev_layout_key' and kou_lev_polyfit != np.NaN: #Do not plot if polyfit return NaN
             ax_rde_kou_lev.cla()
             ax_rde_kou_lev.plot(inv_sqrt_ror,1/lim_curr_arr,'o',markersize=10)
-            ax_rde_kou_lev.plot(inv_sqrt_ror,j_inv_fit,linewidth=3,linestyle='-', color='red')   
+            ax_rde_kou_lev.plot(np.array([0,max(inv_sqrt_ror)]),kou_lev_polyfit(np.array([0,max(inv_sqrt_ror)])),linewidth=3,linestyle='-', color='red') 
             ax_rde_kou_lev.grid()
             ax_rde_kou_lev.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
-            ax_rde_kou_lev.set_ylabel("Current$^{-1}$",fontsize=14)
-            
+            ax_rde_kou_lev.set_ylabel("Current$^{-1}$",fontsize=14)           
             ax_rde_kou_lev.set_xlim(left=0)
             fig_agg_rde_kou_lev.draw()             
 
@@ -1638,6 +1638,11 @@ while True:
             ax_rde_kou_lev.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
             ax_rde_kou_lev.set_ylabel("Current$^{-1}$",fontsize=14)
             fig_agg_rde_kou_lev.draw()
+            
+            ax_rde.cla()
+            ax_rde.set_xlabel("Voltage")
+            ax_rde.set_ylabel("Current")  
+            fig_agg_rde.draw()
             
             window['rde_combo'].Update('')
             disable_slider_cv(True)
