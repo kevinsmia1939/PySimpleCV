@@ -10,7 +10,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import shutil
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_diffusion, RDE_kin_curr
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev
 # from PySimpleCV_main_func import *
 
 if not sys.warnoptions:
@@ -114,9 +114,8 @@ cv_ecsa2 = [
 
 cv_ecsa_layout = [[sg.Column(cv_ecsa1),sg.Column(cv_ecsa2)]]
 
-rde1 =[[sg.Canvas(key='-CANVAS_rde-')]]
-rde1_D =[[sg.Canvas(key='-CANVAS_rde_D-')]]
-rde1_kin_curr =[[sg.Canvas(key='-CANVAS_rde_kin_curr-')]]
+rde1 = [[sg.Canvas(key='-CANVAS_rde-')]]
+rde1_kou_lev =[[sg.Canvas(key='-CANVAS_rde_kou_lev-')]]
 rde2 = [
     [sg.Text('Rotating Disc Electrode, use slider to find limiting current (Jl)')],
     [sg.ButtonMenu("Add/Open LSV file",rde_open_menu,key='rde_open_menu'),sg.Button("Load saved LSV config", key='rde_load'),sg.Combo(values=(), default_value='', readonly=False, key='rde_combo', enable_events=True, size=(30,15)),sg.Button("Delete LSV File", disabled=True)],
@@ -131,13 +130,13 @@ rde2 = [
     [sg.Frame('Diffusion Coefficienct Calculation',[   
     [sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n_rde',size=(3,5),disabled=True, enable_events=True),sg.Text('Electrode area'), sg.Input(default_text=('1'), key='elec_area_rde',size=(5,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),sg.Text('',key='kinvis_rde_err',enable_events=True)],
     [sg.Text('Kinematic viscosity'),sg.Input(default_text=('1'), key='kinvis_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('cm\u00b2/s'),sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3')],
-    [sg.Text('Diffusion (cm\u00b2/s)'),sg.Input('', key='rde_D', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(20,5),disabled=True, enable_events=True),sg.Text('Kinetic Current (A)'),sg.Input('', key='rde_kin_curr', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(20,5),disabled=True, enable_events=True)],
+    [sg.Text('Diffusion (cm\u00b2/s)'),sg.Input('', key='rde_D', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(20,5),disabled=True, enable_events=True),sg.Text('Kinetic Current (A)'),sg.Input('', key='rde_kou_lev', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(20,5),disabled=True, enable_events=True)],
     ], key='-frame_rde_D-')],
     
     [sg.Button('Save parameters and results', key='save_rde_param', disabled=True),sg.Button('Save plot', key='save_rde_plot', disabled=True),sg.Button('Export RDE data', disabled=True),sg.Button('Exit', key='exit')]
     ]
 
-rde_D_tab = sg.TabGroup([[sg.Tab('RDE', rde1, key='rde_layout_key'), sg.Tab('Diffusion', rde1_D , key='rde_D_layout_key'), sg.Tab('Kinetic Current', rde1_kin_curr , key='rde_kin_curr_layout_key')]], enable_events=True)
+rde_D_tab = sg.TabGroup([[sg.Tab('RDE', rde1, key='rde_layout_key'), sg.Tab('Koutecký-Levich Plot', rde1_kou_lev , key='rde_kou_lev_layout_key')]], enable_events=True)
 
 rde_layout = [
     [rde_D_tab,sg.Column(rde2)],
@@ -176,8 +175,7 @@ canvas_cv_D = window['-CANVAS_cv_D-'].tk_canvas
 canvas_cv_k = window['-CANVAS_cv_k-'].tk_canvas
 canvas_cv_ecsa = window['-CANVAS_cv_ecsa-'].tk_canvas
 canvas_rde = window['-CANVAS_rde-'].tk_canvas
-canvas_rde_D = window['-CANVAS_rde_D-'].tk_canvas
-canvas_rde_kin_curr = window['-CANVAS_rde_kin_curr-'].tk_canvas
+canvas_rde_kou_lev = window['-CANVAS_rde_kou_lev-'].tk_canvas
 canvas_bat = window['-CANVAS_bat-'].tk_canvas
 
 # Generate initial empty plot.
@@ -219,19 +217,12 @@ ax_rde.set_ylabel("Current",fontsize=14)
 ax_rde.grid()
 fig_agg_rde = draw_figure(canvas_rde, fig_rde)
 
-fig_rde_D = Figure(figsize=(9,9))
-ax_rde_D = fig_rde_D.add_subplot(111)
-ax_rde_D.set_xlabel("Rate of Rotation$^{1/2}$",fontsize=14)
-ax_rde_D.set_ylabel("Current",fontsize=14)
-ax_rde_D.grid()
-fig_agg_rde_D = draw_figure(canvas_rde_D, fig_rde_D)
-
-fig_rde_kin_curr = Figure(figsize=(9,9))
-ax_rde_kin_curr = fig_rde_kin_curr.add_subplot(111)
-ax_rde_kin_curr.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
-ax_rde_kin_curr.set_ylabel("Current$^{-1}$",fontsize=14)
-ax_rde_kin_curr.grid()
-fig_agg_rde_kin_curr = draw_figure(canvas_rde_kin_curr, fig_rde_kin_curr)
+fig_rde_kou_lev = Figure(figsize=(9,9))
+ax_rde_kou_lev = fig_rde_kou_lev.add_subplot(111)
+ax_rde_kou_lev.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
+ax_rde_kou_lev.set_ylabel("Current$^{-1}$",fontsize=14)
+ax_rde_kou_lev.grid()
+fig_agg_rde_kou_lev = draw_figure(canvas_rde_kou_lev, fig_rde_kou_lev)
 
 fig_bat = Figure(figsize=(10,10))
 ax_bat_volt = fig_bat.add_subplot(111)
@@ -630,8 +621,6 @@ while True:
             if len(vm_name_list) >= 1:
                 all_rde_deleted = False
         
-        # fitting_cv_save_array = np.delete(fitting_cv_save_array, (0), axis=0)
-        # print(fitting_cv_save_array)
         vm_volt = vm_volt_list[cv_name_idx]
         vm_curr = vm_curr_list[cv_name_idx]
         vm_size = vm_size_list[cv_name_idx]
@@ -645,11 +634,6 @@ while True:
             
         elif event == 'rde_open_menu':
             disable_slider_lsv(False)
-            
-        #Set flag to track if files are delete or not    
-        # if len(vm_name_list) >= 1:
-        #     all_cv_deleted = False
-        print(vm_name_list)
 
     if event in ('cv_open_menu','cv_load_cv', 'cv_combo_cv'): #Change combo also update slider range
         cv_select = values['cv_combo_cv']
@@ -675,8 +659,6 @@ while True:
         if cv_name_idx != cv_name_idx_old: #If the option index change (combo box change), update slider
             cv_name_idx_old = cv_name_idx                    
             # Restore saved values
-            # print(cv_name_idx)
-            # print(fitting_cv_save_array)
             cutval_s_save = int(fitting_cv_save_array[cv_name_idx,2])
             cutval_e_save = int(fitting_cv_save_array[cv_name_idx,3])
             jpa_lns_save = int(fitting_cv_save_array[cv_name_idx,4])
@@ -1263,7 +1245,6 @@ while True:
             window['cv_results_dis'].Update('')
         else:
             window['cv_results_dis'].Update(cv_results.to_string(index=False))
-        print(len(vm_name_list))
         if len(vm_name_list) <= 0: # If CV all delete, make combo empty and disable slider
             all_cv_deleted = True
             
@@ -1325,11 +1306,10 @@ while True:
             values['nicholson_cb'] = 0
         elif len(vm_name_list) >= 1:
             all_cv_deleted = False
-            window['cv_combo_cv'].Update(vm_name_list)     
+            window['cv_combo_cv'].Update(values=vm_name_list)     
             cv_select = vm_name_list[cv_name_idx]
             window['cv_combo_cv'].Update(cv_select)
-            values['cv_combo_cv'] = cv_select    
-            # window['cv_combo_cv'].Update(values=vm_name_list)       
+            values['cv_combo_cv'] = cv_select         
             # Change Slider range
             cv_size = len(vm_volt_list[cv_name_idx])
             window['sl_cutval_s'].Update(range=(0,cv_size-1))
@@ -1507,7 +1487,7 @@ while True:
             rde_ror_unit = rde_ror_unit_save
             elec_area_rde = elec_area_rde_save
 
-    if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde', 'bulk_conc_rde','kinvis_rde','elec_n_rde','sl_cutval_s_lsv','sl_cutval_e_lsv', 'sl_avg_s_lsv', 'sl_avg_e_lsv','sl_cutval_s_lsv_pos','sl_cutval_e_lsv_pos', 'sl_avg_s_lsv_pos', 'sl_avg_e_lsv_pos', 'rde_ror','rde_ror_unit','rde_D_layout_key') and all_rde_deleted == False:
+    if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde', 'bulk_conc_rde','kinvis_rde','elec_n_rde','sl_cutval_s_lsv','sl_cutval_e_lsv', 'sl_avg_s_lsv', 'sl_avg_e_lsv','sl_cutval_s_lsv_pos','sl_cutval_e_lsv_pos', 'sl_avg_s_lsv_pos', 'sl_avg_e_lsv_pos', 'rde_ror','rde_ror_unit','rde_kou_lev_layout_key') and all_rde_deleted == False:
         cutval_s_lsv = int(values['sl_cutval_s_lsv'])
         cutval_e_lsv = int(values['sl_cutval_e_lsv'])        
         avg_s_lsv = int(values['sl_avg_s_lsv'])
@@ -1600,28 +1580,21 @@ while True:
         
         rde_ror_arr = np.asarray(rde_results.loc[:,'Rotation'].to_numpy(), dtype=float)
         lim_curr_arr = np.asarray(rde_results.loc[:,'Lim curr'].to_numpy(), dtype=float)
-        sqrt_ror, jl_fit ,diffusion ,rde_r2_D = RDE_diffusion(rde_ror_arr,lim_curr_arr,bulk_conc_rde,elec_n_rde,kinvis_rde)
-        window['rde_D'].Update(diffusion)     
-        inv_sqrt_ror, j_inv_fit, j_kin ,rde_r2_kin_curr = RDE_kin_curr(rde_ror_arr,lim_curr_arr)
-        window['rde_kin_curr'].Update(j_kin)
-
-        if values[1] == 'rde_D_layout_key':
-            ax_rde_D.cla()
-            ax_rde_D.plot(sqrt_ror,lim_curr_arr,'o',markersize=10)           
-            ax_rde_D.plot(sqrt_ror,jl_fit,linewidth=3,linestyle='-', color='blue')
-            ax_rde_D.grid()
-            ax_rde_D.set_xlabel("Rate of Rotation$^{1/2}$",fontsize=14)
-            ax_rde_D.set_ylabel("Current",fontsize=14)
-            fig_agg_rde_D.draw() 
+   
+        inv_sqrt_ror, j_inv_fit, diffusion, j_kin ,rde_r2_kou_lev = RDE_kou_lev(rde_ror_arr,lim_curr_arr,bulk_conc_rde,elec_n_rde,kinvis_rde,rde_ror_unit)
+        
+        window['rde_D'].Update(f'{diffusion:.8}')     
+        window['rde_kou_lev'].Update(f'{j_kin:.8f}')
+        if values[1] == 'rde_kou_lev_layout_key':
+            ax_rde_kou_lev.cla()
+            ax_rde_kou_lev.plot(inv_sqrt_ror,1/lim_curr_arr,'o',markersize=10)
+            ax_rde_kou_lev.plot(inv_sqrt_ror,j_inv_fit,linewidth=3,linestyle='-', color='red')   
+            ax_rde_kou_lev.grid()
+            ax_rde_kou_lev.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
+            ax_rde_kou_lev.set_ylabel("Current$^{-1}$",fontsize=14)
             
-        if values[1] == 'rde_kin_curr_layout_key':
-            ax_rde_kin_curr.cla()
-            ax_rde_kin_curr.plot(inv_sqrt_ror,1/lim_curr_arr,'o',markersize=10)
-            ax_rde_kin_curr.plot(inv_sqrt_ror,j_inv_fit,linewidth=3,linestyle='-', color='red')   
-            ax_rde_kin_curr.grid()
-            ax_rde_kin_curr.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
-            ax_rde_kin_curr.set_ylabel("Current$^{-1}$",fontsize=14)
-            fig_agg_rde_kin_curr.draw()             
+            ax_rde_kou_lev.set_xlim(left=0)
+            fig_agg_rde_kou_lev.draw()             
 
     if event == 'save_rde_param':
         rde_param = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
@@ -1641,10 +1614,12 @@ while True:
         del vm_size_list[rde_name_idx]
         del vm_volt_list[rde_name_idx]
         del vm_volt_ir_list[rde_name_idx]         
+        # print(fitting_rde_save_array,"rrr")
+        # print(rde_name_idx)
         fitting_rde_save_array = np.delete(fitting_rde_save_array,rde_name_idx,0)
         rde_results = rde_results.drop([rde_name_idx])
         rde_results.reset_index(inplace=True)
-        rde_results = rde_results.drop('index',axis=1)      
+        rde_results = rde_results.drop('index',axis=1)  
         # If the deleted data is the last in the list, when delete, the rde_name_idx must be substract to refer to data below it.
         if len(vm_name_list)-1 < rde_name_idx: 
             rde_name_idx = rde_name_idx - 1
@@ -1652,16 +1627,17 @@ while True:
         if rde_results.empty: # If dataframe empty, just put nothing in display
             window['rde_results_dis'].Update('')
         else:
-            window['rde_results_dis'].Update(cv_results.to_string(index=False))
+            window['rde_results_dis'].Update(rde_results.to_string(index=False))
 
+        # print(vm_name_list)
         if len(vm_name_list) <= 0: # If CV all delete, make combo empty and disable slider
             all_rde_deleted = True
             
             # Clear plot
-            ax_cv.cla()
-            ax_cv.set_xlabel("Voltage",fontsize=14)
-            ax_cv.set_ylabel("Current",fontsize=14)
-            fig_agg_cv.draw()
+            ax_rde_kou_lev.cla()
+            ax_rde_kou_lev.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
+            ax_rde_kou_lev.set_ylabel("Current$^{-1}$",fontsize=14)
+            fig_agg_rde_kou_lev.draw()
             
             window['rde_combo'].Update('')
             disable_slider_cv(True)
@@ -1689,11 +1665,11 @@ while True:
             values['elec_area_rde'] = 1
         elif len(vm_name_list) >= 1:
             all_rde_deleted = False
-            window['rde_combo'].Update(lsv_name_list)     
-            cv_select = vm_name_list[rde_name_idx]
-            window['cv_combo_cv'].Update(rde_select)
-            values['cv_combo_cv'] = rde_select    
-            # window['cv_combo_cv'].Update(values=vm_name_list)       
+            print(vm_name_list)
+            window['rde_combo'].Update(values=vm_name_list)     
+            rde_select = vm_name_list[rde_name_idx]
+            window['rde_combo'].Update(rde_select)
+            values['rde_combo'] = rde_select     
             # Change Slider range
             cv_size = len(vm_volt_list[rde_name_idx])
             window['sl_cutval_s_lsv'].Update(range=(0,cv_size-1))
@@ -1705,8 +1681,9 @@ while True:
             window['sl_cutval_e_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,3]))           
             window['sl_avg_s_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,4]))
             window['sl_avg_e_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,5]))
-            window['ir_compen_lsv'].Update(float(fitting_rde_save_array[rde_name_idx,11]))
-            window['elec_area_rde'].Update(float(fitting_rde_save_array[rde_name_idx,14]))
+            window['ir_compen_lsv'].Update(float(fitting_rde_save_array[rde_name_idx,7]))
+            window['rde_ror_unit'].Update(str(fitting_rde_save_array[rde_name_idx,8]))
+            window['elec_area_rde'].Update(float(fitting_rde_save_array[rde_name_idx,9]))
             # Put actual value             
             values['sl_cutval_s_lsv'] = cutval_s_lsv_save
             values['sl_cutval_e_lsv'] = cutval_e_lsv_save           
