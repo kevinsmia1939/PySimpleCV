@@ -25,6 +25,15 @@
   <screenshot>
     <image>https://raw.githubusercontent.com/kevinsmia1939/PySimpleCV/main/data/screenshot/battery_screenshot.png</image>
   </screenshot>
+  <screenshot>
+    <image>https://raw.githubusercontent.com/kevinsmia1939/PySimpleCV/main/data/screenshot/ecsa_screenshot.png</image>
+  </screenshot>
+  <screenshot>
+    <image>https://raw.githubusercontent.com/kevinsmia1939/PySimpleCV/main/data/screenshot/rde_screenshot.png</image>
+  </screenshot>
+  <screenshot>
+    <image>https://raw.githubusercontent.com/kevinsmia1939/PySimpleCV/main/data/screenshot/kou_lev_screenshot.png</image>
+  </screenshot>
  </screenshots>
  <url type="homepage">https://github.com/kevinsmia1939/PySimpleCV</url>
  <developer_name>Kavin Teenakul</developer_name>
@@ -32,6 +41,7 @@
  <url type="bugtracker">https://github.com/kevinsmia1939/PySimpleCV/issues</url>
  <content_rating type="oars-1.1"/>
  <releases>
+     <release version="v1.0.7" date="2023-11-03"/>
      <release version="v1.0.6" date="2023-08-31"/>
      <release version="v1.0.5" date="2023-07-25"/>
      <release version="v1.0.4" date="2023-07-06"/>
