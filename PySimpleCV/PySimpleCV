@@ -37,6 +37,13 @@ def About_PySimpleCV():
     'Epc - Cathodic peak potential',
     'E\u00bd  - Half-wave potential',
     'ΔE\u209a - Peak-to-peak separation potential',
+    'alpha - charge-transfer coefficient',
+    'Ano - Anodic',
+    'Cat - Cathodic',
+    'rev - reversible',
+    'irr - irreversible',
+    'D - Diffusion coefficient',
+    'k - rate of reaction',
     'Nicholson method - Nicholson, R. S. Semiempirical Procedure for Measuring with Stationary Electrode Polarography Rates of Chemical Reactions Involving the Product of Electron Transfer. Anal. Chem. 1966, 38 (10), 1406.'
     )]
 
@@ -1578,8 +1585,8 @@ while True:
         window['rde_kou_lev'].Update(f'{j_kin:.8f}')
         if values[1] == 'rde_kou_lev_layout_key' and kou_lev_polyfit != np.NaN: #Do not plot if polyfit return NaN
             ax_rde_kou_lev.cla()
-            ax_rde_kou_lev.plot(inv_sqrt_ror,1/lim_curr_arr,'o',markersize=10)
             ax_rde_kou_lev.plot(np.array([0,max(inv_sqrt_ror)]),kou_lev_polyfit(np.array([0,max(inv_sqrt_ror)])),linewidth=3,linestyle='-', color='red') 
+            ax_rde_kou_lev.plot(inv_sqrt_ror,1/lim_curr_arr,'o',markersize=10)
             ax_rde_kou_lev.grid()
             ax_rde_kou_lev.set_xlabel("Rate of Rotation$^{-1/2}$",fontsize=14)
             ax_rde_kou_lev.set_ylabel("Current$^{-1}$",fontsize=14)           
@@ -1617,7 +1624,6 @@ while True:
         else:
             window['rde_results_dis'].Update(rde_results.to_string(index=False))
 
-        # print(vm_name_list)
         if len(vm_name_list) <= 0: # If CV all delete, make combo empty and disable slider
             all_rde_deleted = True
             
