@@ -43,7 +43,7 @@ EE - Energy Efficiency
 **Requirement**
 
 Requires Python 3.10 and above.
-Required Python modules: Numpy, Matplotlib, PySimpleGUI, pandas, scipy, statsmodels.
+Required Python modules: Numpy, Matplotlib, PySimpleGUI, pandas, statsmodels.
 
 
 **Future plans**
@@ -58,13 +58,18 @@ The file PySimpleCV/PySimpleCV contain the main code responsible to produce GUI 
 PySimpleCV/PySimpleCV_main_func.py contain mathematical function for calculation.
 
 **Installation**
-Method 1
+
+Create Python environment and install required Python modules.
+
+`python3 -mpip install numpy matplotlib PySimpleGUI pandas statsmodels`
+
 Clone this repository.
 
 `git clone git@github.com:kevinsmia1939/PySimpleCV.git`
 
-Navigate to the PySimpleCV folder and run the PySimpleCV executable. The PySimpleCV file must be marked as executable.
+Navigate to the PySimpleCV folder and run the PySimpleCV executable. The PySimpleCV file must be marked as executable. Double click it or use the command:
 
+`python3 PySimpleCV`
 
 Method 2
 Use Flatpak for Linux.
