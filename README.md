@@ -77,3 +77,6 @@ Uninstall
 
 ![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/cv_screenshot.png?raw=true)
 ![PySimpleCV](https://github.com/kevinsmia1939/PySimpleCV/blob/main/data/screenshot/battery_screenshot.png?raw=true)
+![PySimpleCV](https://raw.githubusercontent.com/kevinsmia1939/PySimpleCV/main/data/screenshot/ecsa_screenshot.png?raw=true)
+![PySimpleCV](https://raw.githubusercontent.com/kevinsmia1939/PySimpleCV/main/data/screenshot/rde_screenshot.png?raw=true)
+![PySimpleCV](https://raw.githubusercontent.com/kevinsmia1939/PySimpleCV/main/data/screenshot/kou_lev_screenshot.png?raw=true)
