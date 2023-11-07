@@ -6,10 +6,10 @@ Please cite: https://doi.org/10.5281/zenodo.8019091 <br />
 License: GPLv3 <br />
 
 # Features
-
 Feel free to make a bug report for new features
 
 **Cyclic voltammetry**
+
 Support plotting multiple CVs.
 Currently supports VersaStudio (.par), Correware(.cor), .csv, and .txt. Please send some other format for more file format support.<br />
 For .csv and .txt, the first column must be voltage and the second column is current.<br />
