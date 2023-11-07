@@ -23,16 +23,16 @@ Export results and save file.
 
 **Cyclic voltammetry ECSA**
 
-Calculate electrochemical active surface area (ECSA) with selected area.
+Calculate electrochemical active surface area (ECSA) with selected area under the CV.
 
 **Rotating Disk Electrode**
 
-Calculate diffusion coefficient and kinetic current
+Calculate diffusion coefficient and kinetic current from Levich equation.
 
 **Battery cycling**
 
-Battery cycling support .xls files with state (C_CC, D_CC, R) columns from Versastudio.
-Support copy-paste battery efficiency.
+Only support .xlsx from Landt Battery Test Systems. I need your help, for example, to file for more support.
+Battery cycling support .xlsx files with state (C_CC, D_CC, R) columns from Landt Battery Test Systems.
 
 VE - Voltage Efficiency
 
@@ -49,8 +49,8 @@ Required Python modules: Numpy, Matplotlib, PySimpleGUI, pandas, statsmodels.
 **Future plans**
 * More file format support, if you have example files of other format, create new issue to add support.
 * More flexible state recognition (C_CC, D_CC, R, etc)
-* Export plot with custom dpi
-* Generate Tafel plot
+* Export plot as image
+* Analyze Tafel
 * Slider with double handle for selecting range
 * Convert between reference voltage (eg, Ag/AgCl to SHE)
 
