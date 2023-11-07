@@ -1,5 +1,5 @@
 # PySimpleCV
-Graphical user interface for plotting and analyzing the cyclic voltammograms (CV). <br />
+Graphical user interface for plotting and analyzing the cyclic voltammograms (CV) with simple to use sliders. <br />
 PySimpleCV also plots battery cycles and calculates efficiencies. Written in pure Python. <br />
 
 Please cite: https://doi.org/10.5281/zenodo.8019091 <br />
