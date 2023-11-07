@@ -55,26 +55,29 @@ Required Python modules: Numpy, Matplotlib, PySimpleGUI, pandas, statsmodels.<br
 The file PySimpleCV/PySimpleCV contain the main code responsible to produce GUI and plotting.<br />
 PySimpleCV/PySimpleCV_main_func.py contain mathematical functions for calculation.<br />
 
-**Installation**
+# Installation
+Method 1
 
-Create Python environment and install required Python modules.
+1\. Create Python environment.<br />
+2\. Install required Python modules.<br />
 
 `python3 -mpip install numpy matplotlib PySimpleGUI pandas statsmodels`
 
-Clone this repository.
+3\. Clone this repository.<br />
 
 `git clone git@github.com:kevinsmia1939/PySimpleCV.git`
 
-Navigate to the PySimpleCV folder and run the PySimpleCV executable. The PySimpleCV file must be marked as executable. Double click it or use the command:
+4\. Navigate to the PySimpleCV folder and run the PySimpleCV executable. The PySimpleCV file must be marked as executable. Double click it or use the command:<br />
 
 `python3 PySimpleCV`
 
-Method 2
-Use Flatpak for Linux.
+Method 2 <br />
+
+Use Flatpak for Linux.<br />
 
 `flatpak install flathub io.github.kevinsmia1939.PySimpleCV`
 
-Uninstall
+Uninstall <br />
 
 `flatpak remove io.github.kevinsmia1939.PySimpleCV`
 
