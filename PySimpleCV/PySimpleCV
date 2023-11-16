@@ -58,7 +58,7 @@ def draw_figure(canvas, figure):
 # Generate layout for CV tab
 cv_slider_size = (50,18)
 # cv_cv=[[sg.Canvas(key='-CANVAS_cv-')]]
-cv_canvas_size = (300, 300)
+cv_canvas_size = (700, 700)
 cv_right_size = 300
 cv_cv=[[sg.Graph(canvas_size=cv_canvas_size, graph_bottom_left=(-1, -0.01), graph_top_right=(2, 0.01),background_color='white', key='-CANVAS_cv-')]]
 cv_diff=[[sg.Canvas(key='-CANVAS_cv_D-')]]
@@ -189,6 +189,7 @@ canvas_rde_kou_lev = window['-CANVAS_rde_kou_lev-'].tk_canvas
 canvas_bat = window['-CANVAS_bat-'].tk_canvas
 
 # Generate initial empty plot.
+graph_elem = window['-CANVAS_cv-']
 # fig_cv = Figure(figsize=(9,9))
 # ax_cv = fig_cv.add_subplot(111)
 # ax_cv.set_xlabel("Voltage",fontsize=14)
@@ -960,14 +961,14 @@ while True:
             cutval_s_all = int(fitting_cv_save_array[j,2])
             cutval_e_all = int(fitting_cv_save_array[j,3])
             
-            graph_elem = window['-CANVAS_cv-']
+            # graph_elem = window['-CANVAS_cv-']
             # graph_width, graph_height = graph_elem.CanvasSize
-            points = list(zip(vm_volt_ir_list[j][cutval_s_all:cutval_e_all], vm_curr_den_list[j][cutval_s_all:cutval_e_all]))
-            print(points)
+            # points = list(zip(vm_volt_ir_list[j][cutval_s_all:cutval_e_all], vm_curr_den_list[j][cutval_s_all:cutval_e_all]))
+            # print(points)
             # graph_elem.draw_lines(points, color='black')
             # ax_cv.plot(np.array(vm_volt_ir_list[j][cutval_s_all:cutval_e_all]).T, np.array(vm_curr_den_list[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=1)
-            graph_elem.draw_lines([(0, 0), (0.1, 0.3), (0.5, 0.4)],color='blue')
-            graph_elem.draw_lines(points,color='green')
+            graph_elem.draw_lines(list(zip(vm_volt_ir_list[j][cutval_s_all:cutval_e_all], vm_curr_den_list[j][cutval_s_all:cutval_e_all])),color='blue')
+            # graph_elem.draw_lines(points,color='green')
 
         if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
