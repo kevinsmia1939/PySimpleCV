@@ -57,7 +57,8 @@ def draw_figure(canvas, figure):
 
 # Generate layout for CV tab
 cv_slider_size = (50,18)
-cv_cv=[[sg.Canvas(key='-CANVAS_cv-')]]
+# cv_cv=[[sg.Canvas(key='-CANVAS_cv-')]]
+cv_cv=[[sg.Graph(canvas_size=(400, 400), graph_bottom_left=(0, 0), graph_top_right=(400, 400),background_color='white', key='-CANVAS_cv-')]]
 cv_diff=[[sg.Canvas(key='-CANVAS_cv_D-')]]
 cv_kin =[[sg.Canvas(key='-CANVAS_cv_k-')]]
 
@@ -177,7 +178,7 @@ layout = sg.TabGroup([[sg.Tab('CV', cv_layout, key='cv_layout_key'),sg.Tab('CV E
 window = sg.Window('PySimpleCV', [[layout]], finalize=True, element_justification='center')
 
 # window.maximize()
-canvas_cv = window['-CANVAS_cv-'].tk_canvas
+# canvas_cv = window['-CANVAS_cv-'].tk_canvas
 canvas_cv_D = window['-CANVAS_cv_D-'].tk_canvas
 canvas_cv_k = window['-CANVAS_cv_k-'].tk_canvas
 canvas_cv_ecsa = window['-CANVAS_cv_ecsa-'].tk_canvas
@@ -206,7 +207,7 @@ ax_cv_kin.grid()
 
 # tight layout push away y label
 # fig_cv.tight_layout(pad=2)
-fig_agg_cv = draw_figure(canvas_cv, fig_cv)
+# fig_agg_cv = draw_figure(canvas_cv, fig_cv)
 fig_agg_cv_D = draw_figure(canvas_cv_D, fig_cv_D)
 fig_agg_cv_k = draw_figure(canvas_cv_k, fig_cv_kin)
 
