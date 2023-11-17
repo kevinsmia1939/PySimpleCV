@@ -10,7 +10,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import shutil
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev, data2canvas
 # from PySimpleCV_main_func import *
 
 if not sys.warnoptions:
@@ -60,7 +60,7 @@ cv_slider_size = (50,18)
 # cv_cv=[[sg.Canvas(key='-CANVAS_cv-')]]
 cv_canvas_size = (700, 700)
 cv_right_size = 300
-cv_cv=[[sg.Graph(canvas_size=cv_canvas_size, graph_bottom_left=(-1, -0.01), graph_top_right=(2, 0.01),background_color='white', key='-CANVAS_cv-')]]
+cv_cv=[[sg.Graph(canvas_size=cv_canvas_size, graph_bottom_left=(-1, -1), graph_top_right=(1, 1),background_color='white', key='-CANVAS_cv-', enable_events=True)]]
 cv_diff=[[sg.Canvas(key='-CANVAS_cv_D-')]]
 cv_kin =[[sg.Canvas(key='-CANVAS_cv_k-')]]
 
@@ -189,12 +189,17 @@ canvas_rde_kou_lev = window['-CANVAS_rde_kou_lev-'].tk_canvas
 canvas_bat = window['-CANVAS_bat-'].tk_canvas
 
 # Generate initial empty plot.
-graph_elem = window['-CANVAS_cv-']
+cv_graph = window['-CANVAS_cv-']
 # fig_cv = Figure(figsize=(9,9))
 # ax_cv = fig_cv.add_subplot(111)
 # ax_cv.set_xlabel("Voltage",fontsize=14)
 # ax_cv.set_ylabel("Current",fontsize=14)
-# ax_cv.grid()
+
+for x in range(-10, 10, 1):    
+    cv_graph.DrawLine((x/10,-1), (x/10,1),color='lightgrey')
+    cv_graph.DrawLine((-1,x/10), (1,x/10),color='lightgrey')
+cv_graph.DrawLine((-1,0), (1,0))
+cv_graph.DrawLine((0,-1), (0,1)) 
 
 fig_cv_D = Figure(figsize=(9,9))
 ax_cv_D = fig_cv_D.add_subplot(111)
@@ -873,7 +878,8 @@ while True:
             # Find alpha
             ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen_cv,cv_curr_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_cv_volt)
             ep12_jpc, jp12_jpc, alpha_jpc = find_alpha(volt_compen_cv,cv_curr_den,jpc_lns,trou_pos,jpc_poly1d,jpc,trou_cv_volt)
-            
+            cv_graph.draw_point((ep12_jpa,jp12_jpa),0.02)
+            cv_graph.draw_point((ep12_jpc,jp12_jpc),0.02)
             # ax_cv.plot(ep12_jpa,jp12_jpa,'x')
             # ax_cv.plot(ep12_jpc,jp12_jpc,'x')
             
@@ -885,13 +891,17 @@ while True:
             # ax_cv.plot(E1_2,0,"D", markersize = 6)
                   
             # ax_cv.plot((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
+            # ax_cv.plot((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
             # ax_cv.plot((volt_compen_cv[low_range_c],volt_compen_cv[high_range_c]),(cv_curr_den[low_range_c],cv_curr_den[high_range_c]),"|", markersize = 10)
-        
+            # cv_graph.draw_rectangle
+            jpa_graphdraw_ln = cv_graph.draw_lines(list(zip(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne])),color='red',width=3)
+
             # ax_cv.plot(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='red')
             # ax_cv.arrow(peak_cv_volt,jpa_poly1d(peak_cv_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='r', length_includes_head=True)
             # ax_cv.plot(np.array([volt_compen_cv[jpa_lns],peak_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(peak_cv_volt)]),'--', color='red')
             
             # ax_cv.plot(volt_compen_cv[jpc_lns:jpc_lne],cv_curr_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
+            jpc_graphdraw_ln = cv_graph.draw_lines(list(zip(volt_compen_cv[jpc_lns:jpc_lne],cv_curr_den[jpc_lns:jpc_lne])),color='blue',width=3)
             # ax_cv.arrow(trou_cv_volt,jpc_poly1d(trou_cv_volt),0,jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
             # ax_cv.plot(np.array([volt_compen_cv[jpc_lns],trou_cv_volt]),np.array([jpc_poly1d(volt_compen_cv[jpc_lns]),jpc_poly1d(trou_cv_volt)]),'--', color='blue')
             jpc0 = 0 #Only with Nicholson method
@@ -960,15 +970,10 @@ while True:
         for j in np.arange(0,vm_volt_list_len):
             cutval_s_all = int(fitting_cv_save_array[j,2])
             cutval_e_all = int(fitting_cv_save_array[j,3])
-            
-            # graph_elem = window['-CANVAS_cv-']
-            # graph_width, graph_height = graph_elem.CanvasSize
-            # points = list(zip(vm_volt_ir_list[j][cutval_s_all:cutval_e_all], vm_curr_den_list[j][cutval_s_all:cutval_e_all]))
-            # print(points)
-            # graph_elem.draw_lines(points, color='black')
-            # ax_cv.plot(np.array(vm_volt_ir_list[j][cutval_s_all:cutval_e_all]).T, np.array(vm_curr_den_list[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=1)
-            graph_elem.draw_lines(list(zip(vm_volt_ir_list[j][cutval_s_all:cutval_e_all], vm_curr_den_list[j][cutval_s_all:cutval_e_all])),color='blue')
-            # graph_elem.draw_lines(points,color='green')
+            cv_graph.draw_lines(list(zip(vm_volt_ir_list[j][cutval_s_all:cutval_e_all], vm_curr_den_list[j][cutval_s_all:cutval_e_all])),color='black',width=1.1)
+        
+        graph_bl,graph_tr = data2canvas(vm_volt_ir_list,vm_curr_den_list)
+        cv_graph.change_coordinates(graph_bl,graph_tr)
 
         if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]

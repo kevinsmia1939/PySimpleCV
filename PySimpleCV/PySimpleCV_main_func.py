@@ -408,16 +408,11 @@ def switch_val(a,b):
     return a,b
 
 def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit_arr):
-
-    
     unit_mapping = {'RPM': 0.104719755,'rad/s': 1}
     conv_unit_arr = [unit_mapping.get(item, item) for item in ror_unit_arr] #Convert RPM to rad/s
     ror = ror * conv_unit_arr
-    # print(ror)
-
     inv_sqrt_ror = 1/np.sqrt(ror)
-    inv_lim_curr = 1/lim_curr
-    
+    inv_lim_curr = 1/lim_curr 
     try:
         if kinvis <= 0:
             kinvis = np.NaN
@@ -434,8 +429,7 @@ def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit_arr):
         # print(inv_sqrt_ror)
         # print(kou_lev_polyfit)
         # print(np.array[0,max(inv_sqrt_ror)])
-        # j_inv_fit = kou_lev_polyfit(np.array[0,max(inv_sqrt_ror)])
-        
+        # j_inv_fit = kou_lev_polyfit(np.array[0,max(inv_sqrt_ror)])      
         residuals = inv_lim_curr - j_inv_fit
         ssr = np.sum(residuals ** 2)
         sst = np.sum((inv_lim_curr - np.mean(inv_lim_curr)) ** 2)
@@ -448,3 +442,10 @@ def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit_arr):
         diffusion = np.NaN
         kou_lev_polyfit = np.NaN
     return inv_sqrt_ror, j_inv_fit, diffusion, j_kin, kou_lev_polyfit, r2
+
+def data2canvas(x_list,y_list):
+    flat_x = [element for sublist in x_list for element in sublist]
+    flat_y = [element for sublist in y_list for element in sublist]
+    graph_bl = (min(flat_x),min(flat_y))
+    graph_tr = (max(flat_x),max(flat_y))
+    return graph_bl, graph_tr
