@@ -871,8 +871,10 @@ while True:
  
  
  
-        # ax_cv.cla() ###### Clear plot before redraw    
-        window['-CANVAS_cv-'].erase()
+        # ax_cv.cla() ###### Clear plot before redraw
+        # Clear plot only when the CV are modify
+        if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area', 'sl_cutval_s', 'sl_cutval_e'):
+            window['-CANVAS_cv-'].erase()
         
         # Plot lines
         vm_volt_list_len = len(vm_volt_list)
@@ -880,18 +882,19 @@ while True:
         max_volt_list = []
         min_curr_list = []
         max_curr_list = []
+        cv_graph_id_list = []
         for j in np.arange(0,vm_volt_list_len):
             cutval_s_all = int(fitting_cv_save_array[j,2])
             cutval_e_all = int(fitting_cv_save_array[j,3])          
             vm_volt_trimed = vm_volt_ir_list[j][cutval_s_all:cutval_e_all]
             vm_curr_trimed = vm_curr_den_list[j][cutval_s_all:cutval_e_all]
-            cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)
-           
-            min_volt_list.append(min(vm_volt_trimed)) #Get list of min and max value of each cv
+            cv_graph_id = cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)
+            cv_graph_id_list.append(cv_graph_id)
+            min_volt_list.append(min(vm_volt_trimed)) #Get list of min and max volt/current of each cv so we can adjust the canvas based on the size
             max_volt_list.append(max(vm_volt_trimed))
             min_curr_list.append(min(vm_curr_trimed))
             max_curr_list.append(max(vm_curr_trimed))
-
+        print(cv_graph_id_list) #store id in a list
         margin_x = (max(max_volt_list)-min(min_volt_list))*0.05 #Create a margin for canvas
         margin_y = (max(max_curr_list)-min(min_curr_list))*0.05
         graph_bl = (min(min_volt_list)-margin_x,(min(min_curr_list)-margin_y))
@@ -915,30 +918,18 @@ while True:
             
             # ax_cv.plot(E1_2,0,"D", markersize = 6)
             cv_graph.draw_point((E1_2,0),0.02,color='red')      
-            # ax_cv.plot((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
-            # 111cv_graph.draw_point((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
-            
+       
             cv_graph.draw_line((volt_compen_cv[low_range_a],cv_curr_den[low_range_a]-0.00015),(volt_compen_cv[low_range_a],cv_curr_den[low_range_a]+0.00015),color='black',width=1.5)
             cv_graph.draw_line((volt_compen_cv[high_range_a],cv_curr_den[high_range_a]-0.00015),(volt_compen_cv[high_range_a],cv_curr_den[high_range_a]+0.00015),color='black',width=1.5)
             cv_graph.draw_line((volt_compen_cv[low_range_c],cv_curr_den[low_range_c]-0.00015),(volt_compen_cv[low_range_c],cv_curr_den[low_range_c]+0.00015),color='black',width=1.5)
             cv_graph.draw_line((volt_compen_cv[high_range_c],cv_curr_den[high_range_c]-0.00015),(volt_compen_cv[high_range_c],cv_curr_den[high_range_c]+0.00015),color='black',width=1.5)
-            # cv_graph.draw_rectangle
+
             cv_graph.draw_lines(list(zip(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne])),color='red',width=3)
-
-            # ax_cv.plot(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='red')
-            # ax_cv.arrow(peak_cv_volt,jpa_poly1d(peak_cv_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='r', length_includes_head=True)
             cv_graph.draw_line((peak_cv_volt,jpa_poly1d(peak_cv_volt)),(peak_cv_volt,peak_curr_a),color='red',width=1.5,dash="..")
-            # ax_cv.plot(np.array([volt_compen_cv[jpa_lns],peak_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(peak_cv_volt)]),'--', color='red')
-
             cv_graph.draw_line((volt_compen_cv[jpa_lns],jpa_poly1d(volt_compen_cv[jpa_lns])),(peak_cv_volt,jpa_poly1d(peak_cv_volt)),color='red',width=1,dash="--")
-            # cv_graph.draw_lines(((volt_compen_cv[jpa_lns],jpa_poly1d(volt_compen_cv[jpa_lns])),(peak_cv_volt,jpa_poly1d(peak_cv_volt))),color='red',width=1)
-            
-            
-            # ax_cv.plot(volt_compen_cv[jpc_lns:jpc_lne],cv_curr_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
+
             jpc_graphdraw_ln = cv_graph.draw_lines(list(zip(volt_compen_cv[jpc_lns:jpc_lne],cv_curr_den[jpc_lns:jpc_lne])),color='blue',width=3)
-            # ax_cv.arrow(trou_cv_volt,jpc_poly1d(trou_cv_volt),0,jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
             cv_graph.draw_line((trou_cv_volt,jpc_poly1d(trou_cv_volt)),(trou_cv_volt,peak_curr_c),color='blue',width=1.5,dash="..")
-            # ax_cv.plot(np.array([volt_compen_cv[jpc_lns],trou_cv_volt]),np.array([jpc_poly1d(volt_compen_cv[jpc_lns]),jpc_poly1d(trou_cv_volt)]),'--', color='blue')
             cv_graph.draw_line((volt_compen_cv[jpc_lns],jpc_poly1d(volt_compen_cv[jpc_lns])),(trou_cv_volt,jpc_poly1d(trou_cv_volt)),color='blue',width=1,dash="--")
             jpc0 = 0 #Only with Nicholson method
             jpc = np.abs(jpc) # Report positive value
