@@ -873,33 +873,10 @@ while True:
  
         # ax_cv.cla() ###### Clear plot before redraw
         # Clear plot only when the CV are modify
-        if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area', 'sl_cutval_s', 'sl_cutval_e'):
-            window['-CANVAS_cv-'].erase()
+        # if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area', 'sl_cutval_s', 'sl_cutval_e'):
+        window['-CANVAS_cv-'].erase()
         
-        # Plot lines
-        vm_volt_list_len = len(vm_volt_list)
-        min_volt_list = []
-        max_volt_list = []
-        min_curr_list = []
-        max_curr_list = []
-        cv_graph_id_list = []
-        for j in np.arange(0,vm_volt_list_len):
-            cutval_s_all = int(fitting_cv_save_array[j,2])
-            cutval_e_all = int(fitting_cv_save_array[j,3])          
-            vm_volt_trimed = vm_volt_ir_list[j][cutval_s_all:cutval_e_all]
-            vm_curr_trimed = vm_curr_den_list[j][cutval_s_all:cutval_e_all]
-            cv_graph_id = cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)
-            cv_graph_id_list.append(cv_graph_id)
-            min_volt_list.append(min(vm_volt_trimed)) #Get list of min and max volt/current of each cv so we can adjust the canvas based on the size
-            max_volt_list.append(max(vm_volt_trimed))
-            min_curr_list.append(min(vm_curr_trimed))
-            max_curr_list.append(max(vm_curr_trimed))
-        print(cv_graph_id_list) #store id in a list
-        margin_x = (max(max_volt_list)-min(min_volt_list))*0.05 #Create a margin for canvas
-        margin_y = (max(max_curr_list)-min(min_curr_list))*0.05
-        graph_bl = (min(min_volt_list)-margin_x,(min(min_curr_list)-margin_y))
-        graph_tr = (max(max_volt_list)+margin_x,(max(max_curr_list)+margin_y))
-        cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin          
+      
         
         if nicholson_cb == 0:
             low_range_a, high_range_a, peak_cv_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, cv_volt, cv_curr, peak_range, peak_pos, jpa_lns, jpa_lne)
@@ -908,8 +885,8 @@ while True:
             # Find alpha
             ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen_cv,cv_curr_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_cv_volt)
             ep12_jpc, jp12_jpc, alpha_jpc = find_alpha(volt_compen_cv,cv_curr_den,jpc_lns,trou_pos,jpc_poly1d,jpc,trou_cv_volt)
-            cv_graph.draw_point((ep12_jpa,jp12_jpa),0.02)
-            cv_graph.draw_point((ep12_jpc,jp12_jpc),0.02)
+            cv_graph.draw_text("×",(ep12_jpa,jp12_jpa),color = "orange",font="Any 20", angle = 0,text_location = "center")
+            cv_graph.draw_text("×",(ep12_jpc,jp12_jpc),color = "orange",font="Any 20", angle = 0,text_location = "center")
         
             # Find estimate standard electrode potential (E1/2~E0)
             E1_2 = (trou_cv_volt+peak_cv_volt)/2
@@ -917,7 +894,7 @@ while True:
             delta_e = np.abs(trou_cv_volt-peak_cv_volt)
             
             # ax_cv.plot(E1_2,0,"D", markersize = 6)
-            cv_graph.draw_point((E1_2,0),0.02,color='red')      
+            cv_graph.draw_text("⋄",(E1_2,0),color = "black",font="Any 20", angle = 0,text_location = "center")  
        
             cv_graph.draw_line((volt_compen_cv[low_range_a],cv_curr_den[low_range_a]-0.00015),(volt_compen_cv[low_range_a],cv_curr_den[low_range_a]+0.00015),color='black',width=1.5)
             cv_graph.draw_line((volt_compen_cv[high_range_a],cv_curr_den[high_range_a]-0.00015),(volt_compen_cv[high_range_a],cv_curr_den[high_range_a]+0.00015),color='black',width=1.5)
@@ -950,29 +927,34 @@ while True:
             # Find peak-peak separation Voltage
             delta_e = np.abs(trou_cv_volt-peak_cv_volt)
             # ax_cv.plot(E1_2,0,"D", markersize = 6)
+            cv_graph.draw_text("⋄",(E1_2,0),color = "black",font="Any 20", angle = 0,text_location = "center")
+            # if event in ('idx_jsp0', 'idx_jsp0_pos'):
+            #     window['-CANVAS_cv-'].erase()
             
             #Find alpha for anodic only, since cathodic is estimate
             ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen_cv,cv_curr_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_cv_volt)
             # ax_cv.plot(ep12_jpa,jp12_jpa,'x')
+            cv_graph.draw_text("×",(ep12_jpa,jp12_jpa),color="orange",font="Any 20",angle = 0,text_location = "center")
         
-            # ax_cv.plot((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
-            # ax_cv.plot((volt_compen_cv[low_range_c],volt_compen_cv[high_range_c]),(cv_curr_den[low_range_c],cv_curr_den[high_range_c]),"|", markersize = 10)
-        
-            # ax_cv.plot(np.array([volt_compen_cv[jpa_lns],peak_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(peak_cv_volt)]),'--', color='green') #Peak
-            # ax_cv.plot(np.array([volt_compen_cv[jpa_lns],trou_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(trou_cv_volt)]),'--', color='green') #Peak    
-            # ax_cv.arrow(trou_cv_volt,jpa_poly1d(trou_cv_volt),0,jpc0,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='green', length_includes_head=True) #jpc0 
-            # ax_cv.arrow(peak_cv_volt,jpa_poly1d(peak_cv_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003, color='black', length_includes_head=True) #jpa
+            cv_graph.draw_line((volt_compen_cv[low_range_a],cv_curr_den[low_range_a]-0.00015),(volt_compen_cv[low_range_a],cv_curr_den[low_range_a]+0.00015),color='black',width=1.5)
+            cv_graph.draw_line((volt_compen_cv[high_range_a],cv_curr_den[high_range_a]-0.00015),(volt_compen_cv[high_range_a],cv_curr_den[high_range_a]+0.00015),color='black',width=1.5)
+            cv_graph.draw_line((volt_compen_cv[low_range_c],cv_curr_den[low_range_c]-0.00015),(volt_compen_cv[low_range_c],cv_curr_den[low_range_c]+0.00015),color='black',width=1.5)
+            cv_graph.draw_line((volt_compen_cv[high_range_c],cv_curr_den[high_range_c]-0.00015),(volt_compen_cv[high_range_c],cv_curr_den[high_range_c]+0.00015),color='black',width=1.5)
+            
+            cv_graph.draw_lines(list(zip(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne])),color='blue',width=3)
     
             jsp0_cv_volt = volt_compen_cv[idx_jsp0]
             jsp0 = cv_curr_den[idx_jsp0]-jpa_poly1d(jsp0_cv_volt)
             
-            # ax_cv.plot(np.array([volt_compen_cv[jpa_lns],volt_compen_cv[idx_jsp0]]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(jsp0_cv_volt)]),'--', color='green') #jsp0
-            # ax_cv.plot(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne],linewidth=3,linestyle='-', color='blue')
-            # ax_cv.arrow(volt_compen_cv[idx_jsp0],jpa_poly1d(jsp0_cv_volt),0,jsp0,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True) #jsp0
+            cv_graph.draw_line((peak_cv_volt,jpa_poly1d(peak_cv_volt)),(peak_cv_volt,peak_curr_a),color='green',width=1.5,dash="..") #jpa
+            cv_graph.draw_line((volt_compen_cv[idx_jsp0],jpa_poly1d(jsp0_cv_volt)),(jsp0_cv_volt,cv_curr_den[idx_jsp0]),color='green',width=1.5,dash="..") #jsp0
+            cv_graph.draw_line((trou_cv_volt,jpa_poly1d(trou_cv_volt)),(trou_cv_volt,peak_curr_c),color='red',width=1.5,dash="..") #jpc0
+
+            cv_graph.draw_line((volt_compen_cv[jpa_lns],jpa_poly1d(volt_compen_cv[jpa_lns])),(max(peak_cv_volt,jsp0_cv_volt,trou_cv_volt),jpa_poly1d(max(peak_cv_volt,jsp0_cv_volt,trou_cv_volt))),color='blue',width=1.5,dash="--") #baseline
             
-            # ax_cv.text(peak_cv_volt,jpa_poly1d(peak_cv_volt), jp1_text, fontsize=10)
-            # ax_cv.text(trou_cv_volt,jpa_poly1d(trou_cv_volt), jp2_text, fontsize=10)
-            # ax_cv.text(volt_compen_cv[idx_jsp0],jpa_poly1d(jsp0_cv_volt), 'jsp0', fontsize=10)
+            cv_graph.draw_text(jp1_text,(peak_cv_volt,(jpa_poly1d(peak_cv_volt)+peak_curr_a)/2),color = "black",font = None,angle = 0,text_location = "center")
+            cv_graph.draw_text(jp2_text,(trou_cv_volt,(jpa_poly1d(trou_cv_volt)+peak_curr_c)/2),color = "black",font = None,angle = 0,text_location = "center")
+            cv_graph.draw_text("jsp0",(volt_compen_cv[idx_jsp0],(jpa_poly1d(jsp0_cv_volt)+cv_curr_den[idx_jsp0])/2),color = "black",font = None,angle = 0,text_location = "center")
             
             jpa = np.abs(jpa)
             jpc0 = np.abs(jpc0)
@@ -993,14 +975,29 @@ while True:
             alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa
                 
         # Plot lines
-        # vm_volt_list_len = len(vm_volt_list)
-        # for j in np.arange(0,vm_volt_list_len):
-        #     cutval_s_all = int(fitting_cv_save_array[j,2])
-        #     cutval_e_all = int(fitting_cv_save_array[j,3])
-        #     cv_graph.draw_lines(list(zip(vm_volt_ir_list[j][cutval_s_all:cutval_e_all], vm_curr_den_list[j][cutval_s_all:cutval_e_all])),color='black',width=1.1)
-        
-        # graph_bl,graph_tr = data2canvas(vm_volt_ir_list,vm_curr_den_list)
-        # cv_graph.change_coordinates(graph_bl,graph_tr)
+        vm_volt_list_len = len(vm_volt_list)
+        min_volt_list = []
+        max_volt_list = []
+        min_curr_list = []
+        max_curr_list = []
+        cv_graph_id_list = []
+        for j in np.arange(0,vm_volt_list_len):
+            cutval_s_all = int(fitting_cv_save_array[j,2])
+            cutval_e_all = int(fitting_cv_save_array[j,3])          
+            vm_volt_trimed = vm_volt_ir_list[j][cutval_s_all:cutval_e_all]
+            vm_curr_trimed = vm_curr_den_list[j][cutval_s_all:cutval_e_all]
+            cv_graph_id = cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)
+            cv_graph_id_list.append(cv_graph_id)
+            min_volt_list.append(min(vm_volt_trimed)) #Get list of min and max volt/current of each cv so we can adjust the canvas based on the size
+            max_volt_list.append(max(vm_volt_trimed))
+            min_curr_list.append(min(vm_curr_trimed))
+            max_curr_list.append(max(vm_curr_trimed))
+        print(cv_graph_id_list) #store id in a list
+        margin_x = (max(max_volt_list)-min(min_volt_list))*0.05 #Create a margin for canvas
+        margin_y = (max(max_curr_list)-min(min_curr_list))*0.05
+        graph_bl = (min(min_volt_list)-margin_x,(min(min_curr_list)-margin_y))
+        graph_tr = (max(max_volt_list)+margin_x,(max(max_curr_list)+margin_y))
+        cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin    
 
         if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
@@ -1012,92 +1009,92 @@ while True:
         # ax_cv.set_ylabel("Current")       
         # fig_agg_cv.draw()
 
-        # cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, jpc0, peak_cv_volt, trou_cv_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
-        # cv_results = cv_results.sort_index()
-        # window['cv_results_dis'].Update(cv_results.to_string(index=False))
+        cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, jpc0, peak_cv_volt, trou_cv_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
+        cv_results = cv_results.sort_index()
+        window['cv_results_dis'].Update(cv_results.to_string(index=False))
             
 
         
-        # alpha_ano = np.average(np.asarray(cv_results.loc[:,'alpha_ano'].to_numpy(), dtype=float))
-        # alpha_cat = np.average(np.asarray(cv_results.loc[:,'alpha_cat'].to_numpy(), dtype=float))
-        # window['alpha_ano'].Update(alpha_ano)
-        # window['alpha_cat'].Update(alpha_cat)    
+        alpha_ano = np.average(np.asarray(cv_results.loc[:,'alpha_ano'].to_numpy(), dtype=float))
+        alpha_cat = np.average(np.asarray(cv_results.loc[:,'alpha_cat'].to_numpy(), dtype=float))
+        window['alpha_ano'].Update(alpha_ano)
+        window['alpha_cat'].Update(alpha_cat)    
 
-    #     if values['enable_d'] == True and values[2] == 'cv_layout_key':
-    #         jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
-    #         jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
-    #         scan = np.array([float(value) for value in cv_results['scan_rate']])
-    #         # Plot peak cv_curr vs scan rate^1/2 to find diffusion coefficient
-    #         ax_cv_D.cla()
-    #         try:
-    #             sqrt_scan_ano, jpa_fit ,D_irr_a ,D_rev_a ,r2_ano = diffusion(scan,jpa_arr,alpha_ano,bulk_conc_cv,elec_n_cv)
-    #             sqrt_scan_cat, jpc_fit ,D_irr_c ,D_rev_c ,r2_cat = diffusion(scan,jpc_arr,alpha_cat,bulk_conc_cv,elec_n_cv)
-    #             ax_cv_D.plot(sqrt_scan_ano,jpa_fit,'-',color='red')
-    #             ax_cv_D.plot(sqrt_scan_cat,jpc_fit,'-',color='blue')
-    #             window['d_rev_jpa'].Update(f"{D_rev_a:e}")
-    #             window['d_rev_jpc'].Update(f"{D_rev_c:e}")
-    #             window['d_irr_jpa'].Update(f"{D_irr_a:e}")
-    #             window['d_irr_jpc'].Update(f"{D_irr_c:e}")
-    #         except SystemError:
-    #             pass
-    #         ax_cv_D.plot(sqrt_scan_ano,jpa_arr,'o',color='red',label='Jpa')
-    #         ax_cv_D.plot(sqrt_scan_cat,jpc_arr,'o',color='blue',label='Jpc')
-    #         ax_cv_D.set_xlabel("Scan rate 1/2")
-    #         ax_cv_D.set_ylabel("Jp")
-    #         fig_cv_D.legend()
-    #         fig_agg_cv_D.draw()
-    #     #Find kinetic parameter
-    #     if values['enable_k'] == True and values[2] == 'cv_layout_key':
-    #         jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
-    #         jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
-    #         e_e0_arr = (np.array([float(value) for value in cv_results['ΔE\u209a']]))/2
-    #         ax_cv_kin.cla()
-    #         try: 
-    #             lnjpa, lnjpa_fit, k0_a, alpha_cat_a, alpha_ano_a, r2_a = reaction_rate(e_e0_arr,jpa_arr,bulk_conc_cv,elec_n_cv)
-    #             lnjpc, lnjpc_fit, k0_c, alpha_cat_c, alpha_ano_c, r2_c = reaction_rate(e_e0_arr,jpc_arr,bulk_conc_cv,elec_n_cv)
-    #             ax_cv_kin.plot(e_e0_arr,lnjpa_fit,'-',color='red')
-    #             ax_cv_kin.plot(e_e0_arr,lnjpc_fit,'-',color='blue')
-    #             window['k_jpa'].Update(f"{k0_a:e}")
-    #             window['k_jpc'].Update(f"{k0_c:e}")
-    #         except SystemError:
-    #             pass            
-    #         ax_cv_kin.plot(e_e0_arr,lnjpa,'o',color='red',label='Jpa')
-    #         ax_cv_kin.plot(e_e0_arr,lnjpc,'o',color='blue',label='Jpc')
-    #         ax_cv_kin.set_xlabel("Ep - E0")
-    #         ax_cv_kin.set_ylabel("ln(Jp)")
-    #         fig_cv_kin.legend()
-    #         fig_agg_cv_k.draw()
+        if values['enable_d'] == True and values[2] == 'cv_layout_key':
+            jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
+            jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
+            scan = np.array([float(value) for value in cv_results['scan_rate']])
+            # Plot peak cv_curr vs scan rate^1/2 to find diffusion coefficient
+            ax_cv_D.cla()
+            try:
+                sqrt_scan_ano, jpa_fit ,D_irr_a ,D_rev_a ,r2_ano = diffusion(scan,jpa_arr,alpha_ano,bulk_conc_cv,elec_n_cv)
+                sqrt_scan_cat, jpc_fit ,D_irr_c ,D_rev_c ,r2_cat = diffusion(scan,jpc_arr,alpha_cat,bulk_conc_cv,elec_n_cv)
+                ax_cv_D.plot(sqrt_scan_ano,jpa_fit,'-',color='red')
+                ax_cv_D.plot(sqrt_scan_cat,jpc_fit,'-',color='blue')
+                window['d_rev_jpa'].Update(f"{D_rev_a:e}")
+                window['d_rev_jpc'].Update(f"{D_rev_c:e}")
+                window['d_irr_jpa'].Update(f"{D_irr_a:e}")
+                window['d_irr_jpc'].Update(f"{D_irr_c:e}")
+            except SystemError:
+                pass
+            ax_cv_D.plot(sqrt_scan_ano,jpa_arr,'o',color='red',label='Jpa')
+            ax_cv_D.plot(sqrt_scan_cat,jpc_arr,'o',color='blue',label='Jpc')
+            ax_cv_D.set_xlabel("Scan rate 1/2")
+            ax_cv_D.set_ylabel("Jp")
+            fig_cv_D.legend()
+            fig_agg_cv_D.draw()
+        #Find kinetic parameter
+        if values['enable_k'] == True and values[2] == 'cv_layout_key':
+            jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
+            jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
+            e_e0_arr = (np.array([float(value) for value in cv_results['ΔE\u209a']]))/2
+            ax_cv_kin.cla()
+            try: 
+                lnjpa, lnjpa_fit, k0_a, alpha_cat_a, alpha_ano_a, r2_a = reaction_rate(e_e0_arr,jpa_arr,bulk_conc_cv,elec_n_cv)
+                lnjpc, lnjpc_fit, k0_c, alpha_cat_c, alpha_ano_c, r2_c = reaction_rate(e_e0_arr,jpc_arr,bulk_conc_cv,elec_n_cv)
+                ax_cv_kin.plot(e_e0_arr,lnjpa_fit,'-',color='red')
+                ax_cv_kin.plot(e_e0_arr,lnjpc_fit,'-',color='blue')
+                window['k_jpa'].Update(f"{k0_a:e}")
+                window['k_jpc'].Update(f"{k0_c:e}")
+            except SystemError:
+                pass            
+            ax_cv_kin.plot(e_e0_arr,lnjpa,'o',color='red',label='Jpa')
+            ax_cv_kin.plot(e_e0_arr,lnjpc,'o',color='blue',label='Jpc')
+            ax_cv_kin.set_xlabel("Ep - E0")
+            ax_cv_kin.set_ylabel("ln(Jp)")
+            fig_cv_kin.legend()
+            fig_agg_cv_k.draw()
             
-    #     #Set flag to track if files are delete or not    
-    #     if len(vm_name_list) >= 1:
-    #         all_cv_deleted = False
+        #Set flag to track if files are delete or not    
+        if len(vm_name_list) >= 1:
+            all_cv_deleted = False
             
-    # if event == 'Export CV data':
-    #     cv_data_path = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("ODS Files", "*.ods"), ("All Files", "*.*")))
-    #     # Find the maximum length among all arrays
-    #     cv_max_length = max(len(x) for x in vm_volt_list + vm_curr_list)     
-    #     # Create dictionaries with padding to max_length
-    #     cv_data = {}
-    #     for i, (x, y) in enumerate(zip(vm_volt_list, vm_curr_list), start=1):
-    #         padded_x = np.pad(x.astype(float), (0, cv_max_length - len(x)), constant_values=np.nan)
-    #         padded_y = np.pad(y.astype(float), (0, cv_max_length - len(y)), constant_values=np.nan)
-    #         cv_data[f'{vm_name_list[i-1]}_cv_volt_{i}'] = padded_x
-    #         cv_data[f'{vm_name_list[i-1]}_curr_{i}'] = padded_y     
-    #     cv_data_dir, filename = os.path.split(cv_data_path)
-    #     filename_without_extension, _ = os.path.splitext(filename)
-    #     results_filename = f"{filename_without_extension}_cv_results.ods"
-    #     cv_data_path = os.path.join(cv_data_dir, results_filename)
-    #     pd.DataFrame(cv_data).to_excel(cv_data_path, index=True)        
+    if event == 'Export CV data':
+        cv_data_path = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("ODS Files", "*.ods"), ("All Files", "*.*")))
+        # Find the maximum length among all arrays
+        cv_max_length = max(len(x) for x in vm_volt_list + vm_curr_list)     
+        # Create dictionaries with padding to max_length
+        cv_data = {}
+        for i, (x, y) in enumerate(zip(vm_volt_list, vm_curr_list), start=1):
+            padded_x = np.pad(x.astype(float), (0, cv_max_length - len(x)), constant_values=np.nan)
+            padded_y = np.pad(y.astype(float), (0, cv_max_length - len(y)), constant_values=np.nan)
+            cv_data[f'{vm_name_list[i-1]}_cv_volt_{i}'] = padded_x
+            cv_data[f'{vm_name_list[i-1]}_curr_{i}'] = padded_y     
+        cv_data_dir, filename = os.path.split(cv_data_path)
+        filename_without_extension, _ = os.path.splitext(filename)
+        results_filename = f"{filename_without_extension}_cv_results.ods"
+        cv_data_path = os.path.join(cv_data_dir, results_filename)
+        pd.DataFrame(cv_data).to_excel(cv_data_path, index=True)        
 
-    # if event == 'save_cv_param':
-    #     cv_param = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
-    #     cv_param_dir, filename = os.path.split(cv_param)
-    #     filename_without_extension, _ = os.path.splitext(filename)
-    #     results_filename = f"{filename_without_extension}_cv_results.ods"
-    #     cv_result_path = os.path.join(cv_param_dir, results_filename)
+    if event == 'save_cv_param':
+        cv_param = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
+        cv_param_dir, filename = os.path.split(cv_param)
+        filename_without_extension, _ = os.path.splitext(filename)
+        results_filename = f"{filename_without_extension}_cv_results.ods"
+        cv_result_path = os.path.join(cv_param_dir, results_filename)
 
-    #     np.savetxt(cv_param, fitting_cv_save_array, delimiter=',', fmt='%s')
-    #     cv_results.to_excel(cv_result_path, index=True)
+        np.savetxt(cv_param, fitting_cv_save_array, delimiter=',', fmt='%s')
+        cv_results.to_excel(cv_result_path, index=True)
 
         #====================================================================================#
         #======================================CV ECSA ======================================#
