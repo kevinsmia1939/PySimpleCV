@@ -446,6 +446,12 @@ def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit_arr):
 def data2canvas(x_list,y_list):
     flat_x = [element for sublist in x_list for element in sublist]
     flat_y = [element for sublist in y_list for element in sublist]
-    graph_bl = (min(flat_x),min(flat_y))
-    graph_tr = (max(flat_x),max(flat_y))
+    minx = min(flat_x)
+    miny = min(flat_y)
+    maxx = max(flat_x)
+    maxy = max(flat_y) 
+    margin_x = (maxx-minx)*0.05 #Add 5% margin
+    margin_y = (maxy-miny)*0.05
+    graph_bl = (minx-margin_x,miny-margin_y)
+    graph_tr = (maxx+margin_x,maxy+margin_y)
     return graph_bl, graph_tr

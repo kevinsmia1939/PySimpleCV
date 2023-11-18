@@ -880,30 +880,39 @@ while True:
             ep12_jpc, jp12_jpc, alpha_jpc = find_alpha(volt_compen_cv,cv_curr_den,jpc_lns,trou_pos,jpc_poly1d,jpc,trou_cv_volt)
             cv_graph.draw_point((ep12_jpa,jp12_jpa),0.02)
             cv_graph.draw_point((ep12_jpc,jp12_jpc),0.02)
-            # ax_cv.plot(ep12_jpa,jp12_jpa,'x')
-            # ax_cv.plot(ep12_jpc,jp12_jpc,'x')
-            
+        
             # Find estimate standard electrode potential (E1/2~E0)
             E1_2 = (trou_cv_volt+peak_cv_volt)/2
             # Find peak-peak separation Voltage
             delta_e = np.abs(trou_cv_volt-peak_cv_volt)
             
             # ax_cv.plot(E1_2,0,"D", markersize = 6)
-                  
+            cv_graph.draw_point((E1_2,0),0.02,color='red')      
             # ax_cv.plot((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
-            # ax_cv.plot((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
-            # ax_cv.plot((volt_compen_cv[low_range_c],volt_compen_cv[high_range_c]),(cv_curr_den[low_range_c],cv_curr_den[high_range_c]),"|", markersize = 10)
+            # 111cv_graph.draw_point((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
+            
+            cv_graph.draw_line((volt_compen_cv[low_range_a],cv_curr_den[low_range_a]-0.00015),(volt_compen_cv[low_range_a],cv_curr_den[low_range_a]+0.00015),color='black',width=1.5)
+            cv_graph.draw_line((volt_compen_cv[high_range_a],cv_curr_den[high_range_a]-0.00015),(volt_compen_cv[high_range_a],cv_curr_den[high_range_a]+0.00015),color='black',width=1.5)
+            cv_graph.draw_line((volt_compen_cv[low_range_c],cv_curr_den[low_range_c]-0.00015),(volt_compen_cv[low_range_c],cv_curr_den[low_range_c]+0.00015),color='black',width=1.5)
+            cv_graph.draw_line((volt_compen_cv[high_range_c],cv_curr_den[high_range_c]-0.00015),(volt_compen_cv[high_range_c],cv_curr_den[high_range_c]+0.00015),color='black',width=1.5)
             # cv_graph.draw_rectangle
-            jpa_graphdraw_ln = cv_graph.draw_lines(list(zip(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne])),color='red',width=3)
+            cv_graph.draw_lines(list(zip(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne])),color='red',width=3)
 
             # ax_cv.plot(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='red')
             # ax_cv.arrow(peak_cv_volt,jpa_poly1d(peak_cv_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='r', length_includes_head=True)
+            cv_graph.draw_line((peak_cv_volt,jpa_poly1d(peak_cv_volt)),(peak_cv_volt,peak_curr_a),color='red',width=1.5,dash="..")
             # ax_cv.plot(np.array([volt_compen_cv[jpa_lns],peak_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(peak_cv_volt)]),'--', color='red')
+
+            cv_graph.draw_line((volt_compen_cv[jpa_lns],jpa_poly1d(volt_compen_cv[jpa_lns])),(peak_cv_volt,jpa_poly1d(peak_cv_volt)),color='red',width=1,dash="--")
+            # cv_graph.draw_lines(((volt_compen_cv[jpa_lns],jpa_poly1d(volt_compen_cv[jpa_lns])),(peak_cv_volt,jpa_poly1d(peak_cv_volt))),color='red',width=1)
+            
             
             # ax_cv.plot(volt_compen_cv[jpc_lns:jpc_lne],cv_curr_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
             jpc_graphdraw_ln = cv_graph.draw_lines(list(zip(volt_compen_cv[jpc_lns:jpc_lne],cv_curr_den[jpc_lns:jpc_lne])),color='blue',width=3)
             # ax_cv.arrow(trou_cv_volt,jpc_poly1d(trou_cv_volt),0,jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
+            cv_graph.draw_line((trou_cv_volt,jpc_poly1d(trou_cv_volt)),(trou_cv_volt,peak_curr_c),color='blue',width=1.5,dash="..")
             # ax_cv.plot(np.array([volt_compen_cv[jpc_lns],trou_cv_volt]),np.array([jpc_poly1d(volt_compen_cv[jpc_lns]),jpc_poly1d(trou_cv_volt)]),'--', color='blue')
+            cv_graph.draw_line((volt_compen_cv[jpc_lns],jpc_poly1d(volt_compen_cv[jpc_lns])),(trou_cv_volt,jpc_poly1d(trou_cv_volt)),color='blue',width=1,dash="--")
             jpc0 = 0 #Only with Nicholson method
             jpc = np.abs(jpc) # Report positive value
         elif nicholson_cb == 1:
