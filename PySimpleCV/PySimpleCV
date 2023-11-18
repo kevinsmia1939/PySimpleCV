@@ -868,9 +868,36 @@ while True:
         if peak_mode_2 == 'deflection':
             trou_pos = idx_defl_points[np.abs(idx_defl_points - trou_pos).argmin()]
             trou_pos = int(trou_pos)
-            
+ 
+ 
+ 
         # ax_cv.cla() ###### Clear plot before redraw    
         window['-CANVAS_cv-'].erase()
+        
+        # Plot lines
+        vm_volt_list_len = len(vm_volt_list)
+        min_volt_list = []
+        max_volt_list = []
+        min_curr_list = []
+        max_curr_list = []
+        for j in np.arange(0,vm_volt_list_len):
+            cutval_s_all = int(fitting_cv_save_array[j,2])
+            cutval_e_all = int(fitting_cv_save_array[j,3])          
+            vm_volt_trimed = vm_volt_ir_list[j][cutval_s_all:cutval_e_all]
+            vm_curr_trimed = vm_curr_den_list[j][cutval_s_all:cutval_e_all]
+            cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)
+           
+            min_volt_list.append(min(vm_volt_trimed)) #Get list of min and max value of each cv
+            max_volt_list.append(max(vm_volt_trimed))
+            min_curr_list.append(min(vm_curr_trimed))
+            max_curr_list.append(max(vm_curr_trimed))
+
+        margin_x = (max(max_volt_list)-min(min_volt_list))*0.05 #Create a margin for canvas
+        margin_y = (max(max_curr_list)-min(min_curr_list))*0.05
+        graph_bl = (min(min_volt_list)-margin_x,(min(min_curr_list)-margin_y))
+        graph_tr = (max(max_volt_list)+margin_x,(max(max_curr_list)+margin_y))
+        cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin          
+        
         if nicholson_cb == 0:
             low_range_a, high_range_a, peak_cv_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, cv_volt, cv_curr, peak_range, peak_pos, jpa_lns, jpa_lne)
             low_range_c, high_range_c, trou_cv_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, cv_volt, cv_curr, peak_range, trou_pos, jpc_lns, jpc_lne)                
@@ -975,14 +1002,14 @@ while True:
             alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa
                 
         # Plot lines
-        vm_volt_list_len = len(vm_volt_list)
-        for j in np.arange(0,vm_volt_list_len):
-            cutval_s_all = int(fitting_cv_save_array[j,2])
-            cutval_e_all = int(fitting_cv_save_array[j,3])
-            cv_graph.draw_lines(list(zip(vm_volt_ir_list[j][cutval_s_all:cutval_e_all], vm_curr_den_list[j][cutval_s_all:cutval_e_all])),color='black',width=1.1)
+        # vm_volt_list_len = len(vm_volt_list)
+        # for j in np.arange(0,vm_volt_list_len):
+        #     cutval_s_all = int(fitting_cv_save_array[j,2])
+        #     cutval_e_all = int(fitting_cv_save_array[j,3])
+        #     cv_graph.draw_lines(list(zip(vm_volt_ir_list[j][cutval_s_all:cutval_e_all], vm_curr_den_list[j][cutval_s_all:cutval_e_all])),color='black',width=1.1)
         
-        graph_bl,graph_tr = data2canvas(vm_volt_ir_list,vm_curr_den_list)
-        cv_graph.change_coordinates(graph_bl,graph_tr)
+        # graph_bl,graph_tr = data2canvas(vm_volt_ir_list,vm_curr_den_list)
+        # cv_graph.change_coordinates(graph_bl,graph_tr)
 
         if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
