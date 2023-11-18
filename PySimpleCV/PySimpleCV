@@ -429,6 +429,23 @@ all_rde_deleted = True
 
 cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "Jpc0", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_ano", "alpha_cat"])
 rde_results = pd.DataFrame(columns =  ["file_name", "Rotation", "Unit", "Lim curr"])
+
+ep12_jpa_id = None
+ep12_jpc_id = None
+E1_2_id = None
+low_range_a_id = None
+high_range_a_id = None
+low_range_c_id = None
+high_range_c_id = None
+jpa_ln_id = None
+jpa_peak_id = None
+jpa_base_id = None
+jpc_ln_id = None
+jpc_trou_id = None
+jpc_base_id = None
+cv_graph_id = None
+
+cv_graph_id_list = []
 while True:
     event, values = window.read()
     # print(values)
@@ -874,40 +891,54 @@ while True:
         # ax_cv.cla() ###### Clear plot before redraw
         # Clear plot only when the CV are modify
         # if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area', 'sl_cutval_s', 'sl_cutval_e'):
-        window['-CANVAS_cv-'].erase()
+            
+        # window['-CANVAS_cv-'].erase()
         
-      
-        
-        if nicholson_cb == 0:
+        # cv_graph.delete_figure(id_name)
+           
+        if nicholson_cb == 0:       
+            cv_graph.delete_figure(ep12_jpa_id) #Delete markers for redraw
+            cv_graph.delete_figure(ep12_jpc_id)
+            cv_graph.delete_figure(E1_2_id)
+            cv_graph.delete_figure(low_range_a_id)
+            cv_graph.delete_figure(high_range_a_id)
+            cv_graph.delete_figure(low_range_c_id)
+            cv_graph.delete_figure(high_range_c_id)
+            cv_graph.delete_figure(jpa_ln_id)
+            cv_graph.delete_figure(jpa_peak_id)
+            cv_graph.delete_figure(jpa_base_id)
+            cv_graph.delete_figure(jpc_ln_id)
+            cv_graph.delete_figure(jpc_trou_id)
+            cv_graph.delete_figure(jpc_base_id) 
+            
             low_range_a, high_range_a, peak_cv_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, cv_volt, cv_curr, peak_range, peak_pos, jpa_lns, jpa_lne)
             low_range_c, high_range_c, trou_cv_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, cv_volt, cv_curr, peak_range, trou_pos, jpc_lns, jpc_lne)                
             
             # Find alpha
             ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen_cv,cv_curr_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_cv_volt)
             ep12_jpc, jp12_jpc, alpha_jpc = find_alpha(volt_compen_cv,cv_curr_den,jpc_lns,trou_pos,jpc_poly1d,jpc,trou_cv_volt)
-            cv_graph.draw_text("×",(ep12_jpa,jp12_jpa),color = "orange",font="Any 20", angle = 0,text_location = "center")
-            cv_graph.draw_text("×",(ep12_jpc,jp12_jpc),color = "orange",font="Any 20", angle = 0,text_location = "center")
-        
+           
+            ep12_jpa_id = cv_graph.draw_text("×",(ep12_jpa,jp12_jpa),color = "orange",font="Any 20", angle = 0,text_location = "center")
+            ep12_jpc_id = cv_graph.draw_text("×",(ep12_jpc,jp12_jpc),color = "orange",font="Any 20", angle = 0,text_location = "center")
+            
             # Find estimate standard electrode potential (E1/2~E0)
             E1_2 = (trou_cv_volt+peak_cv_volt)/2
             # Find peak-peak separation Voltage
             delta_e = np.abs(trou_cv_volt-peak_cv_volt)
-            
-            # ax_cv.plot(E1_2,0,"D", markersize = 6)
-            cv_graph.draw_text("⋄",(E1_2,0),color = "black",font="Any 20", angle = 0,text_location = "center")  
+            E1_2_id = cv_graph.draw_text("⋄",(E1_2,0),color = "black",font="Any 20", angle = 0,text_location = "center")  
        
-            cv_graph.draw_line((volt_compen_cv[low_range_a],cv_curr_den[low_range_a]-0.00015),(volt_compen_cv[low_range_a],cv_curr_den[low_range_a]+0.00015),color='black',width=1.5)
-            cv_graph.draw_line((volt_compen_cv[high_range_a],cv_curr_den[high_range_a]-0.00015),(volt_compen_cv[high_range_a],cv_curr_den[high_range_a]+0.00015),color='black',width=1.5)
-            cv_graph.draw_line((volt_compen_cv[low_range_c],cv_curr_den[low_range_c]-0.00015),(volt_compen_cv[low_range_c],cv_curr_den[low_range_c]+0.00015),color='black',width=1.5)
-            cv_graph.draw_line((volt_compen_cv[high_range_c],cv_curr_den[high_range_c]-0.00015),(volt_compen_cv[high_range_c],cv_curr_den[high_range_c]+0.00015),color='black',width=1.5)
+            low_range_a_id = cv_graph.draw_line((volt_compen_cv[low_range_a],cv_curr_den[low_range_a]-0.00015),(volt_compen_cv[low_range_a],cv_curr_den[low_range_a]+0.00015),color='black',width=1.5)
+            high_range_a_id = cv_graph.draw_line((volt_compen_cv[high_range_a],cv_curr_den[high_range_a]-0.00015),(volt_compen_cv[high_range_a],cv_curr_den[high_range_a]+0.00015),color='black',width=1.5)
+            low_range_c_id = cv_graph.draw_line((volt_compen_cv[low_range_c],cv_curr_den[low_range_c]-0.00015),(volt_compen_cv[low_range_c],cv_curr_den[low_range_c]+0.00015),color='black',width=1.5)
+            high_range_c_id = cv_graph.draw_line((volt_compen_cv[high_range_c],cv_curr_den[high_range_c]-0.00015),(volt_compen_cv[high_range_c],cv_curr_den[high_range_c]+0.00015),color='black',width=1.5)
 
-            cv_graph.draw_lines(list(zip(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne])),color='red',width=3)
-            cv_graph.draw_line((peak_cv_volt,jpa_poly1d(peak_cv_volt)),(peak_cv_volt,peak_curr_a),color='red',width=1.5,dash="..")
-            cv_graph.draw_line((volt_compen_cv[jpa_lns],jpa_poly1d(volt_compen_cv[jpa_lns])),(peak_cv_volt,jpa_poly1d(peak_cv_volt)),color='red',width=1,dash="--")
+            jpa_ln_id = cv_graph.draw_lines(list(zip(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne])),color='red',width=3)
+            jpa_peak_id = cv_graph.draw_line((peak_cv_volt,jpa_poly1d(peak_cv_volt)),(peak_cv_volt,peak_curr_a),color='red',width=1.5,dash="..")
+            jpa_base_id = cv_graph.draw_line((volt_compen_cv[jpa_lns],jpa_poly1d(volt_compen_cv[jpa_lns])),(peak_cv_volt,jpa_poly1d(peak_cv_volt)),color='red',width=1,dash="--")
 
-            jpc_graphdraw_ln = cv_graph.draw_lines(list(zip(volt_compen_cv[jpc_lns:jpc_lne],cv_curr_den[jpc_lns:jpc_lne])),color='blue',width=3)
-            cv_graph.draw_line((trou_cv_volt,jpc_poly1d(trou_cv_volt)),(trou_cv_volt,peak_curr_c),color='blue',width=1.5,dash="..")
-            cv_graph.draw_line((volt_compen_cv[jpc_lns],jpc_poly1d(volt_compen_cv[jpc_lns])),(trou_cv_volt,jpc_poly1d(trou_cv_volt)),color='blue',width=1,dash="--")
+            jpc_ln_id = cv_graph.draw_lines(list(zip(volt_compen_cv[jpc_lns:jpc_lne],cv_curr_den[jpc_lns:jpc_lne])),color='blue',width=3)
+            jpc_trou_id = cv_graph.draw_line((trou_cv_volt,jpc_poly1d(trou_cv_volt)),(trou_cv_volt,peak_curr_c),color='blue',width=1.5,dash="..")
+            jpc_base_id = cv_graph.draw_line((volt_compen_cv[jpc_lns],jpc_poly1d(volt_compen_cv[jpc_lns])),(trou_cv_volt,jpc_poly1d(trou_cv_volt)),color='blue',width=1,dash="--")
             jpc0 = 0 #Only with Nicholson method
             jpc = np.abs(jpc) # Report positive value
         elif nicholson_cb == 1:
@@ -926,14 +957,10 @@ while True:
             E1_2 = (peak_cv_volt+trou_cv_volt)/2
             # Find peak-peak separation Voltage
             delta_e = np.abs(trou_cv_volt-peak_cv_volt)
-            # ax_cv.plot(E1_2,0,"D", markersize = 6)
             cv_graph.draw_text("⋄",(E1_2,0),color = "black",font="Any 20", angle = 0,text_location = "center")
-            # if event in ('idx_jsp0', 'idx_jsp0_pos'):
-            #     window['-CANVAS_cv-'].erase()
-            
+     
             #Find alpha for anodic only, since cathodic is estimate
             ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen_cv,cv_curr_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_cv_volt)
-            # ax_cv.plot(ep12_jpa,jp12_jpa,'x')
             cv_graph.draw_text("×",(ep12_jpa,jp12_jpa),color="orange",font="Any 20",angle = 0,text_location = "center")
         
             cv_graph.draw_line((volt_compen_cv[low_range_a],cv_curr_den[low_range_a]-0.00015),(volt_compen_cv[low_range_a],cv_curr_den[low_range_a]+0.00015),color='black',width=1.5)
@@ -964,8 +991,7 @@ while True:
             # Involving the Product of Electron Transfer. Anal. Chem. 1966, 38
             # (10), 1406.
             jpc = np.abs(jpa*((jpc0/jpa)+((0.485*np.abs(jsp0))/jpa)+0.086))
-
-            
+        
             alpha_jpc = np.NaN
             window['jsp0_cv_volt'].Update(jsp0_cv_volt)        
         
@@ -973,31 +999,55 @@ while True:
         if values['inv_jpa_jpc'] == True:
             jpa, jpc = jpc, jpa
             alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa
-                
-        # Plot lines
-        vm_volt_list_len = len(vm_volt_list)
-        min_volt_list = []
-        max_volt_list = []
-        min_curr_list = []
-        max_curr_list = []
-        cv_graph_id_list = []
-        for j in np.arange(0,vm_volt_list_len):
-            cutval_s_all = int(fitting_cv_save_array[j,2])
-            cutval_e_all = int(fitting_cv_save_array[j,3])          
-            vm_volt_trimed = vm_volt_ir_list[j][cutval_s_all:cutval_e_all]
-            vm_curr_trimed = vm_curr_den_list[j][cutval_s_all:cutval_e_all]
-            cv_graph_id = cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)
-            cv_graph_id_list.append(cv_graph_id)
-            min_volt_list.append(min(vm_volt_trimed)) #Get list of min and max volt/current of each cv so we can adjust the canvas based on the size
-            max_volt_list.append(max(vm_volt_trimed))
-            min_curr_list.append(min(vm_curr_trimed))
-            max_curr_list.append(max(vm_curr_trimed))
-        print(cv_graph_id_list) #store id in a list
-        margin_x = (max(max_volt_list)-min(min_volt_list))*0.05 #Create a margin for canvas
-        margin_y = (max(max_curr_list)-min(min_curr_list))*0.05
-        graph_bl = (min(min_volt_list)-margin_x,(min(min_curr_list)-margin_y))
-        graph_tr = (max(max_volt_list)+margin_x,(max(max_curr_list)+margin_y))
-        cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin    
+        
+        if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area','sl_cutval_s', 'sl_cutval_e'):
+            # Plot lines
+            # window['-CANVAS_cv-'].erase()
+            vm_volt_list_len = len(vm_volt_list)
+            min_volt_list = []
+            max_volt_list = []
+            min_curr_list = []
+            max_curr_list = []
+            if cv_graph_id_list is not None:
+                for i in cv_graph_id_list:
+                    cv_graph.delete_figure(i)
+                    # print(i,"i")
+                cv_graph_id_list = []
+            for j in np.arange(0,vm_volt_list_len):
+                cutval_s_all = int(fitting_cv_save_array[j,2])
+                cutval_e_all = int(fitting_cv_save_array[j,3])          
+                vm_volt_trimed = vm_volt_ir_list[j][cutval_s_all:cutval_e_all]
+                vm_curr_trimed = vm_curr_den_list[j][cutval_s_all:cutval_e_all]
+                cv_graph_id = cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)          
+                cv_graph_id_list.append(cv_graph_id)                         
+                min_volt_list.append(min(vm_volt_trimed)) #Get list of min and max volt/current of each cv so we can adjust the canvas based on the size
+                max_volt_list.append(max(vm_volt_trimed))
+                min_curr_list.append(min(vm_curr_trimed))
+                max_curr_list.append(max(vm_curr_trimed))
+            # print(cv_graph_id_list,"new")
+            # print("looooooooooooop")
+            # cv_graph_id_list = []
+            # print(cv_graph_id_list) #store id in a list
+            margin_x = (max(max_volt_list)-min(min_volt_list))*0.05 #Create a margin for canvas
+            margin_y = (max(max_curr_list)-min(min_curr_list))*0.05
+            graph_bl = (min(min_volt_list)-margin_x,(min(min_curr_list)-margin_y))
+            graph_tr = (max(max_volt_list)+margin_x,(max(max_curr_list)+margin_y))
+            # print("Adjust",graph_bl,graph_tr)
+            cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin 
+
+        # if event in ('sl_cutval_s', 'sl_cutval_e'):
+        #     print(cv_graph_id_list[cv_name_idx],"index of choosen cv")
+        #     print(cv_name_idx,len(volt_compen_cv),len(cv_curr_den))
+                # if max(volt_compen_cv) >= max(max_volt_list) or min(volt_compen_cv) <= min(min_volt_list):
+            # max(max_volt_list)
+            # min(min_volt_list)
+            # max(max_curr_list)
+            # min(min_volt_list)
+            
+            # graph_tr = (max(max_volt_list)+margin_x,(max(max_curr_list)+margin_y))
+            # cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin 
+            
+            # cv_graph.delete_figure(cv_graph_id_list[cv_name_idx]) 
 
         if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
