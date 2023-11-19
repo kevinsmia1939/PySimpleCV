@@ -774,7 +774,10 @@ while True:
             
     if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area','inv_jpa_jpc', 'sl_cutval_s', 'sl_cutval_e', 'sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne', 'peak_range', 'peak_pos', 'trou_pos', 'sl_cutval_s_pos', 'sl_cutval_e_pos', 'sl_jpa_lns_pos', 'sl_jpa_lne_pos',  'sl_jpc_lns_pos', 'sl_jpc_lne_pos', 'peak_range_pos', 'peak_pos_pos', 'trou_pos_pos', 'nicholson_cb', 'idx_jsp0', 'idx_jsp0_pos', 'scan_rate', 'bulk_conc_cv', 'elec_n_cv', 'enable_d', 'enable_k','peak_mode_1', 'peak_mode_2') and all_cv_deleted == False:
         cutval_s = int(values['sl_cutval_s'])
-        cutval_e = int(values['sl_cutval_e'])        
+        cutval_e = int(values['sl_cutval_e'])
+        if cutval_s == cutval_e:
+            cutval_e = cutval_s + 1
+        
         jpa_lns = int(values['sl_jpa_lns'])
         jpa_lne = int(values['sl_jpa_lne'])
         jpc_lns = int(values['sl_jpc_lns'])
@@ -795,7 +798,10 @@ while True:
         elec_n_cv = check_val(values['elec_n_cv'], "int", 1) 
          
         cutval_s_pos = check_val(values['sl_cutval_s_pos'], "int", 1)
-        cutval_e_pos = check_val(values['sl_cutval_e_pos'], "int", 1)  
+        cutval_e_pos = check_val(values['sl_cutval_e_pos'], "int", 1)
+        if cutval_s_pos == cutval_e_pos:
+            cutval_e_pos = cutval_s_pos + 1
+            
         jpa_lns_pos = check_val(values['sl_jpa_lns_pos'], "int", 1)
         jpa_lne_pos = check_val(values['sl_jpa_lne_pos'], "int", 1)  
         jpc_lns_pos = check_val(values['sl_jpc_lns_pos'], "int", 1)  
@@ -844,7 +850,7 @@ while True:
         elif event == 'peak_range':
             window['peak_range_pos'].Update(peak_range)
         elif event == 'peak_range_pos':
-            window['peak_range'].Update(peak_range_pos)
+            windowcutval_s['peak_range'].Update(peak_range_pos)
             peak_range = peak_range_pos     
             
         elif event == 'peak_pos':
@@ -869,7 +875,7 @@ while True:
         jpc_lns,jpc_lne = switch_val(jpc_lns,jpc_lne)
         
         fitting_save_cv = np.array([cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb], dtype=object)
-
+        print(cutval_s, cutval_e)
         fitting_cv_save_array[cv_name_idx][2:19] = fitting_save_cv
         if ir_compen != ir_compen_old:
             ir_compen_old = ir_compen
@@ -1039,7 +1045,10 @@ while True:
                 vm_volt_trimed = vm_volt_ir_list[j][cutval_s_all:cutval_e_all]
                 vm_curr_trimed = vm_curr_den_list[j][cutval_s_all:cutval_e_all]
                 cv_graph_id = cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)          
-                cv_graph_id_list.append(cv_graph_id)                         
+                cv_graph_id_list.append(cv_graph_id)
+
+                # NEED TO FIX MIN MAX EMPTY
+                                         
                 min_volt_list.append(min(vm_volt_trimed)) #Get list of min and max volt/current of each cv so we can adjust the canvas based on the size
                 max_volt_list.append(max(vm_volt_trimed))
                 min_curr_list.append(min(vm_curr_trimed))
@@ -1107,7 +1116,7 @@ while True:
                 xtick_id_list.append(xtick_id)
                 xtext_id_list.append(xtext_id)
                 
-            print(np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks)))
+            # print(np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks)))
             for y in np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks), axis=None):
                 if str(y).startswith("-"): #only display first 5 character excluding negative sign
                     y = float(str(y)[:6]) 
