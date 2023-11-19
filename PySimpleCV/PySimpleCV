@@ -1053,33 +1053,29 @@ while True:
             margin_y = (max_y-min_y)*0.05
             graph_bl = (min_x-margin_x,(min_y-margin_y))
             graph_tr = (max_x+margin_x,(max_y+margin_y))
-            # print("Adjust",graph_bl,graph_tr)
             
             # Draw grid
             # need tick number and axis label
             x_axis_ln_id = cv_graph.draw_line((graph_bl[0],0), (graph_tr[0],0)) #x
             y_axis_ln_id = cv_graph.draw_line((0,graph_bl[1]), (graph_tr[1],1)) #y 
-            
-            # print(graph_bl[0],graph_tr[0],(graph_tr[0]-graph_bl[0])/10)
-            # grid_interval = grid_tick((graph_tr[0]-graph_bl[0])/10)
-            # print(graph_tr[0]-graph_bl[0],(graph_tr[0]-graph_bl[0])/10)
-            tick_intx = grid_tick((graph_tr[0]-graph_bl[0])/10,"down")
-            tick_minx = abs(math.floor(graph_bl[0]/tick_intx))
-            tick_maxx = abs(math.ceil(graph_tr[0]/tick_intx))
+
             round_maxx = grid_tick(graph_tr[0],"up")
             round_minx = grid_tick(graph_bl[0],"down")
             round_grid_interval = (grid_tick(round_maxx-round_minx,None))/10
-            # print(round_maxx)
-            # print(round_minx)
-            # print(round_maxx-round_minx)
             
-            if str(round_grid_interval).endswith('001'):
-                round_grid_interval = float(str(round_grid_interval)[:-1])
-            print(round_grid_interval,"round_grid_interval")
+            # if str(round_grid_interval).endswith('001'):
+            #     round_grid_interval = float(str(round_grid_interval)[:-1])
+            # print(round_grid_interval,"round_grid_interval")
            
             x_canvas_range = graph_tr[0]-graph_bl[0]
             y_canvas_range = graph_tr[1]-graph_bl[1]
-
+            print(len(np.arange(0, round_maxx,round_grid_interval)),len(np.arange(round_minx,0,round_grid_interval)),"OOOOo")    
+            if len(np.arange(0, round_maxx,round_grid_interval)) >= len(np.arange(round_minx,0,round_grid_interval)):   
+                x_ticks = np.arange(0,round_maxx,round_grid_interval)
+            else:
+                x_ticks = np.arange(0,-round_minx,round_grid_interval)
+            print(x_ticks,"AAAAAAAAAA")
+            
             if xtick_id_list is not None:
                 for i in xtick_id_list:
                     cv_graph.delete_figure(i)
@@ -1089,51 +1085,26 @@ while True:
                     cv_graph.delete_figure(i)
                 xtext_id_list = []
                 
-            if len(np.arange(0, round_maxx,round_grid_interval)) >= len(np.arange(round_minx,0,round_grid_interval)):   
-                x_ticks = np.arange(0,round_maxx,round_grid_interval)
-            else:
-                x_ticks = np.arange(0,round_minx,round_grid_interval)
-            # pos = np.arange(0, round_maxx,round_grid_interval)
-            # neg = np.arange(round_minx,0,round_grid_interval)
             for x in np.concatenate((np.flip(-x_ticks[1:-1]),x_ticks), axis=None):
                 x = float(str(x)[:5]) #only display first 5 character
-                print(x)
+                print(x,"++++++++=")
                 xtick_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
                 xtext_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.02), color='green')
                 xtick_id_list.append(xtick_id)
-                xtext_id_list.append(xtext_id)   
-                
+                xtext_id_list.append(xtext_id)                 
             cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
-            # for x in [Decimal(i).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) for i in np.arange(0, graph_tr[0],tick_intx)]:
-            #     x = float(x)
-            #     xtick_max_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
-            #     xtext_max_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.01), color='green')
-            #     xtick_max_id_list.append(xtick_max_id)
-            #     xtext_max_id_list.append(xtext_max_id)
-            # for x in [Decimal(i).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) for i in np.arange(0, graph_bl[0],tick_intx)]:
-            #     x = float(x)
-            #     print(x)
-            #     xtick_min_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
-            #     xtext_min_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.01), color='green')
-            #     xtick_min_id_list.append(xtick_min_id)
-            #     xtext_min_id_list.append(xtext_min_id)
-                
-            # for y in np.linspace(0, graph_bl[0],tick_maxy):
-            #     ytick_id = cv_graph.draw_line((-0.0001,y), (0.0001,y))               
-                # if x != 0:    
-                #     xtick_id = cv_graph.draw_text( x, (x,-0.1), color='green') 
                     
-        # if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
-        #     clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
-        #     cv_volt_defl = np.interp(clip_defl, idx_arr, volt_compen_cv)
-        #     curr_defl = np.interp(clip_defl, idx_arr, cv_curr_den)
-        #     if defl_id_list is not None:
-        #         for i in defl_id_list:
-        #             cv_graph.delete_figure(i)
-        #         defl_id_list = []
-        #     for i in np.arange(0,len(cv_volt_defl)):
-        #         defl_id = cv_graph.draw_circle((cv_volt_defl[i],curr_defl[i]), 0.005, line_color='red', fill_color='red')
-        #         defl_id_list.append(defl_id)
+        if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
+            clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
+            cv_volt_defl = np.interp(clip_defl, idx_arr, volt_compen_cv)
+            curr_defl = np.interp(clip_defl, idx_arr, cv_curr_den)
+            if defl_id_list is not None:
+                for i in defl_id_list:
+                    cv_graph.delete_figure(i)
+                defl_id_list = []
+            for i in np.arange(0,len(cv_volt_defl)):
+                defl_id = cv_graph.draw_circle((cv_volt_defl[i],curr_defl[i]), 0.005, line_color='red', fill_color='red')
+                defl_id_list.append(defl_id)
                 
             # ax_cv.plot(cv_volt_defl,curr_defl,'.',color='green')
         # ax_cv.grid()
