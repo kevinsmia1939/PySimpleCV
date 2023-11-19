@@ -850,7 +850,7 @@ while True:
         elif event == 'peak_range':
             window['peak_range_pos'].Update(peak_range)
         elif event == 'peak_range_pos':
-            windowcutval_s['peak_range'].Update(peak_range_pos)
+            window['peak_range'].Update(peak_range_pos)
             peak_range = peak_range_pos     
             
         elif event == 'peak_pos':
@@ -1045,10 +1045,7 @@ while True:
                 vm_volt_trimed = vm_volt_ir_list[j][cutval_s_all:cutval_e_all]
                 vm_curr_trimed = vm_curr_den_list[j][cutval_s_all:cutval_e_all]
                 cv_graph_id = cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)          
-                cv_graph_id_list.append(cv_graph_id)
-
-                # NEED TO FIX MIN MAX EMPTY
-                                         
+                cv_graph_id_list.append(cv_graph_id)                                        
                 min_volt_list.append(min(vm_volt_trimed)) #Get list of min and max volt/current of each cv so we can adjust the canvas based on the size
                 max_volt_list.append(max(vm_volt_trimed))
                 min_curr_list.append(min(vm_curr_trimed))
@@ -1107,24 +1104,15 @@ while True:
                 ytext_id_list = []
                 
             for x in np.concatenate((np.flip(-x_ticks[1:-1]),x_ticks), axis=None):
-                if str(x).startswith("-"): #only display first 5 character excluding negative sign
-                    x = float(str(x)[:6]) 
-                else:
-                    x = float(str(x)[:5])
                 xtick_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
-                xtext_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.02), color='green')
+                xtext_id = cv_graph.draw_text(np.format_float_scientific(x, unique=False, precision=1,exp_digits=1),(x,-y_canvas_range*0.02), color='green')
                 xtick_id_list.append(xtick_id)
                 xtext_id_list.append(xtext_id)
                 
-            # print(np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks)))
-            for y in np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks), axis=None):
-                if str(y).startswith("-"): #only display first 5 character excluding negative sign
-                    y = float(str(y)[:6]) 
-                else:
-                    y = float(str(y)[:5])
-                print(y)
+            # print(np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks[1:-1])))
+            for y in np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks[1:-1]), axis=None): # No need tick a 0
                 ytick_id = cv_graph.draw_line((-x_canvas_range*0.01,y), (x_canvas_range*0.01,y))
-                ytext_id = cv_graph.draw_text(y,(-x_canvas_range*0.04,y), color='green')
+                ytext_id = cv_graph.draw_text(np.format_float_scientific(y, unique=False, precision=1,exp_digits=1),(-x_canvas_range*0.04,y), color='green')
                 ytick_id_list.append(ytick_id)
                 ytext_id_list.append(ytext_id)                   
             cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
@@ -1303,6 +1291,9 @@ while True:
     if event in ('cv_open_menu_ecsa', 'sl_v_ln_ecsa', 'sl_h_ln_ecsa', 'sl_cutval_s_ecsa', 'sl_cutval_e_ecsa', 'peak_range_ecsa', 'ir_compen_ecsa', 'sl_cutval_s_ecsa_pos', 'sl_cutval_e_ecsa_pos', 'sl_v_ln_ecsa_pos', 'sl_h_ln_ecsa_pos', 'peak_range_ecsa_pos'):
         cutval_s_ecsa = int(values['sl_cutval_s_ecsa'])
         cutval_e_ecsa = int(values['sl_cutval_e_ecsa'])
+        if cutval_s_ecsa == cutval_e_ecsa:
+            cutval_e_ecsa = cutval_s_ecsa + 1
+            
         v_ln_ecsa = int(values['sl_v_ln_ecsa'])
         h_ln_ecsa = int(values['sl_h_ln_ecsa'])  
         peak_range_ecsa = int(values['peak_range_ecsa'])
