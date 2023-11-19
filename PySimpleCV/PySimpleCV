@@ -1044,13 +1044,17 @@ while True:
                 max_volt_list.append(max(vm_volt_trimed))
                 min_curr_list.append(min(vm_curr_trimed))
                 max_curr_list.append(max(vm_curr_trimed))
-
-            margin_x = (max(max_volt_list)-min(min_volt_list))*0.05 #Create a margin for canvas with 5%
-            margin_y = (max(max_curr_list)-min(min_curr_list))*0.05
-            graph_bl = (min(min_volt_list)-margin_x,(min(min_curr_list)-margin_y))
-            graph_tr = (max(max_volt_list)+margin_x,(max(max_curr_list)+margin_y))
+            
+            max_x = max(max_volt_list)
+            min_x = min(min_volt_list)
+            max_y = max(max_curr_list)
+            min_y = min(min_curr_list)
+            margin_x = (max_x-min_x)*0.05 #Create a margin for canvas with 5%
+            margin_y = (max_y-min_y)*0.05
+            graph_bl = (min_x-margin_x,(min_y-margin_y))
+            graph_tr = (max_x+margin_x,(max_y+margin_y))
             # print("Adjust",graph_bl,graph_tr)
-            cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
+            
             # Draw grid
             # need tick number and axis label
             x_axis_ln_id = cv_graph.draw_line((graph_bl[0],0), (graph_tr[0],0)) #x
@@ -1065,23 +1069,14 @@ while True:
             round_maxx = grid_tick(graph_tr[0],"up")
             round_minx = grid_tick(graph_bl[0],"down")
             round_grid_interval = (grid_tick(round_maxx-round_minx,None))/10
-            print(round_maxx)
-            print(round_minx)
-            print(round_maxx-round_minx)
+            # print(round_maxx)
+            # print(round_minx)
+            # print(round_maxx-round_minx)
             
             if str(round_grid_interval).endswith('001'):
                 round_grid_interval = float(str(round_grid_interval)[:-1])
-            print(round_grid_interval)
-            
-            
-            # tick_inty = grid_tick((graph_tr[1]-graph_bl[1])/10,"down")
-            # tick_miny = abs(math.floor(graph_bl[1]/tick_inty))
-            # tick_maxy = abs(math.ceil(graph_tr[1]/tick_inty))
-            # print(tick_interval,tick_minx,tick_maxx)
-            # grid_minx = grid_tick(graph_bl[0],"down")
-            # grid_maxx = grid_tick(graph_tr[0],"up")
-            # print(grid_minx,grid_maxx)
-            
+            print(round_grid_interval,"round_grid_interval")
+           
             x_canvas_range = graph_tr[0]-graph_bl[0]
             y_canvas_range = graph_tr[1]-graph_bl[1]
 
@@ -1093,16 +1088,22 @@ while True:
                 for i in xtext_id_list:
                     cv_graph.delete_figure(i)
                 xtext_id_list = []
+                
+            if len(np.arange(0, round_maxx,round_grid_interval)) >= len(np.arange(round_minx,0,round_grid_interval)):   
+                x_ticks = np.arange(0,round_maxx,round_grid_interval)
+            else:
+                x_ticks = np.arange(0,round_minx,round_grid_interval)
             # pos = np.arange(0, round_maxx,round_grid_interval)
             # neg = np.arange(round_minx,0,round_grid_interval)
-            print(round_grid_interval)
-            for x in np.concatenate((np.flip(np.arange(round_minx,0,round_grid_interval)[1:-1]),np.arange(0, round_maxx,round_grid_interval)), axis=None):
+            for x in np.concatenate((np.flip(-x_ticks[1:-1]),x_ticks), axis=None):
                 x = float(str(x)[:5]) #only display first 5 character
                 print(x)
                 xtick_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
                 xtext_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.02), color='green')
                 xtick_id_list.append(xtick_id)
-                xtext_id_list.append(xtext_id)               
+                xtext_id_list.append(xtext_id)   
+                
+            cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
             # for x in [Decimal(i).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) for i in np.arange(0, graph_tr[0],tick_intx)]:
             #     x = float(x)
             #     xtick_max_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
