@@ -450,14 +450,10 @@ x_axis_ln_id = None
 y_axis_ln_id = None
 cv_graph_id_list = []
 defl_id_list = []
-xtick_max_id_list = []
-xtick_min_id_list = []
-xtext_max_id_list = []   
-xtext_min_id_list = []   
-ytick_max_id_list = []
-ytick_min_id_list = []   
-ytext_max_id_list = []   
-ytext_min_id_list = []   
+xtick_id_list = []
+xtext_id_list = []    
+ytick_id_list = []
+ytext_id_list = []   
 while True:
     event, values = window.read()
     # print(values)
@@ -1066,10 +1062,21 @@ while True:
             tick_intx = grid_tick((graph_tr[0]-graph_bl[0])/10,"down")
             tick_minx = abs(math.floor(graph_bl[0]/tick_intx))
             tick_maxx = abs(math.ceil(graph_tr[0]/tick_intx))
+            round_maxx = grid_tick(graph_tr[0],"up")
+            round_minx = grid_tick(graph_bl[0],"down")
+            round_grid_interval = (grid_tick(round_maxx-round_minx,None))/10
+            print(round_maxx)
+            print(round_minx)
+            print(round_maxx-round_minx)
             
-            tick_inty = grid_tick((graph_tr[1]-graph_bl[1])/10,"down")
-            tick_miny = abs(math.floor(graph_bl[1]/tick_inty))
-            tick_maxy = abs(math.ceil(graph_tr[1]/tick_inty))
+            if str(round_grid_interval).endswith('001'):
+                round_grid_interval = float(str(round_grid_interval)[:-1])
+            print(round_grid_interval)
+            
+            
+            # tick_inty = grid_tick((graph_tr[1]-graph_bl[1])/10,"down")
+            # tick_miny = abs(math.floor(graph_bl[1]/tick_inty))
+            # tick_maxy = abs(math.ceil(graph_tr[1]/tick_inty))
             # print(tick_interval,tick_minx,tick_maxx)
             # grid_minx = grid_tick(graph_bl[0],"down")
             # grid_maxx = grid_tick(graph_tr[0],"up")
@@ -1078,37 +1085,37 @@ while True:
             x_canvas_range = graph_tr[0]-graph_bl[0]
             y_canvas_range = graph_tr[1]-graph_bl[1]
 
-            if xtick_max_id_list is not None:
-                for i in xtick_max_id_list:
+            if xtick_id_list is not None:
+                for i in xtick_id_list:
                     cv_graph.delete_figure(i)
-                xtick_max_id_list = []       
-            if xtick_min_id_list is not None:
-                for i in xtick_min_id_list:
+                xtick_id_list = []       
+            if xtext_id_list is not None:
+                for i in xtext_id_list:
                     cv_graph.delete_figure(i)
-                xtick_min_id_list = []
-            if xtext_max_id_list is not None:
-                for i in xtext_max_id_list:
-                    cv_graph.delete_figure(i)
-                xtext_max_id_list = []
-            if xtext_min_id_list is not None:
-                for i in xtext_min_id_list:
-                    cv_graph.delete_figure(i)
-                xtext_min_id_list = []     
-            # print(0, graph_tr[0],tick_intx)
-            # for x in np.arange(0, graph_tr[0],tick_intx):
-            for x in [Decimal(i).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) for i in np.arange(0, graph_tr[0],tick_intx)]:
-                x = float(x)
-                xtick_max_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
-                xtext_max_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.01), color='green')
-                xtick_max_id_list.append(xtick_max_id)
-                xtext_max_id_list.append(xtext_max_id)
-            for x in [Decimal(i).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) for i in np.arange(0, graph_bl[0],tick_intx)]:
-                x = float(x)
+                xtext_id_list = []
+            # pos = np.arange(0, round_maxx,round_grid_interval)
+            # neg = np.arange(round_minx,0,round_grid_interval)
+            print(round_grid_interval)
+            for x in np.concatenate((np.flip(np.arange(round_minx,0,round_grid_interval)[1:-1]),np.arange(0, round_maxx,round_grid_interval)), axis=None):
+                x = float(str(x)[:5]) #only display first 5 character
                 print(x)
-                xtick_min_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
-                xtext_min_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.01), color='green')
-                xtick_min_id_list.append(xtick_min_id)
-                xtext_min_id_list.append(xtext_min_id)
+                xtick_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
+                xtext_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.02), color='green')
+                xtick_id_list.append(xtick_id)
+                xtext_id_list.append(xtext_id)               
+            # for x in [Decimal(i).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) for i in np.arange(0, graph_tr[0],tick_intx)]:
+            #     x = float(x)
+            #     xtick_max_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
+            #     xtext_max_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.01), color='green')
+            #     xtick_max_id_list.append(xtick_max_id)
+            #     xtext_max_id_list.append(xtext_max_id)
+            # for x in [Decimal(i).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) for i in np.arange(0, graph_bl[0],tick_intx)]:
+            #     x = float(x)
+            #     print(x)
+            #     xtick_min_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
+            #     xtext_min_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.01), color='green')
+            #     xtick_min_id_list.append(xtick_min_id)
+            #     xtext_min_id_list.append(xtext_min_id)
                 
             # for y in np.linspace(0, graph_bl[0],tick_maxy):
             #     ytick_id = cv_graph.draw_line((-0.0001,y), (0.0001,y))               

@@ -462,4 +462,7 @@ def grid_tick(number,updown):
     elif number != 0 and updown == "down":
         magnitude = 10 ** (int(math.log10(abs(number))) - 1)
         rounded_number = math.floor(number / magnitude) * magnitude
+    elif number != 0 and updown == None:
+        magnitude = 10 ** (int(math.log10(abs(number))) - 1)
+        rounded_number = round(number / magnitude) * magnitude    
     return rounded_number
