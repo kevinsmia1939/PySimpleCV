@@ -1,3 +1,4 @@
+import math
 import numpy as np
 import numpy.polynomial.polynomial as poly
 import pandas as pd
@@ -425,11 +426,7 @@ def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit_arr):
         # Levich equation
         diffusion = (slope/(0.62*n*F*kinvis**(-1/6)*conc_bulk))**(3/2) #cathodic where slope is negative
         # Calculate R2
-        j_inv_fit = kou_lev_polyfit(inv_sqrt_ror)
-        # print(inv_sqrt_ror)
-        # print(kou_lev_polyfit)
-        # print(np.array[0,max(inv_sqrt_ror)])
-        # j_inv_fit = kou_lev_polyfit(np.array[0,max(inv_sqrt_ror)])      
+        j_inv_fit = kou_lev_polyfit(inv_sqrt_ror)   
         residuals = inv_lim_curr - j_inv_fit
         ssr = np.sum(residuals ** 2)
         sst = np.sum((inv_lim_curr - np.mean(inv_lim_curr)) ** 2)
@@ -455,3 +452,14 @@ def data2canvas(x_list,y_list):
     graph_bl = (minx-margin_x,miny-margin_y)
     graph_tr = (maxx+margin_x,maxy+margin_y)
     return graph_bl, graph_tr
+
+def grid_tick(number,updown):
+    if number == 0:
+        return 0
+    elif number != 0 and updown == "up":
+        magnitude = 10 ** (int(math.log10(abs(number))) - 1)
+        rounded_number = math.ceil(number / magnitude) * magnitude
+    elif number != 0 and updown == "down":
+        magnitude = 10 ** (int(math.log10(abs(number))) - 1)
+        rounded_number = math.floor(number / magnitude) * magnitude
+    return rounded_number

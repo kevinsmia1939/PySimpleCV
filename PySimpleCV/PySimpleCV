@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 import os
 import sys
+import math
+from decimal import Decimal, ROUND_HALF_UP
 import numpy as np 
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg 
 from matplotlib.figure import Figure
@@ -10,7 +12,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import shutil
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev, data2canvas
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev, data2canvas, grid_tick
 # from PySimpleCV_main_func import *
 
 if not sys.warnoptions:
@@ -195,11 +197,11 @@ cv_graph = window['-CANVAS_cv-']
 # ax_cv.set_xlabel("Voltage",fontsize=14)
 # ax_cv.set_ylabel("Current",fontsize=14)
 
-for x in range(-10, 10, 1):    
-    cv_graph.DrawLine((x/10,-1), (x/10,1),color='lightgrey')
-    cv_graph.DrawLine((-1,x/10), (1,x/10),color='lightgrey')
-cv_graph.DrawLine((-1,0), (1,0))
-cv_graph.DrawLine((0,-1), (0,1)) 
+# for x in range(-10, 10, 1):    
+#     cv_graph.DrawLine((x/10,-1), (x/10,1),color='lightgrey')
+#     cv_graph.DrawLine((-1,x/10), (1,x/10),color='lightgrey')
+# cv_graph.DrawLine((-1,0), (1,0))
+# cv_graph.DrawLine((0,-1), (0,1)) 
 
 fig_cv_D = Figure(figsize=(9,9))
 ax_cv_D = fig_cv_D.add_subplot(111)
@@ -444,8 +446,18 @@ jpc_ln_id = None
 jpc_trou_id = None
 jpc_base_id = None
 cv_graph_id = None
-
+x_axis_ln_id = None
+y_axis_ln_id = None
 cv_graph_id_list = []
+defl_id_list = []
+xtick_max_id_list = []
+xtick_min_id_list = []
+xtext_max_id_list = []   
+xtext_min_id_list = []   
+ytick_max_id_list = []
+ytick_min_id_list = []   
+ytext_max_id_list = []   
+ytext_min_id_list = []   
 while True:
     event, values = window.read()
     # print(values)
@@ -1001,17 +1013,29 @@ while True:
             alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa
         
         if event in ('cv_open_menu', 'cv_load_cv', 'ir_compen', 'elec_area','sl_cutval_s', 'sl_cutval_e'):
+            if peak_mode_1 == "deflection" or peak_mode_2 == "deflection": #Plot deflection
+                clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
+                cv_volt_defl = np.interp(clip_defl, idx_arr, volt_compen_cv)
+                curr_defl = np.interp(clip_defl, idx_arr, cv_curr_den)
+                if defl_id_list is not None:
+                    for i in defl_id_list:
+                        cv_graph.delete_figure(i)
+                    defl_id_list = []
+                for i in np.arange(0,len(cv_volt_defl)):
+                    defl_id = cv_graph.draw_circle((cv_volt_defl[i],curr_defl[i]), 0.005, line_color='red', fill_color='red')
+                    defl_id_list.append(defl_id)
+
             # Plot lines
-            # window['-CANVAS_cv-'].erase()
             vm_volt_list_len = len(vm_volt_list)
             min_volt_list = []
             max_volt_list = []
             min_curr_list = []
             max_curr_list = []
+            cv_graph.delete_figure(x_axis_ln_id)
+            cv_graph.delete_figure(y_axis_ln_id)
             if cv_graph_id_list is not None:
                 for i in cv_graph_id_list:
                     cv_graph.delete_figure(i)
-                    # print(i,"i")
                 cv_graph_id_list = []
             for j in np.arange(0,vm_volt_list_len):
                 cutval_s_all = int(fitting_cv_save_array[j,2])
@@ -1024,35 +1048,85 @@ while True:
                 max_volt_list.append(max(vm_volt_trimed))
                 min_curr_list.append(min(vm_curr_trimed))
                 max_curr_list.append(max(vm_curr_trimed))
-            # print(cv_graph_id_list,"new")
-            # print("looooooooooooop")
-            # cv_graph_id_list = []
-            # print(cv_graph_id_list) #store id in a list
-            margin_x = (max(max_volt_list)-min(min_volt_list))*0.05 #Create a margin for canvas
+
+            margin_x = (max(max_volt_list)-min(min_volt_list))*0.05 #Create a margin for canvas with 5%
             margin_y = (max(max_curr_list)-min(min_curr_list))*0.05
             graph_bl = (min(min_volt_list)-margin_x,(min(min_curr_list)-margin_y))
             graph_tr = (max(max_volt_list)+margin_x,(max(max_curr_list)+margin_y))
             # print("Adjust",graph_bl,graph_tr)
-            cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin 
-
-        # if event in ('sl_cutval_s', 'sl_cutval_e'):
-        #     print(cv_graph_id_list[cv_name_idx],"index of choosen cv")
-        #     print(cv_name_idx,len(volt_compen_cv),len(cv_curr_den))
-                # if max(volt_compen_cv) >= max(max_volt_list) or min(volt_compen_cv) <= min(min_volt_list):
-            # max(max_volt_list)
-            # min(min_volt_list)
-            # max(max_curr_list)
-            # min(min_volt_list)
+            cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
+            # Draw grid
+            # need tick number and axis label
+            x_axis_ln_id = cv_graph.draw_line((graph_bl[0],0), (graph_tr[0],0)) #x
+            y_axis_ln_id = cv_graph.draw_line((0,graph_bl[1]), (graph_tr[1],1)) #y 
             
-            # graph_tr = (max(max_volt_list)+margin_x,(max(max_curr_list)+margin_y))
-            # cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin 
+            # print(graph_bl[0],graph_tr[0],(graph_tr[0]-graph_bl[0])/10)
+            # grid_interval = grid_tick((graph_tr[0]-graph_bl[0])/10)
+            # print(graph_tr[0]-graph_bl[0],(graph_tr[0]-graph_bl[0])/10)
+            tick_intx = grid_tick((graph_tr[0]-graph_bl[0])/10,"down")
+            tick_minx = abs(math.floor(graph_bl[0]/tick_intx))
+            tick_maxx = abs(math.ceil(graph_tr[0]/tick_intx))
             
-            # cv_graph.delete_figure(cv_graph_id_list[cv_name_idx]) 
+            tick_inty = grid_tick((graph_tr[1]-graph_bl[1])/10,"down")
+            tick_miny = abs(math.floor(graph_bl[1]/tick_inty))
+            tick_maxy = abs(math.ceil(graph_tr[1]/tick_inty))
+            # print(tick_interval,tick_minx,tick_maxx)
+            # grid_minx = grid_tick(graph_bl[0],"down")
+            # grid_maxx = grid_tick(graph_tr[0],"up")
+            # print(grid_minx,grid_maxx)
+            
+            x_canvas_range = graph_tr[0]-graph_bl[0]
+            y_canvas_range = graph_tr[1]-graph_bl[1]
 
-        if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
-            clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
-            cv_volt_defl = np.interp([clip_defl], idx_arr, volt_compen_cv)
-            curr_defl = np.interp([clip_defl], idx_arr, cv_curr_den)
+            if xtick_max_id_list is not None:
+                for i in xtick_max_id_list:
+                    cv_graph.delete_figure(i)
+                xtick_max_id_list = []       
+            if xtick_min_id_list is not None:
+                for i in xtick_min_id_list:
+                    cv_graph.delete_figure(i)
+                xtick_min_id_list = []
+            if xtext_max_id_list is not None:
+                for i in xtext_max_id_list:
+                    cv_graph.delete_figure(i)
+                xtext_max_id_list = []
+            if xtext_min_id_list is not None:
+                for i in xtext_min_id_list:
+                    cv_graph.delete_figure(i)
+                xtext_min_id_list = []     
+            # print(0, graph_tr[0],tick_intx)
+            # for x in np.arange(0, graph_tr[0],tick_intx):
+            for x in [Decimal(i).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) for i in np.arange(0, graph_tr[0],tick_intx)]:
+                x = float(x)
+                xtick_max_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
+                xtext_max_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.01), color='green')
+                xtick_max_id_list.append(xtick_max_id)
+                xtext_max_id_list.append(xtext_max_id)
+            for x in [Decimal(i).quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP) for i in np.arange(0, graph_bl[0],tick_intx)]:
+                x = float(x)
+                print(x)
+                xtick_min_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
+                xtext_min_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.01), color='green')
+                xtick_min_id_list.append(xtick_min_id)
+                xtext_min_id_list.append(xtext_min_id)
+                
+            # for y in np.linspace(0, graph_bl[0],tick_maxy):
+            #     ytick_id = cv_graph.draw_line((-0.0001,y), (0.0001,y))               
+                # if x != 0:    
+                #     xtick_id = cv_graph.draw_text( x, (x,-0.1), color='green') 
+                    
+        # if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
+        #     clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
+        #     cv_volt_defl = np.interp(clip_defl, idx_arr, volt_compen_cv)
+        #     curr_defl = np.interp(clip_defl, idx_arr, cv_curr_den)
+        #     if defl_id_list is not None:
+        #         for i in defl_id_list:
+        #             cv_graph.delete_figure(i)
+        #         defl_id_list = []
+        #     for i in np.arange(0,len(cv_volt_defl)):
+        #         defl_id = cv_graph.draw_circle((cv_volt_defl[i],curr_defl[i]), 0.005, line_color='red', fill_color='red')
+        #         defl_id_list.append(defl_id)
+                
             # ax_cv.plot(cv_volt_defl,curr_defl,'.',color='green')
         # ax_cv.grid()
         # ax_cv.set_xlabel("Voltage")
