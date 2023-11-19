@@ -1061,20 +1061,23 @@ while True:
 
             round_maxx = grid_tick(graph_tr[0],"up")
             round_minx = grid_tick(graph_bl[0],"down")
-            round_grid_interval = (grid_tick(round_maxx-round_minx,None))/10
-            
-            # if str(round_grid_interval).endswith('001'):
-            #     round_grid_interval = float(str(round_grid_interval)[:-1])
-            # print(round_grid_interval,"round_grid_interval")
+            grid_xinte = (grid_tick(round_maxx-round_minx,None))/10
+            round_maxy = grid_tick(graph_tr[1],"up")
+            round_miny = grid_tick(graph_bl[1],"down")
+            grid_yinte = (grid_tick(round_maxy-round_miny,None))/10            
            
             x_canvas_range = graph_tr[0]-graph_bl[0]
             y_canvas_range = graph_tr[1]-graph_bl[1]
-            print(len(np.arange(0, round_maxx,round_grid_interval)),len(np.arange(round_minx,0,round_grid_interval)),"OOOOo")    
-            if len(np.arange(0, round_maxx,round_grid_interval)) >= len(np.arange(round_minx,0,round_grid_interval)):   
-                x_ticks = np.arange(0,round_maxx,round_grid_interval)
+            if len(np.arange(0, round_maxx,grid_xinte)) >= len(np.arange(round_minx,0,grid_xinte)):   
+                x_ticks = np.arange(0,round_maxx,grid_xinte)
             else:
-                x_ticks = np.arange(0,-round_minx,round_grid_interval)
-            print(x_ticks,"AAAAAAAAAA")
+                x_ticks = np.arange(0,-round_minx,grid_xinte)
+                
+            if len(np.arange(0, round_maxy,grid_yinte)) >= len(np.arange(round_miny,0,grid_yinte)):   
+                y_ticks = np.arange(0,round_maxy,grid_yinte)
+            else:
+                y_ticks = np.arange(0,-round_miny,grid_yinte)            
+            print(y_ticks)
             
             if xtick_id_list is not None:
                 for i in xtick_id_list:
@@ -1084,14 +1087,37 @@ while True:
                 for i in xtext_id_list:
                     cv_graph.delete_figure(i)
                 xtext_id_list = []
+
+            if ytick_id_list is not None:
+                for i in ytick_id_list:
+                    cv_graph.delete_figure(i)
+                ytick_id_list = []       
+            if ytext_id_list is not None:
+                for i in ytext_id_list:
+                    cv_graph.delete_figure(i)
+                ytext_id_list = []
                 
             for x in np.concatenate((np.flip(-x_ticks[1:-1]),x_ticks), axis=None):
-                x = float(str(x)[:5]) #only display first 5 character
-                print(x,"++++++++=")
+                if str(x).startswith("-"): #only display first 5 character excluding negative sign
+                    x = float(str(x)[:6]) 
+                else:
+                    x = float(str(x)[:5])
                 xtick_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
                 xtext_id = cv_graph.draw_text(x,(x,-y_canvas_range*0.02), color='green')
                 xtick_id_list.append(xtick_id)
-                xtext_id_list.append(xtext_id)                 
+                xtext_id_list.append(xtext_id)
+                
+            print(np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks)))
+            for y in np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks), axis=None):
+                if str(y).startswith("-"): #only display first 5 character excluding negative sign
+                    y = float(str(y)[:6]) 
+                else:
+                    y = float(str(y)[:5])
+                print(y)
+                ytick_id = cv_graph.draw_line((-x_canvas_range*0.01,y), (x_canvas_range*0.01,y))
+                ytext_id = cv_graph.draw_text(y,(-x_canvas_range*0.04,y), color='green')
+                ytick_id_list.append(ytick_id)
+                ytext_id_list.append(ytext_id)                   
             cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
                     
         if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
