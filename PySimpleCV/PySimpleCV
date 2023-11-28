@@ -1060,10 +1060,7 @@ while True:
             graph_bl = (min_x-margin_x,(min_y-margin_y))
             graph_tr = (max_x+margin_x,(max_y+margin_y))
             
-            # Draw grid
-            # need tick number and axis label
-            x_axis_ln_id = cv_graph.draw_line((graph_bl[0],0), (graph_tr[0],0)) #x
-            y_axis_ln_id = cv_graph.draw_line((0,graph_bl[1]), (graph_tr[1],1)) #y 
+            cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
 
             round_maxx = grid_tick(graph_tr[0],"up")
             round_minx = grid_tick(graph_bl[0],"down")
@@ -1083,7 +1080,7 @@ while True:
                 y_ticks = np.arange(0,round_maxy,grid_yinte)
             else:
                 y_ticks = np.arange(0,-round_miny,grid_yinte)            
-            print(y_ticks)
+            # print(y_ticks)
             
             if xtick_id_list is not None:
                 for i in xtick_id_list:
@@ -1102,20 +1099,38 @@ while True:
                 for i in ytext_id_list:
                     cv_graph.delete_figure(i)
                 ytext_id_list = []
-                
+
+            # Draw grid
+            if graph_bl[0] > 0 or graph_tr[0] < 0:
+                # (graph_tr[0]-graph_bl[0])*0.1
+                # y_axis_ln_id = cv_graph.draw_line((graph_bl[0]+x_canvas_range*0.02,graph_bl[1]), (graph_bl[0]+x_canvas_range*0.02,graph_tr[1])) #y 
+                # x_axis_loc = graph_bl[1]+y_canvas_range*0.02
+                y_axis_loc = graph_bl[0]+x_canvas_range*0.02
+                # y_axis_ln_id = cv_graph.draw_line((y_axis_loc,graph_bl[1]), (y_axis_loc,graph_tr[1])) #y 
+            
+            else:
+                y_axis_loc = 0
+            y_axis_ln_id = cv_graph.draw_line((y_axis_loc,graph_bl[1]), (y_axis_loc,graph_tr[1])) #y 
+                # x_axis_ln_id = cv_graph.draw_line((graph_bl[0],x_axis_loc), (graph_tr[0],x_axis_loc)) #x
+            
+            x_axis_loc = graph_bl[1]+y_canvas_range*0.02
+            x_axis_ln_id = cv_graph.draw_line((graph_bl[0],x_axis_loc), (graph_tr[0],x_axis_loc))
+            
+            #Draw tick number and axis label    
+            x_text_loc = x_axis_loc+y_canvas_range*0.02
             for x in np.concatenate((np.flip(-x_ticks[1:-1]),x_ticks), axis=None):
-                xtick_id = cv_graph.draw_line((x,-y_canvas_range*0.01), (x,y_canvas_range*0.01))
-                xtext_id = cv_graph.draw_text(np.format_float_scientific(x, unique=False, precision=1,exp_digits=1),(x,-y_canvas_range*0.02), color='green')
+                xtick_id = cv_graph.draw_line((x,x_axis_loc-y_canvas_range*0.01), (x,x_axis_loc+y_canvas_range*0.01))
+                xtext_id = cv_graph.draw_text(np.format_float_scientific(x, unique=False, precision=1,exp_digits=1),(x,x_text_loc), color='green')
                 xtick_id_list.append(xtick_id)
                 xtext_id_list.append(xtext_id)
-                
-            # print(np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks[1:-1])))
-            for y in np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks[1:-1]), axis=None): # No need tick a 0
-                ytick_id = cv_graph.draw_line((-x_canvas_range*0.01,y), (x_canvas_range*0.01,y))
-                ytext_id = cv_graph.draw_text(np.format_float_scientific(y, unique=False, precision=1,exp_digits=1),(-x_canvas_range*0.04,y), color='green')
+
+            y_text_loc = y_axis_loc+x_canvas_range*0.04
+            for y in np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks), axis=None): # No need tick a 0
+                ytick_id = cv_graph.draw_line((y_axis_loc-x_canvas_range*0.01,y), (y_axis_loc+x_canvas_range*0.01,y))
+                ytext_id = cv_graph.draw_text(np.format_float_scientific(y, unique=False, precision=1,exp_digits=1),(y_text_loc,y), color='green')
                 ytick_id_list.append(ytick_id)
                 ytext_id_list.append(ytext_id)                   
-            cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
+            # cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
                     
         if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
@@ -1139,7 +1154,6 @@ while True:
         cv_results = cv_results.sort_index()
         window['cv_results_dis'].Update(cv_results.to_string(index=False))
             
-
         
         alpha_ano = np.average(np.asarray(cv_results.loc[:,'alpha_ano'].to_numpy(), dtype=float))
         alpha_cat = np.average(np.asarray(cv_results.loc[:,'alpha_cat'].to_numpy(), dtype=float))
