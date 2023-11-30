@@ -398,7 +398,8 @@ vm_volt_list = []
 vm_curr_list = []
 vm_curr_den_list = []
 vm_volt_ir_list = []
-
+trim_vm_curr_den_list = []
+trim_vm_volt_ir_list = []
 cv_path_list = []
 cv_name_list = []
 cv_size_list = []
@@ -883,6 +884,7 @@ while True:
             vm_volt_ir_list[cv_name_idx] = volt_compen_cv
         else:
             volt_compen_cv = vm_volt_ir_list[cv_name_idx]
+            # vm_volt_ir_list[cv_name_idx] = volt_compen_cv
         
         if elec_area != elec_area_old:
             elec_area_old = elec_area
@@ -891,7 +893,11 @@ while True:
             vm_curr_den_list[cv_name_idx] = cv_curr_den
         else:
             cv_curr_den = vm_curr_den_list[cv_name_idx]
-    
+            # vm_curr_den_list[cv_name_idx] = cv_curr_den
+
+        # trim_vm_curr_den_list[cv_name_idx] = vm_curr_den_list
+        # trim_vm_volt_ir_list[cv_name_idx] = vm_volt_ir_list
+        
         if peak_mode_1 == 'deflection':
             peak_pos = idx_defl_points[np.abs(idx_defl_points - peak_pos).argmin()]
             peak_pos = int(peak_pos)
@@ -924,18 +930,15 @@ while True:
                 for i in cv_graph_id_list:
                     cv_graph.delete_figure(i)
                 cv_graph_id_list = []
-            for j in np.arange(0,vm_volt_list_len):
+            for j in np.arange(0,vm_volt_list_len): #Find the boundary of the graph
                 cutval_s_all = int(fitting_cv_save_array[j,2])
                 cutval_e_all = int(fitting_cv_save_array[j,3])          
                 vm_volt_trimed = vm_volt_ir_list[j][cutval_s_all:cutval_e_all]
-                vm_curr_trimed = vm_curr_den_list[j][cutval_s_all:cutval_e_all]
-                cv_graph_id = cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)          
-                cv_graph_id_list.append(cv_graph_id)                                        
+                vm_curr_trimed = vm_curr_den_list[j][cutval_s_all:cutval_e_all]                                    
                 min_volt_list.append(min(vm_volt_trimed)) #Get list of min and max volt/current of each cv so we can adjust the canvas based on the size
                 max_volt_list.append(max(vm_volt_trimed))
                 min_curr_list.append(min(vm_curr_trimed))
-                max_curr_list.append(max(vm_curr_trimed))
-            
+                max_curr_list.append(max(vm_curr_trimed))            
             max_x = max(max_volt_list)
             min_x = min(min_volt_list)
             max_y = max(max_curr_list)
@@ -945,10 +948,18 @@ while True:
             graph_bl = (min_x-margin_x,(min_y-margin_y))
             graph_tr = (max_x+margin_x,(max_y+margin_y))
             
-            cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
-            print(graph_bl,graph_tr)
+            cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin The coordinate must be adjust before plotting
+            # print(graph_bl,graph_tr)
 
-            round_maxx = grid_tick(graph_tr[0],"up")
+            for k in np.arange(0,vm_volt_list_len): #Now plot
+                cutval_s_all = int(fitting_cv_save_array[k,2])
+                cutval_e_all = int(fitting_cv_save_array[k,3])          
+                vm_volt_trimed = vm_volt_ir_list[k][cutval_s_all:cutval_e_all]
+                vm_curr_trimed = vm_curr_den_list[k][cutval_s_all:cutval_e_all]
+                cv_graph_id = cv_graph.draw_lines(list(zip(vm_volt_trimed, vm_curr_trimed)),color='black',width=1.1)          
+                cv_graph_id_list.append(cv_graph_id)       
+
+            round_maxx = grid_tick(graph_tr[0],"up")    
             round_minx = grid_tick(graph_bl[0],"down")
             grid_xinte = (grid_tick(round_maxx-round_minx,None))/10
             round_maxy = grid_tick(graph_tr[1],"up")
@@ -966,8 +977,7 @@ while True:
                 y_ticks = np.arange(0,round_maxy,grid_yinte)
             else:
                 y_ticks = np.arange(0,-round_miny,grid_yinte)            
-            # print(y_ticks)
-            
+
             if xtick_id_list is not None:
                 for i in xtick_id_list:
                     cv_graph.delete_figure(i)
@@ -1015,7 +1025,7 @@ while True:
                 ytick_id_list.append(ytick_id)
                 ytext_id_list.append(ytext_id)            
            
-        if nicholson_cb == 0 and event in ('sl_jpa_lns', 'sl_jpa_lne',  'sl_jpc_lns', 'sl_jpc_lne'):       
+        if nicholson_cb == 0:       
             cv_graph.delete_figure(ep12_jpa_id) #Delete markers for redraw
             cv_graph.delete_figure(ep12_jpc_id)
             cv_graph.delete_figure(E1_2_id)
@@ -1029,7 +1039,7 @@ while True:
             cv_graph.delete_figure(jpc_ln_id)
             cv_graph.delete_figure(jpc_trou_id)
             cv_graph.delete_figure(jpc_base_id)
-            cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
+            # cv_graph.change_coordinates(graph_bl,graph_tr) #Adjust canvas margin
             low_range_a, high_range_a, peak_cv_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, cv_volt, cv_curr, peak_range, peak_pos, jpa_lns, jpa_lne)
             low_range_c, high_range_c, trou_cv_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, cv_volt, cv_curr, peak_range, trou_pos, jpc_lns, jpc_lne)                
             
