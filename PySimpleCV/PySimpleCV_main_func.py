@@ -466,3 +466,46 @@ def grid_tick(number,updown):
         magnitude = 10 ** (int(math.log10(abs(number))) - 1)
         rounded_number = round(number / magnitude) * magnitude    
     return rounded_number
+
+def draw_grid_line(graph_bl,graph_tr,xtick_id_list,ytick_id_list):
+    round_maxx = grid_tick(graph_tr[0],"up")    
+    round_minx = grid_tick(graph_bl[0],"down")
+    grid_xinte = (grid_tick(round_maxx-round_minx,None))/10
+    round_maxy = grid_tick(graph_tr[1],"up")
+    round_miny = grid_tick(graph_bl[1],"down")
+    grid_yinte = (grid_tick(round_maxy-round_miny,None))/10            
+   
+    x_canvas_range = graph_tr[0]-graph_bl[0]
+    y_canvas_range = graph_tr[1]-graph_bl[1]
+    if len(np.arange(0, round_maxx,grid_xinte)) >= len(np.arange(round_minx,0,grid_xinte)):   
+        x_ticks = np.arange(0,round_maxx,grid_xinte)
+    else:
+        x_ticks = np.arange(0,-round_minx,grid_xinte)
+        
+    if len(np.arange(0, round_maxy,grid_yinte)) >= len(np.arange(round_miny,0,grid_yinte)):   
+        y_ticks = np.arange(0,round_maxy,grid_yinte)
+    else:
+        y_ticks = np.arange(0,-round_miny,grid_yinte)            
+
+    # Draw grid that adapt to canvas
+    if graph_bl[0] > -x_canvas_range*0.03:
+        y_axis_loc = graph_bl[0]+x_canvas_range*0.03
+        y_text_loc = y_axis_loc+x_canvas_range*0.04
+    elif graph_tr[0] < x_canvas_range*0.03:
+        y_axis_loc = graph_tr[0]-x_canvas_range*0.03
+    else:
+        y_axis_loc = 0
+        y_text_loc = y_axis_loc+x_canvas_range*0.04
+        
+    if graph_tr[0] < x_canvas_range*0.05:
+        y_text_loc = y_axis_loc-x_canvas_range*0.04
+        
+    if graph_bl[1] > -y_canvas_range*0.03:
+        x_axis_loc = graph_bl[1]+y_canvas_range*0.03
+    elif graph_tr[1] < y_canvas_range*0.04:
+        x_axis_loc = graph_tr[1]-y_canvas_range*0.04
+    else:
+        x_axis_loc = 0            
+    x_text_loc = x_axis_loc+y_canvas_range*0.02
+
+    return x_ticks, y_ticks, x_text_loc, y_text_loc

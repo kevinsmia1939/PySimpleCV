@@ -12,7 +12,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import shutil
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev, data2canvas, grid_tick
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev, data2canvas, grid_tick, draw_grid_line
 # from PySimpleCV_main_func import *
 
 if not sys.warnoptions:
@@ -63,7 +63,8 @@ cv_slider_size = (50,18)
 cv_canvas_size = (720, 720)
 cv_right_size = 300
 cv_cv=[[sg.Graph(canvas_size=cv_canvas_size, graph_bottom_left=(-1, -1), graph_top_right=(1, 1),background_color='white', key='-CANVAS_cv-', enable_events=True)]]
-cv_diff=[[sg.Canvas(key='-CANVAS_cv_D-')]]
+cv_diff=[[sg.Graph(canvas_size=cv_canvas_size, graph_bottom_left=(-1, -1), graph_top_right=(1, 1),background_color='white', key='-CANVAS_cv_D-', enable_events=True)]]
+# cv_diff=[[sg.Canvas(key='-CANVAS_cv_D-')]]
 cv_kin =[[sg.Canvas(key='-CANVAS_cv_k-')]]
 
 cv_open_menu = ["Menu",["VersaSTAT4 (.par)", "CorrWare (.cor)", "CSV (.csv)", "text (.txt)"]]
@@ -183,7 +184,7 @@ window = sg.Window('PySimpleCV', [[layout]], finalize=True, element_justificatio
 
 # window.maximize()
 # canvas_cv = window['-CANVAS_cv-'].tk_canvas
-canvas_cv_D = window['-CANVAS_cv_D-'].tk_canvas
+# canvas_cv_D = window['-CANVAS_cv_D-'].tk_canvas
 canvas_cv_k = window['-CANVAS_cv_k-'].tk_canvas
 canvas_cv_ecsa = window['-CANVAS_cv_ecsa-'].tk_canvas
 canvas_rde = window['-CANVAS_rde-'].tk_canvas
@@ -204,11 +205,11 @@ cv_graph = window['-CANVAS_cv-']
 # cv_graph.DrawLine((0,-1), (0,1)) 
 
 cv_D_graph = window['-CANVAS_cv_D-']
-fig_cv_D = Figure(figsize=(9,9))
-ax_cv_D = fig_cv_D.add_subplot(111)
-ax_cv_D.set_xlabel("Scan rate 1/2",fontsize=14)
-ax_cv_D.set_ylabel("Jp",fontsize=14)
-ax_cv_D.grid()
+# fig_cv_D = Figure(figsize=(9,9))
+# ax_cv_D = fig_cv_D.add_subplot(111)
+# ax_cv_D.set_xlabel("Scan rate 1/2",fontsize=14)
+# ax_cv_D.set_ylabel("Jp",fontsize=14)
+# ax_cv_D.grid()
 
 fig_cv_kin = Figure(figsize=(9,9))
 ax_cv_kin = fig_cv_kin.add_subplot(111)
@@ -219,7 +220,7 @@ ax_cv_kin.grid()
 # tight layout push away y label
 # fig_cv.tight_layout(pad=2)
 # fig_agg_cv = draw_figure(canvas_cv, fig_cv)
-fig_agg_cv_D = draw_figure(canvas_cv_D, fig_cv_D)
+# fig_agg_cv_D = draw_figure(canvas_cv_D, fig_cv_D)
 fig_agg_cv_k = draw_figure(canvas_cv_k, fig_cv_kin)
 
 fig_cv_ecsa = Figure(figsize=(9,9))
@@ -456,6 +457,9 @@ xtick_id_list = []
 xtext_id_list = []    
 ytick_id_list = []
 ytext_id_list = []   
+
+D_ano_fit_id = None
+D_cat_fit_id = None
 while True:
     event, values = window.read()
     # print(values)
@@ -1021,7 +1025,7 @@ while True:
             #Draw axis    
             y_axis_ln_id = cv_graph.draw_line((y_axis_loc,graph_bl[1]), (y_axis_loc,graph_tr[1])) #y 
             x_axis_ln_id = cv_graph.draw_line((graph_bl[0],x_axis_loc), (graph_tr[0],x_axis_loc))
-            # print(x_canvas_range/2,y_canvas_range/2,"xxxxxxxx")
+            # Draw text axis label
             volt_axis_id = cv_graph.draw_text("Voltage",((graph_tr[0]+graph_bl[0])/2,graph_bl[1]+y_canvas_range*0.02), color='black')
             curr_axis_id = cv_graph.draw_text("Current",(graph_bl[0]+x_canvas_range*0.02,(graph_tr[1]+graph_bl[1])/2), color='black',angle=90)
             #Draw tick number and axis label    
@@ -1169,19 +1173,42 @@ while True:
         window['alpha_ano'].Update(alpha_ano)
         window['alpha_cat'].Update(alpha_cat)    
 
+        D_ano_data_id_list = []
+        D_cat_data_id_list = []
         if values['enable_d'] == True and values[2] == 'cv_layout_key':
+            cv_graph.delete_figure(D_ano_fit_id)
+            cv_graph.delete_figure(D_cat_fit_id)
+            
+            for D_ano_data_ids in D_ano_data_id_list:
+                cv_D_graph.delete_figure(D_ano_data_ids)
+            for D_cat_data_ids in D_cat_data_id_list:
+                cv_D_graph.delete_figure(D_cat_data_ids)                
             jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
             jpa_arr = np.asarray(cv_results.loc[:,'Jpa'].to_numpy(), dtype=float)
             scan = np.array([float(value) for value in cv_results['scan_rate']])
             # Plot peak cv_curr vs scan rate^1/2 to find diffusion coefficient
-            ax_cv_D.cla()
+            # ax_cv_D.cla()
             try:
                 sqrt_scan_ano, jpa_fit ,D_irr_a ,D_rev_a ,r2_ano = diffusion(scan,jpa_arr,alpha_ano,bulk_conc_cv,elec_n_cv)
                 sqrt_scan_cat, jpc_fit ,D_irr_c ,D_rev_c ,r2_cat = diffusion(scan,jpc_arr,alpha_cat,bulk_conc_cv,elec_n_cv)
-                ax_cv_D.plot(sqrt_scan_ano,jpa_fit,'-',color='red')
-                ax_cv_D.plot(sqrt_scan_cat,jpc_fit,'-',color='blue')
+                # ax_cv_D.plot(sqrt_scan_ano,jpa_fit,'-',color='red')
+                # ax_cv_D.plot(sqrt_scan_cat,jpc_fit,'-',color='blue')
+                D_min_x = np.min(np.minimum(sqrt_scan_ano, sqrt_scan_cat))
+                D_max_x = np.max(np.maximum(sqrt_scan_ano, sqrt_scan_cat))
+                D_min_y = np.min(np.minimum(jpa_fit, jpc_fit))
+                D_max_y = np.max(np.maximum(jpa_fit, jpc_fit))
+
+                D_x_margin = (D_max_x-D_min_x)*0.1 #10% margin
+                D_y_margin = (D_max_y-D_min_y)*0.1
+                D_graph_bl = (D_min_x-D_x_margin,D_min_y-D_y_margin)
+                D_graph_tr = (D_max_x+D_x_margin,D_max_y+D_y_margin)
+                cv_D_graph.change_coordinates(D_graph_bl,D_graph_tr)
+                # list(zip(sqrt_scan_ano,jpa_fit)
+                print(sqrt_scan_ano,jpa_fit)
+                # min_array = np.minimum(array1, array2)
                 
-                
+                D_ano_fit_id = cv_D_graph.draw_lines(list(zip(sqrt_scan_ano,jpa_fit)),color='red',width=1.5)
+                D_cat_fit_id = cv_D_graph.draw_lines(list(zip(sqrt_scan_cat,jpc_fit)),color='blue',width=1.5)
                 
                 window['d_rev_jpa'].Update(f"{D_rev_a:e}")
                 window['d_rev_jpc'].Update(f"{D_rev_c:e}")
@@ -1189,12 +1216,24 @@ while True:
                 window['d_irr_jpc'].Update(f"{D_irr_c:e}")
             except SystemError:
                 pass
-            ax_cv_D.plot(sqrt_scan_ano,jpa_arr,'o',color='red',label='Jpa')
-            ax_cv_D.plot(sqrt_scan_cat,jpc_arr,'o',color='blue',label='Jpc')
-            ax_cv_D.set_xlabel("Scan rate 1/2")
-            ax_cv_D.set_ylabel("Jp")
-            fig_cv_D.legend()
-            fig_agg_cv_D.draw()
+            
+            ano_id = 0
+            for ano in sqrt_scan_ano:
+                D_ano_data_id = cv_D_graph.draw_circle((ano,jpa_arr[ano_id]),(D_max_x-D_min_x)*0.01,line_color='red', fill_color='red')
+                ano_id += 1
+                D_ano_data_id_list.append(D_ano_data_id)
+            cat_id = 0
+            for cat in sqrt_scan_cat:
+                D_cat_data_id = cv_D_graph.draw_circle((cat,jpc_arr[cat_id]),(D_max_x-D_min_x)*0.01,line_color='blue', fill_color='blue')
+                cat_id += 1
+                D_cat_data_id_list.append(D_cat_data_id)
+                
+            # ax_cv_D.plot(sqrt_scan_ano,jpa_arr,'o',color='red',label='Jpa')
+            # ax_cv_D.plot(sqrt_scan_cat,jpc_arr,'o',color='blue',label='Jpc')
+            # ax_cv_D.set_xlabel("Scan rate 1/2")
+            # ax_cv_D.set_ylabel("Jp")
+            # fig_cv_D.legend()
+            # fig_agg_cv_D.draw()
         #Find kinetic parameter
         if values['enable_k'] == True and values[2] == 'cv_layout_key':
             jpc_arr = np.asarray(cv_results.loc[:,'Jpc'].to_numpy(), dtype=float)
