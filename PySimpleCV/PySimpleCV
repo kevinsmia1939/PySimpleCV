@@ -419,6 +419,25 @@ all_cv_deleted = True
 all_rde_deleted = True
 
 cv_data_id_list = []
+cv_graph_ano_range = None
+cv_graph_cat_range = None
+cv_graph_ano_select = None
+cv_graph_ano_arrow = None
+cv_graph_ano_fit = None
+cv_graph_cat_select = None
+cv_graph_cat_arrow = None
+cv_graph_cat_fit = None
+cv_graph_e1_2 = None
+cv_graph_jpa_alpha = None
+cv_graph_ano_range = None
+cv_graph_cat_range = None
+cv_graph_peak_fit = None
+cv_graph_trou_fit = None
+cv_graph_jpc0_arrow = None
+cv_graph_ano_arrow = None
+cv_graph_jsp0_fit = None
+cv_graph_ano_select = None
+cv_graph_jsp0 = None
 
 cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "Jpc0", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_ano", "alpha_cat"])
 rde_results = pd.DataFrame(columns =  ["file_name", "Rotation", "Unit", "Lim curr"])
@@ -870,43 +889,53 @@ while True:
         for j in np.arange(0,vm_volt_list_len):
             cutval_s_all = int(fitting_cv_save_array[j,2])
             cutval_e_all = int(fitting_cv_save_array[j,3])
-            cv_data, = ax_cv.plot(np.array(vm_volt_ir_list[j][cutval_s_all:cutval_e_all]).T, np.array(vm_curr_den_list[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=1)
-            cv_data_id_list.append(cv_data)
+            cv_graph_data, = ax_cv.plot(np.array(vm_volt_ir_list[j][cutval_s_all:cutval_e_all]).T, np.array(vm_curr_den_list[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=1)
+            cv_data_id_list.append(cv_graph_data)
 
         if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
             cv_volt_defl = np.interp([clip_defl], idx_arr, volt_compen_cv)
             curr_defl = np.interp([clip_defl], idx_arr, cv_curr_den)
-            ax_cv.plot(cv_volt_defl,curr_defl,'.',color='green')
+            cv_graph_defl, = ax_cv.plot(cv_volt_defl,curr_defl,'.',color='green')
         
         if nicholson_cb == 0:
+            
             low_range_a, high_range_a, peak_cv_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, cv_volt, cv_curr, peak_range, peak_pos, jpa_lns, jpa_lne)
             low_range_c, high_range_c, trou_cv_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, cv_volt, cv_curr, peak_range, trou_pos, jpc_lns, jpc_lne)
 
             # Find alpha
             ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen_cv,cv_curr_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_cv_volt)
             ep12_jpc, jp12_jpc, alpha_jpc = find_alpha(volt_compen_cv,cv_curr_den,jpc_lns,trou_pos,jpc_poly1d,jpc,trou_cv_volt)
-
-            ax_cv.plot(ep12_jpa,jp12_jpa,'x')
-            ax_cv.plot(ep12_jpc,jp12_jpc,'x')
+            
+            cv_graph_ano_range.remove() if cv_graph_ano_range is not None else cv_graph_ano_range
+            cv_graph_cat_range.remove() if cv_graph_cat_range is not None else cv_graph_cat_range
+            cv_graph_ano_select.remove() if cv_graph_ano_select is not None else cv_graph_ano_select
+            cv_graph_ano_arrow.remove() if cv_graph_ano_arrow is not None else cv_graph_ano_arrow
+            cv_graph_ano_fit.remove() if cv_graph_ano_fit is not None else cv_graph_ano_fit
+            cv_graph_cat_select.remove() if cv_graph_cat_select is not None else cv_graph_cat_select
+            cv_graph_cat_arrow.remove() if cv_graph_cat_arrow is not None else cv_graph_cat_arrow
+            cv_graph_cat_fit.remove() if cv_graph_cat_fit is not None else cv_graph_cat_fit
+            
+            cv_graph_jpa_alpha, = ax_cv.plot(ep12_jpa,jp12_jpa,'x', markersize = 6)
+            cv_graph_jpc_alpha, = ax_cv.plot(ep12_jpc,jp12_jpc,'x', markersize = 6)
 
             # Find estimate standard electrode potential (E1/2~E0)
             E1_2 = (trou_cv_volt+peak_cv_volt)/2
             # Find peak-peak separation Voltage
             delta_e = np.abs(trou_cv_volt-peak_cv_volt)
 
-            ax_cv.plot(E1_2,0,"D", markersize = 6)
+            cv_graph_e1_2 = ax_cv.plot(E1_2,0,"D", markersize = 6)
 
-            ax_cv.plot((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
-            ax_cv.plot((volt_compen_cv[low_range_c],volt_compen_cv[high_range_c]),(cv_curr_den[low_range_c],cv_curr_den[high_range_c]),"|", markersize = 10)
+            cv_graph_ano_range, = ax_cv.plot((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
+            cv_graph_cat_range, = ax_cv.plot((volt_compen_cv[low_range_c],volt_compen_cv[high_range_c]),(cv_curr_den[low_range_c],cv_curr_den[high_range_c]),"|", markersize = 10)
 
-            ax_cv.plot(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='red')
-            ax_cv.arrow(peak_cv_volt,jpa_poly1d(peak_cv_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='r', length_includes_head=True)
-            ax_cv.plot(np.array([volt_compen_cv[jpa_lns],peak_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(peak_cv_volt)]),'--', color='red')
+            cv_graph_ano_select, = ax_cv.plot(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne],linewidth=2,linestyle='-', color='red')
+            cv_graph_ano_arrow, = ax_cv.arrow(peak_cv_volt,jpa_poly1d(peak_cv_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='r', length_includes_head=True)
+            cv_graph_ano_fit, = ax_cv.plot(np.array([volt_compen_cv[jpa_lns],peak_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(peak_cv_volt)]),'--', color='red')
 
-            ax_cv.plot(volt_compen_cv[jpc_lns:jpc_lne],cv_curr_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
-            ax_cv.arrow(trou_cv_volt,jpc_poly1d(trou_cv_volt),0,jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
-            ax_cv.plot(np.array([volt_compen_cv[jpc_lns],trou_cv_volt]),np.array([jpc_poly1d(volt_compen_cv[jpc_lns]),jpc_poly1d(trou_cv_volt)]),'--', color='blue')
+            cv_graph_cat_select, = ax_cv.plot(volt_compen_cv[jpc_lns:jpc_lne],cv_curr_den[jpc_lns:jpc_lne],linewidth=2,linestyle='-',color='blue')
+            cv_graph_cat_arrow, = ax_cv.arrow(trou_cv_volt,jpc_poly1d(trou_cv_volt),0,jpc,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True)
+            cv_graph_cat_fit, = ax_cv.plot(np.array([volt_compen_cv[jpc_lns],trou_cv_volt]),np.array([jpc_poly1d(volt_compen_cv[jpc_lns]),jpc_poly1d(trou_cv_volt)]),'--', color='blue')
             jpc0 = 0 #Only with Nicholson method
             jpc = np.abs(jpc) # Report positive value
         elif nicholson_cb == 1:
@@ -925,26 +954,39 @@ while True:
             E1_2 = (peak_cv_volt+trou_cv_volt)/2
             # Find peak-peak separation Voltage
             delta_e = np.abs(trou_cv_volt-peak_cv_volt)
-            ax_cv.plot(E1_2,0,"D", markersize = 6)
+            
+            cv_graph_e1_2.remove() if cv_graph_e1_2 is not None else cv_graph_e1_2
+            cv_graph_jpa_alpha.remove() if cv_graph_jpa_alpha is not None else cv_graph_jpa_alpha
+            cv_graph_ano_range.remove() if cv_graph_ano_range is not None else cv_graph_ano_range
+            cv_graph_cat_range.remove() if cv_graph_cat_range is not None else cv_graph_cat_range
+            cv_graph_peak_fit.remove() if cv_graph_peak_fit is not None else cv_graph_peak_fit
+            cv_graph_trou_fit.remove() if cv_graph_trou_fit is not None else cv_graph_trou_fit
+            cv_graph_jpc0_arrow.remove() if cv_graph_jpc0_arrow is not None else cv_graph_jpc0_arrow
+            cv_graph_ano_arrow.remove() if cv_graph_ano_arrow is not None else cv_graph_ano_arrow
+            cv_graph_jsp0_fit.remove() if cv_graph_jsp0_fit is not None else cv_graph_jsp0_fit
+            cv_graph_ano_select.remove() if cv_graph_ano_select is not None else cv_graph_ano_select
+            cv_graph_jsp0.remove() if cv_graph_jsp0 is not None else cv_graph_jsp0
+            
+            cv_graph_e1_2 = ax_cv.plot(E1_2,0,"D", markersize = 6)
 
             #Find alpha for anodic only, since cathodic is estimate
             ep12_jpa, jp12_jpa, alpha_jpa = find_alpha(volt_compen_cv,cv_curr_den,jpa_lns,peak_pos,jpa_poly1d,jpa,peak_cv_volt)
-            ax_cv.plot(ep12_jpa,jp12_jpa,'x')
+            cv_graph_jpa_alpha, = ax_cv.plot(ep12_jpa,jp12_jpa,'x')
 
-            ax_cv.plot((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
-            ax_cv.plot((volt_compen_cv[low_range_c],volt_compen_cv[high_range_c]),(cv_curr_den[low_range_c],cv_curr_den[high_range_c]),"|", markersize = 10)
+            cv_graph_ano_range, = ax_cv.plot((volt_compen_cv[low_range_a],volt_compen_cv[high_range_a]),(cv_curr_den[low_range_a],cv_curr_den[high_range_a]),"|", markersize = 10)
+            cv_graph_cat_range, = ax_cv.plot((volt_compen_cv[low_range_c],volt_compen_cv[high_range_c]),(cv_curr_den[low_range_c],cv_curr_den[high_range_c]),"|", markersize = 10)
 
-            ax_cv.plot(np.array([volt_compen_cv[jpa_lns],peak_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(peak_cv_volt)]),'--', color='green') #Peak
-            ax_cv.plot(np.array([volt_compen_cv[jpa_lns],trou_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(trou_cv_volt)]),'--', color='green') #Peak
-            ax_cv.arrow(trou_cv_volt,jpa_poly1d(trou_cv_volt),0,jpc0,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='green', length_includes_head=True) #jpc0
-            ax_cv.arrow(peak_cv_volt,jpa_poly1d(peak_cv_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003, color='black', length_includes_head=True) #jpa
+            cv_graph_peak_fit, = ax_cv.plot(np.array([volt_compen_cv[jpa_lns],peak_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(peak_cv_volt)]),'--', color='green') #Peak
+            cv_graph_trou_fit, = ax_cv.plot(np.array([volt_compen_cv[jpa_lns],trou_cv_volt]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(trou_cv_volt)]),'--', color='green') #Peak
+            cv_graph_jpc0_arrow, = ax_cv.arrow(trou_cv_volt,jpa_poly1d(trou_cv_volt),0,jpc0,linewidth=0.2,head_width=0.005, head_length=0.0003 ,color='green', length_includes_head=True) #jpc0
+            cv_graph_ano_arrow, = ax_cv.arrow(peak_cv_volt,jpa_poly1d(peak_cv_volt),0,jpa,linewidth=0.2,head_width=0.005, head_length=0.0003, color='black', length_includes_head=True) #jpa
 
             jsp0_cv_volt = volt_compen_cv[idx_jsp0]
             jsp0 = cv_curr_den[idx_jsp0]-jpa_poly1d(jsp0_cv_volt)
 
-            ax_cv.plot(np.array([volt_compen_cv[jpa_lns],volt_compen_cv[idx_jsp0]]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(jsp0_cv_volt)]),'--', color='green') #jsp0
-            ax_cv.plot(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne],linewidth=3,linestyle='-', color='blue')
-            ax_cv.arrow(volt_compen_cv[idx_jsp0],jpa_poly1d(jsp0_cv_volt),0,jsp0,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True) #jsp0
+            cv_graph_jsp0_fit, = ax_cv.plot(np.array([volt_compen_cv[jpa_lns],volt_compen_cv[idx_jsp0]]),np.array([jpa_poly1d(volt_compen_cv[jpa_lns]),jpa_poly1d(jsp0_cv_volt)]),'--', color='green') #jsp0
+            cv_graph_ano_select, = ax_cv.plot(volt_compen_cv[jpa_lns:jpa_lne],cv_curr_den[jpa_lns:jpa_lne],linewidth=3,linestyle='-', color='blue')
+            cv_graph_jsp0, = ax_cv.arrow(volt_compen_cv[idx_jsp0],jpa_poly1d(jsp0_cv_volt),0,jsp0,linewidth=0.2,head_width=0.005, head_length=0.0003, color='b', length_includes_head=True) #jsp0
 
             ax_cv.text(peak_cv_volt,jpa_poly1d(peak_cv_volt), jp1_text, fontsize=10)
             ax_cv.text(trou_cv_volt,jpa_poly1d(trou_cv_volt), jp2_text, fontsize=10)
