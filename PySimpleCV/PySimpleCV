@@ -60,7 +60,7 @@ def draw_figure(canvas, figure):
 # Generate layout for CV tab
 cv_slider_size = (50,18)
 # cv_cv=[[sg.Canvas(key='-CANVAS_cv-')]]
-cv_canvas_size = (700, 700)
+cv_canvas_size = (720, 720)
 cv_right_size = 300
 cv_cv=[[sg.Graph(canvas_size=cv_canvas_size, graph_bottom_left=(-1, -1), graph_top_right=(1, 1),background_color='white', key='-CANVAS_cv-', enable_events=True)]]
 cv_diff=[[sg.Canvas(key='-CANVAS_cv_D-')]]
@@ -203,6 +203,7 @@ cv_graph = window['-CANVAS_cv-']
 # cv_graph.DrawLine((-1,0), (1,0))
 # cv_graph.DrawLine((0,-1), (0,1)) 
 
+cv_D_graph = window['-CANVAS_cv_D-']
 fig_cv_D = Figure(figsize=(9,9))
 ax_cv_D = fig_cv_D.add_subplot(111)
 ax_cv_D.set_xlabel("Scan rate 1/2",fontsize=14)
@@ -398,8 +399,6 @@ vm_volt_list = []
 vm_curr_list = []
 vm_curr_den_list = []
 vm_volt_ir_list = []
-trim_vm_curr_den_list = []
-trim_vm_volt_ir_list = []
 cv_path_list = []
 cv_name_list = []
 cv_size_list = []
@@ -449,6 +448,8 @@ jpc_base_id = None
 cv_graph_id = None
 x_axis_ln_id = None
 y_axis_ln_id = None
+volt_axis_id = None
+curr_axis_id = None
 cv_graph_id_list = []
 defl_id_list = []
 xtick_id_list = []
@@ -926,6 +927,8 @@ while True:
             max_curr_list = []
             cv_graph.delete_figure(x_axis_ln_id)
             cv_graph.delete_figure(y_axis_ln_id)
+            cv_graph.delete_figure(volt_axis_id)
+            cv_graph.delete_figure(curr_axis_id)
             if cv_graph_id_list is not None:
                 for i in cv_graph_id_list:
                     cv_graph.delete_figure(i)
@@ -997,19 +1000,30 @@ while True:
                 ytext_id_list = []
 
             # Draw grid that adapt to canvas
-            if graph_bl[0] > 0 or graph_tr[0] < 0:
-                y_axis_loc = graph_bl[0]+x_canvas_range*0.02
+            if graph_bl[0] > -x_canvas_range*0.03:
+                y_axis_loc = graph_bl[0]+x_canvas_range*0.03
+                y_text_loc = y_axis_loc+x_canvas_range*0.04
+            elif graph_tr[0] < x_canvas_range*0.03:
+                y_axis_loc = graph_tr[0]-x_canvas_range*0.03
             else:
                 y_axis_loc = 0
+                y_text_loc = y_axis_loc+x_canvas_range*0.04
                 
-            if graph_bl[1] > 0 or graph_tr[1] < 0:
-                x_axis_loc = graph_bl[1]+y_canvas_range*0.02
+            if graph_tr[0] < x_canvas_range*0.05:
+                y_text_loc = y_axis_loc-x_canvas_range*0.04
+                
+            if graph_bl[1] > -y_canvas_range*0.03:
+                x_axis_loc = graph_bl[1]+y_canvas_range*0.03
+            elif graph_tr[1] < y_canvas_range*0.04:
+                x_axis_loc = graph_tr[1]-y_canvas_range*0.04
             else:
                 x_axis_loc = 0            
             #Draw axis    
             y_axis_ln_id = cv_graph.draw_line((y_axis_loc,graph_bl[1]), (y_axis_loc,graph_tr[1])) #y 
             x_axis_ln_id = cv_graph.draw_line((graph_bl[0],x_axis_loc), (graph_tr[0],x_axis_loc))
-            
+            # print(x_canvas_range/2,y_canvas_range/2,"xxxxxxxx")
+            volt_axis_id = cv_graph.draw_text("Voltage",((graph_tr[0]+graph_bl[0])/2,graph_bl[1]+y_canvas_range*0.02), color='black')
+            curr_axis_id = cv_graph.draw_text("Current",(graph_bl[0]+x_canvas_range*0.02,(graph_tr[1]+graph_bl[1])/2), color='black',angle=90)
             #Draw tick number and axis label    
             x_text_loc = x_axis_loc+y_canvas_range*0.02
             for x in np.concatenate((np.flip(-x_ticks[1:-1]),x_ticks), axis=None):
@@ -1018,7 +1032,6 @@ while True:
                 xtick_id_list.append(xtick_id)
                 xtext_id_list.append(xtext_id)
 
-            y_text_loc = y_axis_loc+x_canvas_range*0.04
             for y in np.concatenate((np.flip(-y_ticks[1:-1]),y_ticks), axis=None): # No need tick a 0
                 ytick_id = cv_graph.draw_line((y_axis_loc-x_canvas_range*0.01,y), (y_axis_loc+x_canvas_range*0.01,y))
                 ytext_id = cv_graph.draw_text(np.format_float_scientific(y, unique=False, precision=1,exp_digits=1),(y_text_loc,y), color='green')
@@ -1071,7 +1084,7 @@ while True:
             jpc0 = 0 #Only with Nicholson method
             jpc = np.abs(jpc) # Report positive value
             
-            print(graph_bl,graph_tr,"xxx")
+            # print(graph_bl,graph_tr,"xxx")
             
         elif nicholson_cb == 1:
             if values['inv_jpa_jpc'] == True: 
@@ -1144,10 +1157,10 @@ while True:
                 defl_id = cv_graph.draw_circle((cv_volt_defl[i],curr_defl[i]), 0.005, line_color='red', fill_color='red')
                 defl_id_list.append(defl_id)
 
-        try:
-            cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, jpc0, peak_cv_volt, trou_cv_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
-        except:
-            cv_results.loc[cv_name_idx] = [cv_select, scan_rate, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]
+        # try:
+        cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, jpc0, peak_cv_volt, trou_cv_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
+        # except:
+        #     cv_results.loc[cv_name_idx] = [cv_select, scan_rate, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN, np.NaN]
         cv_results = cv_results.sort_index()
         window['cv_results_dis'].Update(cv_results.to_string(index=False))
             
@@ -1167,6 +1180,9 @@ while True:
                 sqrt_scan_cat, jpc_fit ,D_irr_c ,D_rev_c ,r2_cat = diffusion(scan,jpc_arr,alpha_cat,bulk_conc_cv,elec_n_cv)
                 ax_cv_D.plot(sqrt_scan_ano,jpa_fit,'-',color='red')
                 ax_cv_D.plot(sqrt_scan_cat,jpc_fit,'-',color='blue')
+                
+                
+                
                 window['d_rev_jpa'].Update(f"{D_rev_a:e}")
                 window['d_rev_jpc'].Update(f"{D_rev_c:e}")
                 window['d_irr_jpa'].Update(f"{D_irr_a:e}")
@@ -1844,7 +1860,7 @@ while True:
             values['elec_area_rde'] = 1
         elif len(vm_name_list) >= 1:
             all_rde_deleted = False
-            print(vm_name_list)
+            # print(vm_name_list)
             window['rde_combo'].Update(values=vm_name_list)     
             rde_select = vm_name_list[rde_name_idx]
             window['rde_combo'].Update(rde_select)
