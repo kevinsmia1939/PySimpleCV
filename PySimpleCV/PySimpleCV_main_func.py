@@ -508,4 +508,4 @@ def draw_grid_line(graph_bl,graph_tr,xtick_id_list,ytick_id_list):
         x_axis_loc = 0            
     x_text_loc = x_axis_loc+y_canvas_range*0.02
 
-    return x_ticks, y_ticks, x_text_loc, y_text_loc
+    return x_canvas_range, y_canvas_range, x_ticks, y_ticks, x_axis_loc, y_axis_loc, x_text_loc, y_text_loc
