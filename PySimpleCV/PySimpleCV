@@ -418,14 +418,13 @@ elec_area_lsv_old = 1
 all_cv_deleted = True
 all_rde_deleted = True
 
+cv_data_id_list = []
+
 cv_results = pd.DataFrame(columns =  ["file_name", "scan_rate", "Jpa", "Jpc", "Jpc0", "Epa", "Epc", "Jpa/Jpc", "E\u00bd", "ΔE\u209a", "alpha_ano", "alpha_cat"])
 rde_results = pd.DataFrame(columns =  ["file_name", "Rotation", "Unit", "Lim curr"])
 while True:
     event, values = window.read()
     # print(values)
-    # print(values)
-    # print(values[1]) #This print active tab
-    # print(values[0])
     if event in (sg.WIN_CLOSED,'exit','exit_2'):
         try:
             shutil.rmtree(temp_path) # Delete temporary files from loading CV tar file.
@@ -860,8 +859,26 @@ while True:
             trou_pos = idx_defl_points[np.abs(idx_defl_points - trou_pos).argmin()]
             trou_pos = int(trou_pos)
 
-        ax_cv.cla() ###### Clear plot before redraw
+        # ax_cv.cla() ###### Clear plot before redraw
+        if cv_data_id_list is not None:
+            for i in cv_data_id_list:
+                i.remove()
+            cv_data_id_list = []        
 
+        # Plot lines
+        vm_volt_list_len = len(vm_volt_list)
+        for j in np.arange(0,vm_volt_list_len):
+            cutval_s_all = int(fitting_cv_save_array[j,2])
+            cutval_e_all = int(fitting_cv_save_array[j,3])
+            cv_data, = ax_cv.plot(np.array(vm_volt_ir_list[j][cutval_s_all:cutval_e_all]).T, np.array(vm_curr_den_list[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=1)
+            cv_data_id_list.append(cv_data)
+
+        if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
+            clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
+            cv_volt_defl = np.interp([clip_defl], idx_arr, volt_compen_cv)
+            curr_defl = np.interp([clip_defl], idx_arr, cv_curr_den)
+            ax_cv.plot(cv_volt_defl,curr_defl,'.',color='green')
+        
         if nicholson_cb == 0:
             low_range_a, high_range_a, peak_cv_volt, peak_curr_a, jpa, jpa_poly1d = get_peak_CV(peak_mode_1,cv_size, cv_volt, cv_curr, peak_range, peak_pos, jpa_lns, jpa_lne)
             low_range_c, high_range_c, trou_cv_volt, peak_curr_c, jpc, jpc_poly1d = get_peak_CV(peak_mode_2,cv_size, cv_volt, cv_curr, peak_range, trou_pos, jpc_lns, jpc_lne)
@@ -941,38 +958,21 @@ while True:
             # Involving the Product of Electron Transfer. Anal. Chem. 1966, 38
             # (10), 1406.
             jpc = np.abs(jpa*((jpc0/jpa)+((0.485*np.abs(jsp0))/jpa)+0.086))
-
-
             alpha_jpc = np.NaN
             window['jsp0_cv_volt'].Update(jsp0_cv_volt)
-
-            # invert jpa and jpc or not
-        if values['inv_jpa_jpc'] == True:
-            jpa, jpc = jpc, jpa
-            alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa
-
-        # Plot lines
-        vm_volt_list_len = len(vm_volt_list)
-        for j in np.arange(0,vm_volt_list_len):
-            cutval_s_all = int(fitting_cv_save_array[j,2])
-            cutval_e_all = int(fitting_cv_save_array[j,3])
-            ax_cv.plot(np.array(vm_volt_ir_list[j][cutval_s_all:cutval_e_all]).T, np.array(vm_curr_den_list[j][cutval_s_all:cutval_e_all]).T, '-', color='black',linewidth=1)
-
-        if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
-            clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
-            cv_volt_defl = np.interp([clip_defl], idx_arr, volt_compen_cv)
-            curr_defl = np.interp([clip_defl], idx_arr, cv_curr_den)
-            ax_cv.plot(cv_volt_defl,curr_defl,'.',color='green')
+            
         ax_cv.grid()
         ax_cv.set_xlabel("Voltage")
-        ax_cv.set_ylabel("Current")
+        ax_cv.set_ylabel("Current")            
         fig_agg_cv.draw()
+        # invert jpa and jpc or not
+        if values['inv_jpa_jpc'] == True:
+            jpa, jpc = jpc, jpa
+            alpha_jpa, alpha_jpc = alpha_jpc, alpha_jpa        
 
         cv_results.loc[cv_name_idx] = [cv_select, scan_rate, jpa, jpc, jpc0, peak_cv_volt, trou_cv_volt, jpa/jpc, E1_2, delta_e, alpha_jpa, alpha_jpc]
         cv_results = cv_results.sort_index()
         window['cv_results_dis'].Update(cv_results.to_string(index=False))
-
-
 
         alpha_ano = np.average(np.asarray(cv_results.loc[:,'alpha_ano'].to_numpy(), dtype=float))
         alpha_cat = np.average(np.asarray(cv_results.loc[:,'alpha_cat'].to_numpy(), dtype=float))
