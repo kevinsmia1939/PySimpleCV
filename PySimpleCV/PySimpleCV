@@ -29,8 +29,10 @@ def About_PySimpleCV():
     'Matplotlib - https://matplotlib.org/',
     'PySimpleGUI - https://www.pysimplegui.org',
     'statsmodels - https://www.statsmodels.org',
-
-    'Abbreviation',
+    title="About")]
+    
+def CV_Abbreviations():
+    [sg.popup('Abbreviations',
     'Jpa - Anodic peak current/current density',
     'Jpc - Cathodic peak current/current density',
     'Epa - Anodic peak potential',
@@ -42,10 +44,10 @@ def About_PySimpleCV():
     'Cat - Cathodic',
     'rev - reversible',
     'irr - irreversible',
-    'D - Diffusion coefficient',
-    'k - rate of reaction',
-    'Nicholson method - Nicholson, R. S. Semiempirical Procedure for Measuring with Stationary Electrode Polarography Rates of Chemical Reactions Involving the Product of Electron Transfer. Anal. Chem. 1966, 38 (10), 1406.'
-    )]
+    'D - Diffusion coefficient cm\u00b2/s',
+    'k - rate of reaction cm/s',
+    'Nicholson method - Nicholson, R. S. Semiempirical Procedure for Measuring with Stationary Electrode Polarography Rates of Chemical Reactions Involving the Product of Electron Transfer. Anal. Chem. 1966, 38 (10), 1406.',
+    title="Abbreviations")]
 
 sg.theme('DarkBlue')
 
@@ -94,7 +96,7 @@ cv_settings = [
     [sg.Text('Ano k (cm/s)'),sg.Input('', key='k_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat k (cm/s)'),sg.Input('', key='k_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
     ], key='-frame_D_k-')],
 
-    [sg.Button('Save parameters and results', key='save_cv_param', disabled=True),sg.Button('Save plot', key='save_cv', disabled=True),sg.Button('Export CV data', disabled=True),sg.Button('About PySimpleCV'),sg.Button('Exit', key='exit')]
+    [sg.Button('Save parameters and results', key='save_cv_param', disabled=True),sg.Button('Save plot', key='save_cv', disabled=True),sg.Button('Export CV data', disabled=True),sg.Button('About PySimpleCV'),sg.Button('Abbreviations',key='CV_Abbreviations'),sg.Button('Exit', key='exit')]
 ]
 cv_D_k_tab = sg.TabGroup([[sg.Tab('CV', cv_cv, key='cv_cv_layout_key'), sg.Tab('Diffusion', cv_diff, key='cv_diff_layout_key'),sg.Tab('Kinetics', cv_kin, key='cv_kin_layout_key')]], enable_events=True)
 
@@ -455,6 +457,9 @@ while True:
     if event == 'About PySimpleCV':
             About_PySimpleCV()
             continue
+    if event == 'CV_Abbreviations':
+            CV_Abbreviations()
+            continue    
 
     if event in ('cv_load_cv', 'cv_load_ecsa'):
         load_cv_dir = sg.popup_get_file('', no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
@@ -979,16 +984,16 @@ while True:
             delta_e = np.abs(trou_cv_volt-peak_cv_volt)
             
             cv_graph_e1_2.remove() if cv_graph_e1_2 is not None else None
-            cv_graph_jpa_alpha.remove() if cv_graph_jpa_alpha is not None else cv_graph_jpa_alpha
-            cv_graph_ano_range.remove() if cv_graph_ano_range is not None else cv_graph_ano_range
-            cv_graph_cat_range.remove() if cv_graph_cat_range is not None else cv_graph_cat_range
-            cv_graph_peak_fit.remove() if cv_graph_peak_fit is not None else cv_graph_peak_fit
-            cv_graph_trou_fit.remove() if cv_graph_trou_fit is not None else cv_graph_trou_fit
-            cv_graph_jpc0_arrow.remove() if cv_graph_jpc0_arrow is not None else cv_graph_jpc0_arrow
-            cv_graph_ano_arrow.remove() if cv_graph_ano_arrow is not None else cv_graph_ano_arrow
-            cv_graph_jsp0_fit.remove() if cv_graph_jsp0_fit is not None else cv_graph_jsp0_fit
-            cv_graph_ano_select.remove() if cv_graph_ano_select is not None else cv_graph_ano_select
-            cv_graph_jsp0.remove() if cv_graph_jsp0 is not None else cv_graph_jsp0
+            cv_graph_jpa_alpha.remove() if cv_graph_jpa_alpha is not None else None
+            cv_graph_ano_range.remove() if cv_graph_ano_range is not None else None
+            cv_graph_cat_range.remove() if cv_graph_cat_range is not None else None
+            cv_graph_peak_fit.remove() if cv_graph_peak_fit is not None else None
+            cv_graph_trou_fit.remove() if cv_graph_trou_fit is not None else None
+            cv_graph_jpc0_arrow.remove() if cv_graph_jpc0_arrow is not None else None
+            cv_graph_ano_arrow.remove() if cv_graph_ano_arrow is not None else None
+            cv_graph_jsp0_fit.remove() if cv_graph_jsp0_fit is not None else None
+            cv_graph_ano_select.remove() if cv_graph_ano_select is not None else None
+            cv_graph_jsp0.remove() if cv_graph_jsp0 is not None else None
             
             cv_graph_e1_2, = ax_cv.plot(E1_2,0,"D", markersize = 6, color='green')
 
