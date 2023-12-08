@@ -2,6 +2,7 @@
 import os
 import sys
 import numpy as np
+import numpy.polynomial.polynomial as poly
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import PySimpleGUI as sg
@@ -10,7 +11,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import shutil
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev, linear_fit, data_poly_inter
 # from PySimpleCV_main_func import *
 
 if not sys.warnoptions:
@@ -133,9 +134,10 @@ rde2 = [
      sg.Text('Angular velocity'),sg.Input(default_text=('0'), key='rde_ror',size=(10,5),disabled=True, enable_events=True),sg.Combo(values=('RPM','rad/s'), default_value='RPM', readonly=True, key='rde_ror_unit', enable_events=True)],
     [sg.Text('Trim LSV plot start'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_s_lsv', disable_number_display=True, enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_cutval_s_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
     [sg.Text('Trim LSV plot end'), sg.Slider(range=(0, 1), size=cv_slider_size, orientation='h', key='sl_cutval_e_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_cutval_e_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Average Start'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_avg_s_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_avg_s_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
-    [sg.Text('Average End'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_avg_e_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_avg_e_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
-
+    [sg.Text('Baseline Start'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_bl_s_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_bl_s_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Baseline End'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_bl_e_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_bl_e_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Peak Start'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_peak_s_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_peak_s_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
+    [sg.Text('Peak End'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_peak_e_lsv', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_peak_e_lsv_pos',size=(10,5),disabled=True, enable_events=True)],
     [sg.Frame('Diffusion Coefficienct Calculation',[
     [sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n_rde',size=(3,5),disabled=True, enable_events=True),sg.Text('Electrode area'), sg.Input(default_text=('1'), key='elec_area_rde',size=(5,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),sg.Text('',key='kinvis_rde_err',enable_events=True)],
     [sg.Text('Kinematic viscosity'),sg.Input(default_text=('1'), key='kinvis_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('cm\u00b2/s'),sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3')],
@@ -360,12 +362,16 @@ def disable_slider_cv(bool):
 def disable_slider_lsv(bool):
     window['sl_cutval_s_lsv'].Update(disabled=bool)
     window['sl_cutval_e_lsv'].Update(disabled=bool)
-    window['sl_avg_s_lsv'].Update(disabled=bool)
-    window['sl_avg_e_lsv'].Update(disabled=bool)
+    window['sl_peak_s_lsv'].Update(disabled=bool)
+    window['sl_peak_e_lsv'].Update(disabled=bool)
+    window['sl_bl_s_lsv'].Update(disabled=bool)
+    window['sl_bl_e_lsv'].Update(disabled=bool)
     window['sl_cutval_s_lsv_pos'].Update(disabled=bool)
     window['sl_cutval_e_lsv_pos'].Update(disabled=bool)
-    window['sl_avg_s_lsv_pos'].Update(disabled=bool)
-    window['sl_avg_e_lsv_pos'].Update(disabled=bool)
+    window['sl_peak_s_lsv_pos'].Update(disabled=bool)
+    window['sl_peak_e_lsv_pos'].Update(disabled=bool)
+    window['sl_bl_s_lsv_pos'].Update(disabled=bool)
+    window['sl_bl_e_lsv_pos'].Update(disabled=bool)
     window['ir_compen_lsv'].Update(disabled=bool)
     window['elec_area_rde'].Update(disabled=bool)
     window['bulk_conc_rde'].Update(disabled=bool)
@@ -405,9 +411,9 @@ lsv_curr_list = []
 #                            file name,file format, cutval_s, cutval_e, jpa_lns, jpa_lne, jpc_lns, jpc_lne, peak_pos, trou_pos, peak_range, ir_compen, peak_mode_1, peak_mode_2,elec_area, idx_jsp0, inv_jpa_jpc, scan_rate, nicholson_cb, cutval_s_ecsa, cutval_e_ecsa, v_ln_ecsa, h_ln_ecsa, peak_range_ecsa
 fitting_cv_default = np.array([["",       "",          0,        0,        0,       0,       0,       0,       1,        1,        100,        0.,        "max",       "min",      1.,        0,        0,           0.,        0,            0,             0,             0,         0,         1]], dtype=object)
 fitting_cv_save_array = np.zeros((1,fitting_cv_default.size), dtype=object)
-#                                0         1            2             3             4            5             6                  7              8             9
-#                                file name,file format, cutval_s_rde, cutval_e_rde, sl_avg_s_lsv,sl_avg_e_lsv, rde rotation rate, ir_compen_lsv, rde_ror_unit, elec_area_rde
-fitting_rde_default = np.array([["",       "",          0,            0,            0,           0,            0,                 0,             "RPM",        1]], dtype=object)
+#                                0         1            2             3             4             5             6           7            8                  9              10            11
+#                                file name,file format, cutval_s_rde, cutval_e_rde, sl_peak_s_lsv,sl_peak_e_lsv,sl_bl_s_lsv,sl_bl_e_lsv, rde rotation rate, ir_compen_lsv, rde_ror_unit, elec_area_rde
+fitting_rde_default = np.array([["",       "",          0,            0,            0,            0,            0,          0,           0,                 0,             "RPM",        1]], dtype=object)
 fitting_rde_save_array = np.zeros((1,fitting_rde_default.size), dtype=object)
 cv_name_idx_old = -1 #set to -1 so that cv_name_idx != cv_name_idx_old will trigger the first time
 rde_name_idx_old = -1
@@ -540,11 +546,12 @@ while True:
 
     if event in ('cv_open_menu', 'cv_open_menu_ecsa', 'rde_open_menu'):
         # vm = voltammogram
+        # print(values['rde_open_menu'])
         if values['cv_open_menu'] == "VersaSTAT4 (.par)" or values['cv_open_menu_ecsa'] == "VersaSTAT4 (.par)" or values['rde_open_menu'] == "VersaSTAT4 (.par)":
             file_format = "VersaSTAT"
             vm_file_new = sg.popup_get_file('Choose VersaSTAT4 CV file',multiple_files=True)
             if vm_file_new is None or vm_file_new == '' or vm_file_new == ():
-                continue
+                continue           
             if not vm_file_new.endswith('.par'):
                 sg.popup("Wrong file extension, is it .par?", keep_on_top=True)
                 continue
@@ -596,7 +603,6 @@ while True:
                 fitting_cv_default[:,0] = vm_file
                 fitting_cv_default[:,1] = file_format
                 fitting_cv_default[:,3] = vm_size
-                # fitting_cv_default[:,4] = int(cv_size/10)
             elif event == 'rde_open_menu':
                 fitting_rde_default[:,0] = vm_file
                 fitting_rde_default[:,1] = file_format
@@ -1460,7 +1466,7 @@ while True:
             continue
         try:
             fitting_rde_save_array = np.loadtxt(load_rde_dir,dtype=object, comments=None, delimiter=',')
-            df_fitting_rde_save_array = pd.DataFrame(fitting_rde_save_array,columns=['file name','file format', 'cutval_s_rde', 'cutval_e_rde', 'sl_avg_s_lsv','sl_avg_e_lsv', 'rde rotation rate', 'ir_compen_lsv', 'rde_ror_unit', 'elec_area_rde'])
+            df_fitting_rde_save_array = pd.DataFrame(fitting_rde_save_array,columns=['file name','file format', 'cutval_s_rde', 'cutval_e_rde', 'sl_peak_s_lsv','sl_peak_e_lsv', 'sl_bl_s_lsv','sl_bl_e_lsv', 'rde rotation rate', 'ir_compen_lsv', 'rde_ror_unit', 'elec_area_rde'])
             rde_results = pd.read_excel(rde_result_path, index_col=0) #Use first column as index
             rde_results = pd.read_excel(rde_result_path, index_col=0) #Use first column as index
             for i in list(range(df_fitting_rde_save_array.shape[0])):
@@ -1494,8 +1500,10 @@ while True:
 
         window['sl_cutval_s_lsv'].Update(range=(0,lsv_size-1))
         window['sl_cutval_e_lsv'].Update(range=(0,lsv_size-1))
-        window['sl_avg_s_lsv'].Update(range=(0,lsv_size-1))
-        window['sl_avg_e_lsv'].Update(range=(0,lsv_size-1))
+        window['sl_peak_s_lsv'].Update(range=(0,lsv_size-1))
+        window['sl_peak_e_lsv'].Update(range=(0,lsv_size-1))
+        window['sl_bl_s_lsv'].Update(range=(0,lsv_size-1))
+        window['sl_bl_e_lsv'].Update(range=(0,lsv_size-1))
 
         #Set flag to track if files are delete or not
         if len(vm_name_list) >= 1:
@@ -1515,24 +1523,30 @@ while True:
 
         window['sl_cutval_s_lsv'].Update(range=(0,lsv_size-1))
         window['sl_cutval_e_lsv'].Update(range=(0,lsv_size-1))
-        window['sl_avg_s_lsv'].Update(range=(0,lsv_size-1))
-        window['sl_avg_e_lsv'].Update(range=(0,lsv_size-1))
+        window['sl_peak_s_lsv'].Update(range=(0,lsv_size-1))
+        window['sl_peak_e_lsv'].Update(range=(0,lsv_size-1))
+        window['sl_bl_s_lsv'].Update(range=(0,lsv_size-1))
+        window['sl_bl_e_lsv'].Update(range=(0,lsv_size-1))
         if rde_name_idx != rde_name_idx_old: #If the option index change (combo box change), update slider
             rde_name_idx_old = rde_name_idx
             # Restore saved values
             cutval_s_lsv_save = int(fitting_rde_save_array[rde_name_idx,2])
             cutval_e_lsv_save = int(fitting_rde_save_array[rde_name_idx,3])
-            avg_s_lsv_save = int(fitting_rde_save_array[rde_name_idx,4])
-            avg_e_lsv_save = int(fitting_rde_save_array[rde_name_idx,5])
-            rde_ror_save = float(fitting_rde_save_array[rde_name_idx,6])
-            ir_compen_lsv_save = float(fitting_rde_save_array[rde_name_idx,7])
-            rde_ror_unit_save = str(fitting_rde_save_array[rde_name_idx,8])
-            elec_area_rde_save = float(fitting_rde_save_array[rde_name_idx,9])
+            peak_s_lsv_save = int(fitting_rde_save_array[rde_name_idx,4])
+            peak_e_lsv_save = int(fitting_rde_save_array[rde_name_idx,5])
+            bl_s_lsv_save = int(fitting_rde_save_array[rde_name_idx,6])
+            bl_e_lsv_save = int(fitting_rde_save_array[rde_name_idx,7])
+            rde_ror_save = float(fitting_rde_save_array[rde_name_idx,8])
+            ir_compen_lsv_save = float(fitting_rde_save_array[rde_name_idx,9])
+            rde_ror_unit_save = str(fitting_rde_save_array[rde_name_idx,10])
+            elec_area_rde_save = float(fitting_rde_save_array[rde_name_idx,11])
             # Put slider to previous position, this is just what is shown not real value
             window['sl_cutval_s_lsv'].Update(cutval_s_lsv_save)
             window['sl_cutval_e_lsv'].Update(cutval_e_lsv_save)
-            window['sl_avg_s_lsv'].Update(avg_s_lsv_save)
-            window['sl_avg_e_lsv'].Update(avg_e_lsv_save)
+            window['sl_peak_s_lsv'].Update(peak_s_lsv_save)
+            window['sl_peak_e_lsv'].Update(peak_e_lsv_save)
+            window['sl_bl_s_lsv'].Update(bl_s_lsv_save)
+            window['sl_bl_e_lsv'].Update(bl_e_lsv_save)
             window['rde_ror'].Update(rde_ror_save)
             window['ir_compen_lsv'].Update(ir_compen_lsv_save)
             window['rde_ror_unit'].Update(rde_ror_unit_save)
@@ -1540,8 +1554,10 @@ while True:
             # Put actual value
             values['sl_cutval_s_lsv'] = cutval_s_lsv_save
             values['sl_cutval_e_lsv'] = cutval_e_lsv_save
-            values['sl_avg_s_lsv'] = avg_s_lsv_save
-            values['sl_avg_s_lsv'] = avg_e_lsv_save
+            values['sl_peak_s_lsv'] = peak_s_lsv_save
+            values['sl_peak_s_lsv'] = peak_e_lsv_save
+            values['sl_bl_s_lsv'] = bl_s_lsv_save
+            values['sl_bl_s_lsv'] = bl_e_lsv_save
             values['rde_ror'] = rde_ror_save
             values['ir_compen_lsv'] = ir_compen_lsv_save
             values['rde_ror_unit'] = rde_ror_unit_save
@@ -1549,18 +1565,22 @@ while True:
             # Assign the value from saved data
             cutval_s_lsv = cutval_s_lsv_save
             cutval_e_lsv = cutval_e_lsv_save
-            avg_s_lsv = avg_s_lsv_save
-            avg_e_lsv = avg_e_lsv_save
+            peak_s_lsv = peak_s_lsv_save
+            peak_e_lsv = peak_e_lsv_save
+            bl_s_lsv = bl_s_lsv_save
+            bl_e_lsv = bl_e_lsv_save
             rde_ror = rde_ror_save
             ir_compen_lsv = ir_compen_lsv_save
             rde_ror_unit = rde_ror_unit_save
             elec_area_rde = elec_area_rde_save
 
-    if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde', 'bulk_conc_rde','kinvis_rde','elec_n_rde','sl_cutval_s_lsv','sl_cutval_e_lsv', 'sl_avg_s_lsv', 'sl_avg_e_lsv','sl_cutval_s_lsv_pos','sl_cutval_e_lsv_pos', 'sl_avg_s_lsv_pos', 'sl_avg_e_lsv_pos', 'rde_ror','rde_ror_unit','rde_kou_lev_layout_key') and all_rde_deleted == False:
+    if event in ('rde_open_menu','rde_load', 'ir_compen_lsv', 'elec_area_rde', 'bulk_conc_rde','kinvis_rde','elec_n_rde','sl_cutval_s_lsv','sl_cutval_e_lsv', 'sl_peak_s_lsv', 'sl_peak_e_lsv','sl_bl_s_lsv', 'sl_bl_e_lsv','sl_cutval_s_lsv_pos','sl_cutval_e_lsv_pos', 'sl_peak_s_lsv_pos', 'sl_peak_e_lsv_pos','sl_bl_s_lsv_pos', 'sl_bl_e_lsv_pos', 'rde_ror','rde_ror_unit','rde_kou_lev_layout_key') and all_rde_deleted == False:
         cutval_s_lsv = int(values['sl_cutval_s_lsv'])
         cutval_e_lsv = int(values['sl_cutval_e_lsv'])
-        avg_s_lsv = int(values['sl_avg_s_lsv'])
-        avg_e_lsv = int(values['sl_avg_e_lsv'])
+        peak_s_lsv = int(values['sl_peak_s_lsv'])
+        peak_e_lsv = int(values['sl_peak_e_lsv'])     
+        bl_s_lsv = int(values['sl_bl_s_lsv'])
+        bl_e_lsv = int(values['sl_bl_e_lsv'])
         rde_ror_unit = str(values['rde_ror_unit'])
 
         # Make sure that proper number format is used
@@ -1572,8 +1592,10 @@ while True:
         rde_ror = check_val(values['rde_ror'], "float", 0)
         cutval_s_lsv_pos = check_val(values['sl_cutval_s_lsv'], "int", 1)
         cutval_e_lsv_pos = check_val(values['sl_cutval_e_lsv'], "int", 1)
-        avg_s_lsv_pos = check_val(values['sl_avg_s_lsv'], "int", 1)
-        avg_e_lsv_pos = check_val(values['sl_avg_e_lsv'], "int", 1)
+        peak_s_lsv_pos = check_val(values['sl_peak_s_lsv'], "int", 1)
+        peak_e_lsv_pos = check_val(values['sl_peak_e_lsv'], "int", 1)
+        bl_s_lsv_pos = check_val(values['sl_bl_s_lsv'], "int", 1)
+        bl_e_lsv_pos = check_val(values['sl_bl_e_lsv'], "int", 1)
 
         if elec_area_lsv <= 0 or kinvis_rde <= 0 or elec_n_rde <= 0:
             window['kinvis_rde_err'].Update("Err negative value")
@@ -1592,23 +1614,36 @@ while True:
             window['sl_cutval_e_lsv'].Update(cutval_e_lsv_pos)
             cutval_e_lsv = cutval_e_lsv_pos
 
-        elif event == 'sl_avg_s_lsv':
-            window['sl_avg_s_lsv_pos'].Update(avg_s_lsv)
-        elif event == 'sl_jpa_lns_pos':
-            window['sl_jpa_lns'].Update(avg_s_lsv)
-            avg_s_lsv = avg_s_lsv_pos
+        elif event == 'sl_peak_s_lsv':
+            window['sl_peak_s_lsv_pos'].Update(peak_s_lsv)
+        elif event == 'sl_peak_s_lsv_pos':
+            window['sl_peak_s_lsv'].Update(peak_s_lsv)
+            peak_s_lsv = peak_s_lsv_pos
 
-        elif event == 'sl_avg_e_lsv':
-            window['sl_avg_e_lsv_pos'].Update(avg_e_lsv)
-        elif event == 'sl_jpa_lne_pos':
-            window['sl_jpa_lne'].Update(avg_e_lsv)
-            avg_e_lsv = avg_e_lsv_pos
+        elif event == 'sl_peak_e_lsv':
+            window['sl_peak_e_lsv_pos'].Update(peak_e_lsv)
+        elif event == 'sl_peak_e_lsv_pos':
+            window['sl_peak_e_lsv'].Update(peak_e_lsv)
+            peak_e_lsv = peak_e_lsv_pos
+            
+        elif event == 'sl_bl_s_lsv':
+            window['sl_bl_s_lsv_pos'].Update(bl_s_lsv)
+        elif event == 'sl_bl_s_lsv_pos':
+            window['sl_bl_s_lsv'].Update(bl_s_lsv)
+            bl_s_lsv = bl_s_lsv_pos
 
+        elif event == 'sl_bl_e_lsv':
+            window['sl_bl_e_lsv_pos'].Update(bl_e_lsv)
+        elif event == 'sl_bl_e_lsv_pos':
+            window['sl_bl_e_lsv'].Update(bl_e_lsv)
+            bl_e_lsv = bl_e_lsv_pos
+            
         cutval_s_lsv,cutval_e_lsv = switch_val(cutval_s_lsv,cutval_e_lsv)
-        avg_s_lsv,avg_e_lsv = switch_val(avg_s_lsv,avg_e_lsv)
+        peak_s_lsv,peak_e_lsv = switch_val(peak_s_lsv,peak_e_lsv)
+        bl_s_lsv,bl_e_lsv = switch_val(bl_s_lsv,bl_e_lsv)
 
-        fitting_save_rde = np.array([cutval_s_lsv,cutval_e_lsv,avg_s_lsv,avg_e_lsv,rde_ror,ir_compen_lsv,rde_ror_unit,elec_area_lsv])
-        fitting_rde_save_array[rde_name_idx][2:10] = fitting_save_rde
+        fitting_save_rde = np.array([cutval_s_lsv,cutval_e_lsv,peak_s_lsv,peak_e_lsv,bl_s_lsv,bl_e_lsv,rde_ror,ir_compen_lsv,rde_ror_unit,elec_area_lsv])
+        fitting_rde_save_array[rde_name_idx][2:12] = fitting_save_rde
 
         if ir_compen_lsv != ir_compen_lsv_old:
             ir_compen_lsv_old = ir_compen_lsv
@@ -1631,19 +1666,36 @@ while True:
         for j in np.arange(0,vm_volt_list_len):
             cutval_s_lsv_all = int(fitting_rde_save_array[j,2])
             cutval_e_lsv_all = int(fitting_rde_save_array[j,3])
-            ax_rde.plot(np.array(vm_volt_ir_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, np.array(vm_curr_den_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, '-', color='black',linewidth=1)
-
-        lsv_curr_avg = np.average(lsv_curr_den[avg_s_lsv:avg_e_lsv])
+            ax_rde.plot(np.array(vm_volt_ir_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, np.array(vm_curr_den_list[j][cutval_s_lsv_all:cutval_e_lsv_all]).T, '-', color='black',linewidth=0.5)#linewidth=0.03
 
         if values[1] == 'rde_layout_key':
-            ax_rde.axhline(y=lsv_curr_avg, color='blue', linestyle='--',linewidth=3)
-            ax_rde.plot(volt_compen_lsv[avg_s_lsv:avg_e_lsv],lsv_curr_den[avg_s_lsv:avg_e_lsv],linewidth=3,linestyle='-', color='blue')
+            peak_rde_volt_select = volt_compen_lsv[peak_s_lsv:peak_e_lsv]
+            peak_rde_curr_select = lsv_curr_den[peak_s_lsv:peak_e_lsv]
+            peak_fit_coef, peak_rde_poly1d = linear_fit(peak_rde_volt_select,peak_rde_curr_select) 
+    
+            bl_rde_volt_select = volt_compen_lsv[bl_s_lsv:bl_e_lsv]
+            bl_rde_curr_select = lsv_curr_den[bl_s_lsv:bl_e_lsv]
+            bl_fit_coef, bl_rde_poly1d = linear_fit(bl_rde_volt_select,bl_rde_curr_select)
+    
+            avg_ln_poly = poly.Polynomial((peak_fit_coef + bl_fit_coef)/2)         
+            rde_x_midpoint, rde_y_midpoint = data_poly_inter(volt_compen_lsv,lsv_curr_den,avg_ln_poly,5)          
+            ax_rde.plot(rde_x_midpoint, rde_y_midpoint,"x")
+            
+            bl_mid_y = bl_rde_poly1d(rde_x_midpoint)
+            peak_mid_y = peak_rde_poly1d(rde_x_midpoint)
+            lim_curr = abs(peak_mid_y-bl_mid_y)
+            ax_rde.vlines(rde_x_midpoint, bl_mid_y, peak_mid_y,color='lightblue',linewidth=1.5,linestyle=':')
+            
+            ax_rde.plot(np.array([min(volt_compen_lsv),max(volt_compen_lsv)]),peak_rde_poly1d(np.array([min(volt_compen_lsv),max(volt_compen_lsv)])),linewidth=1,linestyle='--', color='green')
+            ax_rde.plot(peak_rde_volt_select,peak_rde_curr_select,linewidth=3,linestyle='-', color='green')            
+            ax_rde.plot(np.array([min(volt_compen_lsv),max(volt_compen_lsv)]),bl_rde_poly1d(np.array([min(volt_compen_lsv),max(volt_compen_lsv)])),linewidth=1,linestyle='--', color='red')
+            ax_rde.plot(bl_rde_volt_select,bl_rde_curr_select,linewidth=3,linestyle='-', color='red')
+            
             ax_rde.set_xlabel("Voltage")
             ax_rde.set_ylabel("Current")
-            ax_rde.grid()
             fig_agg_rde.draw()
 
-        rde_results.loc[rde_name_idx] = [rde_select, rde_ror, rde_ror_unit, lsv_curr_avg]
+        rde_results.loc[rde_name_idx] = [rde_select, rde_ror, rde_ror_unit, lim_curr]
         rde_results = rde_results.sort_index()
         window['rde_results_dis'].Update(rde_results.to_string(index=False))
 
@@ -1716,22 +1768,28 @@ while True:
             values['rde_combo'] = ''
             window['sl_cutval_s_lsv'].Update(range=(0,0))
             window['sl_cutval_e_lsv'].Update(range=(0,0))
-            window['sl_avg_s_lsv'].Update(range=(0,0))
-            window['sl_avg_e_lsv'].Update(range=(0,0))
+            window['sl_peak_s_lsv'].Update(range=(0,0))
+            window['sl_peak_e_lsv'].Update(range=(0,0))
+            window['sl_bl_s_lsv'].Update(range=(0,0))
+            window['sl_bl_e_lsv'].Update(range=(0,0))
 
             # Put slider to previous position, this is just what is shown not real value
             window['sl_cutval_s_lsv'].Update(int(0))
             window['sl_cutval_e_lsv'].Update(int(0))
-            window['sl_avg_s_lsv'].Update(int(0))
-            window['sl_avg_e_lsv'].Update(int(0))
+            window['sl_peak_s_lsv'].Update(int(0))
+            window['sl_peak_e_lsv'].Update(int(0))
+            window['sl_bl_s_lsv'].Update(int(0))
+            window['sl_bl_e_lsv'].Update(int(0))
 
             window['ir_compen_lsv'].Update(float(0))
             window['elec_area_rde'].Update(float(0))
             # Put actual value
             values['sl_cutval_s_lsv'] = 0
             values['sl_cutval_e_lsv'] = 0
-            values['sl_avg_s_lsv'] = 0
-            values['sl_avg_e_lsv'] = 0
+            values['sl_peak_s_lsv'] = 0
+            values['sl_peak_e_lsv'] = 0
+            values['sl_bl_s_lsv'] = 0
+            values['sl_bl_e_lsv'] = 0
             values['ir_compen_lsv'] = 0
             values['elec_area_rde'] = 1
         elif len(vm_name_list) >= 1:
@@ -1745,21 +1803,25 @@ while True:
             cv_size = len(vm_volt_list[rde_name_idx])
             window['sl_cutval_s_lsv'].Update(range=(0,cv_size-1))
             window['sl_cutval_e_lsv'].Update(range=(0,cv_size-1))
-            window['sl_avg_s_lsv'].Update(range=(0,cv_size-1))
-            window['sl_avg_e_lsv'].Update(range=(0,cv_size-1))
+            window['sl_peak_s_lsv'].Update(range=(0,cv_size-1))
+            window['sl_peak_e_lsv'].Update(range=(0,cv_size-1))
+            window['sl_bl_s_lsv'].Update(range=(0,cv_size-1))
+            window['sl_bl_e_lsv'].Update(range=(0,cv_size-1))
             # Put slider to previous position, this is just what is shown not real value
             window['sl_cutval_s_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,2]))
             window['sl_cutval_e_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,3]))
-            window['sl_avg_s_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,4]))
-            window['sl_avg_e_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,5]))
-            window['ir_compen_lsv'].Update(float(fitting_rde_save_array[rde_name_idx,7]))
-            window['rde_ror_unit'].Update(str(fitting_rde_save_array[rde_name_idx,8]))
-            window['elec_area_rde'].Update(float(fitting_rde_save_array[rde_name_idx,9]))
+            window['sl_peak_s_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,4]))
+            window['sl_peak_e_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,5]))
+            window['sl_bl_s_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,6]))
+            window['sl_bl_e_lsv'].Update(int(fitting_rde_save_array[rde_name_idx,7]))
+            window['ir_compen_lsv'].Update(float(fitting_rde_save_array[rde_name_idx,8]))
+            window['rde_ror_unit'].Update(str(fitting_rde_save_array[rde_name_idx,9]))
+            window['elec_area_rde'].Update(float(fitting_rde_save_array[rde_name_idx,10]))
             # Put actual value
             values['sl_cutval_s_lsv'] = cutval_s_lsv_save
             values['sl_cutval_e_lsv'] = cutval_e_lsv_save
-            values['sl_avg_s_lsv'] = avg_s_lsv_save
-            values['sl_avg_e_lsv'] = avg_e_lsv_save
+            values['sl_peak_s_lsv'] = peak_s_lsv_save
+            values['sl_peak_e_lsv'] = peak_e_lsv_save
             values['ir_compen_lsv'] = ir_compen_lsv_save
             values['elec_area_rde'] = elec_area_rde_save
 

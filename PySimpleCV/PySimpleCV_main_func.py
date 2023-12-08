@@ -177,6 +177,11 @@ def get_peak_CV(peak_mode,cv_size, volt, current, peak_range, peak_pos, jp_lns, 
     jp = peak_curr - jp_poly1d(peak_volt)
     return low_range_peak, high_range_peak, peak_volt, peak_curr, jp, jp_poly1d
 
+def linear_fit(volt, current):
+    fit_coef,_ = poly.polyfit(volt,current, 1, full=True) # 1 for linear fit  
+    poly1d = poly.Polynomial(fit_coef) 
+    return fit_coef, poly1d 
+
 def time2sec(time_raw,delim):
     # Take time format such as 1-12:05:24 and convert to seconds
     time_raw = str(time_raw)
@@ -406,6 +411,8 @@ def switch_val(a,b):
         b_old = b
         b = a
         a = b_old
+    if a == b: #Prevent overlapped
+        b = a+1
     return a,b
 
 def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit_arr):
@@ -439,3 +446,36 @@ def RDE_kou_lev(ror,lim_curr,conc_bulk,n,kinvis,ror_unit_arr):
         diffusion = np.NaN
         kou_lev_polyfit = np.NaN
     return inv_sqrt_ror, j_inv_fit, diffusion, j_kin, kou_lev_polyfit, r2
+
+def data_poly_inter(x,y,poly_coef,detail):
+    #Find the value of intersection
+    # x,y is an array of equal length
+    # poly_coef is 2nd data as numpy poly.Polynomial()
+    #detail is number of points
+    abs_min = np.abs(y-poly_coef(x))
+    min_idx = np.argmin(abs_min)
+    if min_idx == len(x):
+        xvals1 = np.linspace(x[min_idx-1], x[min_idx],detail)
+        yinterp1 = np.interp(xvals1, x, y)
+        yinterp2 = np.interp(xvals1, x, poly_coef(x))
+        fine_min_idx = np.argmin(np.abs(yinterp1-yinterp2))
+    elif min_idx == 0:
+        xvals1 = np.linspace(x[min_idx],x[min_idx+1],detail)
+        yinterp1 = np.interp(xvals1, x, y)
+        yinterp2 = np.interp(xvals1, x, poly_coef(x))
+        fine_min_idx = np.argmin(np.abs(yinterp1-yinterp2))              
+    elif abs_min[min_idx+1] > abs_min[min_idx-1]:
+        xvals1 = np.linspace(x[min_idx-1], x[min_idx],detail)
+        yinterp1 = np.interp(xvals1, x, y)
+        yinterp2 = np.interp(xvals1, x, poly_coef(x))
+        fine_min_idx = np.argmin(np.abs(yinterp1-yinterp2))
+    elif abs_min[min_idx+1] < abs_min[min_idx-1]:
+        xvals1 = np.linspace(x[min_idx],x[min_idx+1],detail)
+        yinterp1 = np.interp(xvals1, x, y)
+        yinterp2 = np.interp(xvals1, x, poly_coef(x))
+        fine_min_idx = np.argmin(np.abs(yinterp1-yinterp2)) 
+    elif abs_min[min_idx+1] == abs_min[min_idx-1]:
+        fine_min_idx = min_idx
+        xvals1 = x
+        yinterp1 = y
+    return xvals1[fine_min_idx], yinterp1[fine_min_idx]  
