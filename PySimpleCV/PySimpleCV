@@ -544,7 +544,6 @@ while True:
 
     if event in ('cv_open_menu', 'cv_open_menu_ecsa', 'rde_open_menu'):
         # vm = voltammogram
-        # print(values['rde_open_menu'])
         if values['cv_open_menu'] == "VersaSTAT4 (.par)" or values['cv_open_menu_ecsa'] == "VersaSTAT4 (.par)" or values['rde_open_menu'] == "VersaSTAT4 (.par)":
             file_format = "VersaSTAT"
             vm_file_new = sg.popup_get_file('Choose VersaSTAT4 CV file',multiple_files=True)
@@ -1123,6 +1122,8 @@ while True:
 
     if event == 'save_cv_param':
         cv_param = sg.popup_get_file('', save_as=True, no_window=True, file_types=(("TXT Files", "*.txt"), ("All Files", "*.*")))
+        if cv_param is None or cv_param == '' or cv_param == ():
+            continue
         cv_param_dir, filename = os.path.split(cv_param)
         filename_without_extension, _ = os.path.splitext(filename)
         results_filename = f"{filename_without_extension}_cv_results.ods"
@@ -1707,6 +1708,7 @@ while True:
         window['rde_kou_lev'].Update(f'{j_kin:.8f}')
         if values[1] == 'rde_kou_lev_layout_key' and kou_lev_polyfit != np.NaN: #Do not plot if polyfit return NaN
             ax_rde_kou_lev.cla()
+            print(inv_sqrt_ror)
             ax_rde_kou_lev.plot(np.array([0,max(inv_sqrt_ror)]),kou_lev_polyfit(np.array([0,max(inv_sqrt_ror)])),linewidth=3,linestyle='-', color='red')
             ax_rde_kou_lev.plot(inv_sqrt_ror,1/lim_curr_arr,'o',markersize=10)
             ax_rde_kou_lev.grid()
