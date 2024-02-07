@@ -10,29 +10,28 @@ Feel free to make a bug report for new features
 
 **Cyclic voltammetry**
 
-Support plotting multiple CVs.
-Currently supports VersaStudio (.par), Correware(.cor), .csv, and .txt. Please send some other format for more file format support.<br />
-For .csv and .txt, the first column must be voltage and the second column is current.<br />
+* Select and plot multiple CV at the same time.<br />
+* Currently supports VersaStudio (.par), Correware(.cor), .csv, and .txt. Please send some other format for more file format support. For .csv and .txt, the first column must be voltage and the second column is current.<br />
 
-Nicholson method to calculate peak current when the base line cannot be determine.<br />
-Select and plot multiple CV at the same time.<br />
-Calculate diffustion coefficient and rate of reaction from Randles-Sevcik equation.<br />
-Plot peak current vs. sqare root of scan rate for diffustion coefficient.<br />
-Plot peak current vs. peak separation for rate of reaction.<br />
-Export results and save file.<br />
+* Nicholson method to calculate peak current when the base line cannot be determine.<br />
+* Calculate diffustion coefficient and rate of reaction from Randles-Sevcik equation.<br />
+* Plot peak current vs. sqare root of scan rate for diffustion coefficient.<br />
+* Plot peak current vs. peak separation for rate of reaction.<br />
+* Detect peak with maximum, minimum, or 2nd derivatives.<br />
+* Export results and save file.<br />
 
 **Cyclic voltammetry ECSA**
 
-Calculate electrochemical active surface area (ECSA) with selected area under the CV.
+* Calculate electrochemical active surface area (ECSA) with selected area under the CV.
 
 **Rotating Disk Electrode**
 
-Calculate diffusion coefficient and kinetic current from Levich equation.
+* Calculate diffusion coefficient and kinetic current from Levich equation.
 
 **Battery cycling**
 
-Only support .xlsx from Landt Battery Test Systems. I need your help, for example, to file for more support.<br />
-Battery cycling support .xlsx files with state (C_CC, D_CC, R) columns from Landt Battery Test Systems.<br />
+* Only support .xlsx from Landt Battery Test Systems. I need your help, for example, to file for more support.<br />
+* Battery cycling support .xlsx files with state (C_CC, D_CC, R) columns from Landt Battery Test Systems.<br />
 
 VE - Voltage Efficiency<br />
 CE - Coulombic Efficiency<br />
@@ -40,8 +39,8 @@ EE - Energy Efficiency<br />
 
 **Requirement**
 
-Requires Python 3.10 and above.<br />
-Required Python modules: Numpy, Matplotlib, PySimpleGUI, pandas, statsmodels.<br />
+* Requires Python 3.10 and above.<br />
+* Required Python modules: Numpy, Matplotlib, PySimpleGUI, pandas, statsmodels.<br />
 
 
 **Future plans**
