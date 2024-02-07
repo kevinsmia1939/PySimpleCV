@@ -274,7 +274,7 @@ def lowess_diff(x_idx,x,y,frac):
     x, smh_diff_y = diff(x,smh_y)
     return x, smh_diff_y
 
-def deflection(cv_size,volt,current):
+def peak_2nd_deriv(cv_size,volt,current):
     # The idx_arr is use to "unwarp" the circular CV
     idx_arr = np.arange(0,cv_size)
     frac = 0.05

@@ -11,7 +11,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import shutil
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, deflection, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev, linear_fit, data_poly_inter
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, peak_2nd_deriv, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev, linear_fit, data_poly_inter
 # from PySimpleCV_main_func import *
 
 if not sys.warnoptions:
@@ -48,6 +48,7 @@ def CV_Abbreviations():
     'D - Diffusion coefficient cm\u00b2/s',
     'k - rate of reaction cm/s',
     'Nicholson method - Nicholson, R. S. Semiempirical Procedure for Measuring with Stationary Electrode Polarography Rates of Chemical Reactions Involving the Product of Electron Transfer. Anal. Chem. 1966, 38 (10), 1406.',
+    '2nd deriv - Peak detection by second derivatives, use lowess smoothing for every derivative, Data Handling in Science and Technology Volume 21, 1998, Pages 183-190, DOI: 10.1016/S0922-3487(98)80027-0',
     title="Abbreviations")]
 
 sg.theme('DarkBlue')
@@ -66,7 +67,7 @@ cv_kin =[[sg.Canvas(key='-CANVAS_cv_k-')]]
 
 cv_open_menu = ["Menu",["VersaSTAT4 (.par)", "CorrWare (.cor)", "CSV (.csv)", "text (.txt)"]]
 rde_open_menu = ["Menu",["VersaSTAT4 (.par)", "CorrWare (.cor)", "CSV (.csv)", "text (.txt)"]]
-cv_peak_mode = ["max","min","deflection"]
+cv_peak_mode = ["max","min","2nd deriv"]
 
 cv_settings = [
     [sg.ButtonMenu("Add/Open CV file",cv_open_menu,key='cv_open_menu'),sg.Button("Load saved CV files", key='cv_load_cv'),sg.Combo(values=(), default_value='', readonly=False, key='cv_combo_cv', enable_events=True, size=(30,15)),sg.Button("Delete CV File", disabled=True)],
@@ -81,8 +82,8 @@ cv_settings = [
     [sg.Text('Start 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lns', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_jpc_lns_pos',size=(6,5),disabled=True, enable_events=True)],
     [sg.Text('End 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_jpc_lne', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_jpc_lne_pos',size=(6,5),disabled=True, enable_events=True)],
     [sg.Text('Search range'),sg.Slider(range=(1, 100), size=cv_slider_size, orientation='h', key='peak_range', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='peak_range_pos',size=(6,5),disabled=True, enable_events=True)],
-    [sg.Text('Peak position 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=True), sg.Combo(values=('max','min','exact','deflection'), default_value='max', readonly=True, key='peak_mode_1', enable_events=True, size=(7,15)),sg.Text('position'), sg.Input(default_text=('0'), key='peak_pos_pos',size=(6,5),disabled=True, enable_events=True)],
-    [sg.Text('Peak position 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trou_pos', enable_events=True, disabled=True), sg.Combo(values=('max','min','exact','deflection'), default_value='min', readonly=True, key='peak_mode_2', enable_events=True, size=(7,15)),sg.Text('position'), sg.Input(default_text=('0'), key='trou_pos_pos',size=(6,5),disabled=True, enable_events=True)],
+    [sg.Text('Peak position 1'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='peak_pos', enable_events=True, disabled=True), sg.Combo(values=('max','min','exact','2nd deriv'), default_value='max', readonly=True, key='peak_mode_1', enable_events=True, size=(7,15)),sg.Text('position'), sg.Input(default_text=('0'), key='peak_pos_pos',size=(6,5),disabled=True, enable_events=True)],
+    [sg.Text('Peak position 2'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='trou_pos', enable_events=True, disabled=True), sg.Combo(values=('max','min','exact','2nd deriv'), default_value='min', readonly=True, key='peak_mode_2', enable_events=True, size=(7,15)),sg.Text('position'), sg.Input(default_text=('0'), key='trou_pos_pos',size=(6,5),disabled=True, enable_events=True)],
 
     [sg.Frame('Nicholson Method',[
     [sg.Checkbox('Nicholson method (if baseline cannot be determine)', default=False, key='nicholson_cb', enable_events=True, disabled=True)],
@@ -97,7 +98,7 @@ cv_settings = [
     [sg.Text('Ano k (cm/s)'),sg.Input('', key='k_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat k (cm/s)'),sg.Input('', key='k_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
     ], key='-frame_D_k-')],
 
-    [sg.Button('Save parameters and results', key='save_cv_param', disabled=True),sg.Button('Save plot', key='save_cv', disabled=True),sg.Button('Export CV data', disabled=True),sg.Button('About PySimpleCV'),sg.Button('Abbreviations',key='CV_Abbreviations'),sg.Button('Exit', key='exit')]
+    [sg.Button('Save parameters and results', key='save_cv_param', disabled=True),sg.Button('Save plot', key='save_cv', disabled=True),sg.Button('Export CV data', disabled=True),sg.Button('About PySimpleCV'),sg.Button('Abbreviations',key='CV_Abbreviations', disabled=False),sg.Button('Exit', key='exit')]
 ]
 cv_D_k_tab = sg.TabGroup([[sg.Tab('CV', cv_cv, key='cv_cv_layout_key'), sg.Tab('Diffusion', cv_diff, key='cv_diff_layout_key'),sg.Tab('Kinetics', cv_kin, key='cv_kin_layout_key')]], enable_events=True)
 
@@ -505,7 +506,7 @@ while True:
 
                 if event == 'cv_load_cv':
                     # deflection and Peak detection
-                    _, idx_intc_defl = deflection(vm_size,vm_volt,vm_curr)
+                    _, idx_intc_defl = peak_2nd_deriv(vm_size,vm_volt,vm_curr)
                     idx_intc_defl_list.append(idx_intc_defl)
 
                 window['cv_combo_cv'].Update(values=vm_name_list) # Update combo list of CVs
@@ -591,7 +592,7 @@ while True:
             vm_size_list.append(vm_size)
             if event == 'cv_open_menu':
                 # deflection and Peak detection
-                _, idx_intc_defl = deflection(vm_size,vm_volt,vm_curr)
+                _, idx_intc_defl = peak_2nd_deriv(vm_size,vm_volt,vm_curr)
                 idx_intc_defl_list.append(idx_intc_defl)
 
             ###############################################################################
@@ -880,10 +881,10 @@ while True:
         else:
             cv_curr_den = vm_curr_den_list[cv_name_idx]
 
-        if peak_mode_1 == 'deflection':
+        if peak_mode_1 == '2nd deriv':
             peak_pos = idx_defl_points[np.abs(idx_defl_points - peak_pos).argmin()]
             peak_pos = int(peak_pos)
-        if peak_mode_2 == 'deflection':
+        if peak_mode_2 == '2nd deriv':
             trou_pos = idx_defl_points[np.abs(idx_defl_points - trou_pos).argmin()]
             trou_pos = int(trou_pos)
 
@@ -920,7 +921,7 @@ while True:
             cv_y_min_canvas = min(cv_y_min_ls)-cv_y_margin
             cv_y_max_canvas = max(cv_y_max_ls)+cv_y_margin
             
-        if peak_mode_1 == "deflection" or peak_mode_2 == "deflection":
+        if peak_mode_1 == "2nd deriv" or peak_mode_2 == "2nd deriv":
             clip_defl = idx_defl_points[(idx_defl_points >= cutval_s) & (idx_defl_points <= cutval_e)]
             cv_volt_defl = np.interp([clip_defl], idx_arr, volt_compen_cv)
             curr_defl = np.interp([clip_defl], idx_arr, cv_curr_den)
