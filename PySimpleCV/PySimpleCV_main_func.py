@@ -95,31 +95,21 @@ def battery_xls2df(bat_file):
         raise Exception("Unknown file type, please choose .xls")
     return df_bat,row_size, time_df, volt_df, current_df, capacity_df, state_df
 
-def open_battery_data(file_path,separate,volt_tab,current_tab,time_tab,rm_num_column):
+def open_battery_data(file_path,separate):
     # file_path string
-    # separate string or None
-    # volt_tab string or None
-    # current_tab string or None
-    # time_tab string or None
-    # rm_num_column string or None
+    # separate string
     _, file_extension = os.path.splitext(file_path)
     if file_extension == '.xlsx' or file_extension == '.xls':
         df = pd.read_excel(file_path)
     elif file_extension == '.csv':
         df = pd.read_csv(file_path)
     elif file_extension == '.txt':
-        df = pd.read_csv(file_path, sep=separate, header=None)
+        df = pd.read_csv(file_path, sep=separate, engine='python', header=None)
     elif file_extension == '.ods':
         df = pd.read_excel(file_path, engine='odf')
     else:
         print(f"Unsupported file format: {file_extension}. Please use .xlsx, .csv, .txt, .ods, or add a feature request")
         return None
-    df = df[[col for col in [volt_tab,current_tab,time_tab] if col is not None]]
-    
-    if rm_num_column is not None:
-    # Create a mask where True indicates the value is numeric
-        df = df[df[rm_num_column].apply(lambda x: str(x).isnumeric())]
-    df = df.reset_index(drop=True)
     return df
 
 def group_index(arr,key):
@@ -144,13 +134,21 @@ def group_index(arr,key):
     state_group = np.array(state_ls).reshape(-1, 2)
     return state_group
 
-def calculate_battery(df,cycle_cv,voltage_name,current_name,time_name,charge_val,discharge_val,rest_val):
+def df_select_column(df,volt_col,current_col,time_col,rm_num_col):
+    # Open all voltage, current, time header if not None
+    df = df[[col for col in [volt_col,current_col,time_col] if col is not None]]
+    if rm_num_col is not None:
+    # Create a mask where True indicates the value is numeric
+        df = df[df[rm_num_col].apply(lambda x: str(x).isnumeric())]
+    df = df.reset_index(drop=True)
+    return df    
+
+def calculate_battery(df,volt_col,current_col,time_col,rm_num_col,cycle_cv,voltage_name,current_name,time_name,charge_val,discharge_val,rest_val):
+    df = df_select_column(df,volt_col,current_col,time_col,rm_num_col)
     charge_val = sorted(charge_val)
     discharge_val = sorted(discharge_val)
     rest_val = sorted(rest_val)
-    # df = pd.read_csv(file, sep=',')
-    # df = df.drop('Id', axis=1)
-    # df = df.reset_index(drop=True)
+
     state_list = []  
     for i in np.arange(0,df.shape[0],1):
         curve = df.loc[i, cycle_cv]

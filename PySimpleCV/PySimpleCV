@@ -11,7 +11,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import shutil
 matplotlib.use('TkAgg')
-from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, peak_2nd_deriv, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev, linear_fit, data_poly_inter
+from PySimpleCV_main_func import battery_xls2df, get_CV_init, find_state_seq, get_battery_eff, cy_idx_state_range, CV_file2df, get_peak_CV, search_pattern, ir_compen_func, diffusion, reaction_rate, peak_2nd_deriv, find_alpha, min_max_peak, check_val, switch_val, RDE_kou_lev, linear_fit, data_poly_inter,open_battery_data,calculate_battery, df_select_column
 # from PySimpleCV_main_func import *
 
 if not sys.warnoptions:
@@ -90,7 +90,7 @@ cv_settings = [
     [sg.Text('Switching potential current (jps0)'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='idx_jsp0', enable_events=True, disabled=True),sg.Text('', key='jsp0_cv_volt'),sg.Text('V'),sg.Text('position'),sg.Input(default_text=('0'), key='idx_jsp0_pos',size=(6,5),disabled=True, enable_events=True)],
     ], key='-frame_nicholson-')],
 
-    [sg.Frame('Diffusion Coefficienct and rate of reaction',[
+    [sg.Frame('Diffusion Coefficient and rate of reaction',[
     [sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc_cv',size=(15,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3'),sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n_cv',size=(15,5),disabled=True, enable_events=True)],
     [sg.Text('Average anodic alpha'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_ano',size=(15,5),disabled=True, enable_events=True),sg.Text('Average cathodic alpha'),sg.Input(text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(), key='alpha_cat',size=(15,5),disabled=True, enable_events=True)],
     [sg.Text('Ano rev D (cm\u00b2/s)'),sg.Input('', key='d_rev_jpa', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True),sg.Text('Cat rev D (cm\u00b2/s)'),sg.Input('', key='d_rev_jpc', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(15,5),disabled=True, enable_events=True)],
@@ -139,7 +139,7 @@ rde2 = [
     [sg.Text('Baseline End'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_bl_e_rde', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_bl_e_rde_pos',size=(10,5),disabled=True, enable_events=True)],
     [sg.Text('Peak Start'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_peak_s_rde', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_peak_s_rde_pos',size=(10,5),disabled=True, enable_events=True)],
     [sg.Text('Peak End'),sg.Slider(range=(1, 1), size=cv_slider_size, orientation='h', key='sl_peak_e_rde', enable_events=True, disabled=True),sg.Text('position'), sg.Input(default_text=('0'), key='sl_peak_e_rde_pos',size=(10,5),disabled=True, enable_events=True)],
-    [sg.Frame('Diffusion Coefficienct Calculation',[
+    [sg.Frame('Diffusion Coefficient Calculation',[
     [sg.Text('Number of electrons'),sg.Input(default_text=('1'), key='elec_n_rde',size=(3,5),disabled=True, enable_events=True),sg.Text('Electrode area'), sg.Input(default_text=('1'), key='elec_area_rde',size=(5,5),disabled=True, enable_events=True),sg.Text('cm\u00b2'),sg.Text('',key='kinvis_rde_err',enable_events=True)],
     [sg.Text('Kinematic viscosity'),sg.Input(default_text=('1'), key='kinvis_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('cm\u00b2/s'),sg.Text('Bulk concentration'),sg.Input(default_text=('0'), key='bulk_conc_rde',size=(10,5),disabled=True, enable_events=True),sg.Text('mol/cm\u00b3')],
     [sg.Text('Diffusion (cm\u00b2/s)'),sg.Input('', key='rde_D', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(20,5),disabled=True, enable_events=True),sg.Text('Kinetic Current (A)'),sg.Input('', key='rde_kou_lev', text_color=sg.theme_text_color(), disabled_readonly_background_color=sg.theme_text_element_background_color(),size=(20,5),disabled=True, enable_events=True)],
@@ -158,21 +158,26 @@ rde_layout = [
 # Generate layout for battery cycling tab.
 bat_col1=[[sg.Canvas(key='-CANVAS_bat-')]]
 bat_col2 = [
-    [sg.Button("Open battery file"),sg.Text('.xls files'),
-     sg.Checkbox('Voltage', default=True, key='cb_cv_volt', disabled=True, enable_events=True),
-     sg.Checkbox('Current', default=True, key='cb_current', disabled=True, enable_events=True),
-     sg.Checkbox('Efficiencies', default=True, key='cb_eff', disabled=True, enable_events=True),
-     sg.Checkbox('Capacities', default=True, key='cb_cap', disabled=True, enable_events=True)],
-    [sg.Text('Battery file:'), sg.Text('No Battery file selected', key = 'bat_file_use')],
-    [sg.Text('Average Voltage efficiency='),sg.Text('', key = 'output_ve'),sg.Text('%')],
+    [sg.Button("Open battery file"),sg.Text('.xlsx, xls, .csv, .txt, .ods')],
+    [sg.Text('Battery file:'), sg.Text('No battery file selected', key = 'bat_file_use')],
+    [sg.Text('Select voltage column:'),sg.Combo(values=(), default_value='', readonly=False, key='bat_combo_volt_col', disabled=True, enable_events=True, size=(30,15))],    
+    [sg.Text('Select current column:'),sg.Combo(values=(), default_value='', readonly=False, key='bat_combo_curr_col', disabled=True, enable_events=True, size=(30,15))],    
+    [sg.Text('Select time column:'),sg.Combo(values=(), default_value='', readonly=False, key='bat_combo_time_col', disabled=True, enable_events=True, size=(30,15))],
+    [sg.Text('Remove all non-numbers in column:'),sg.Combo(values=(), default_value='', readonly=False, key='bat_combo_rm_num_col', disabled=True, enable_events=True, size=(30,15))],        
+    [sg.Text('Average voltage efficiency='),sg.Text('', key = 'output_ve'),sg.Text('%')],
     [sg.Text('Average coulombic efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%')],
     [sg.Text('Average energy efficiency='), sg.Text('', key = 'output_ee'),sg.Text('%')],
     [sg.Text('Total number of cycles='), sg.Text('', key= 'tot_cycle')],
-    [sg.Text('Voltage, current, energy efficiency(%) for each row of cycle, press ctrl+c to copy')],
-    [sg.Text('To copy nicely to spreadsheet software, select space as delimiter and merge delimters.')],
-    [sg.Multiline('',size=(90,35), disabled=True, key = 'output_arr')],
+    [sg.Checkbox('Voltage', default=True, key='cb_cv_volt', disabled=True, enable_events=True),
+     sg.Checkbox('Current', default=True, key='cb_current', disabled=True, enable_events=True),
+     sg.Checkbox('Efficiencies', default=True, key='cb_eff', disabled=True, enable_events=True),
+     sg.Checkbox('Capacities', default=True, key='cb_cap', disabled=True, enable_events=True)],
     [sg.Text('Cycle start'), sg.Slider(range=(0, 0), size=(50, 8), orientation='h', key='cycle_start', enable_events=True, disabled=False)],
     [sg.Text('Cycle end'), sg.Slider(range=(1, 1), size=(50, 8), orientation='h', key='cycle_end', enable_events=True, disabled=False)],
+    [sg.Text('Voltage, current, energy efficiency(%) for each row of cycle, press ctrl+c to copy')],
+    [sg.Text('To copy nicely to spreadsheet software, select space as delimiter and merge delimters.')],
+    [sg.Multiline('',size=(90,10), disabled=True, key = 'bat_df_display')],
+    [sg.Multiline('',size=(90,15), disabled=True, key = 'output_arr')],
     [sg.Button('Clear plot',key='bat_clear'),sg.Button('Save plot', key='save_bat'), sg.Button('Exit', key='exit_2')]
     ]
 bat_layout = [[sg.Column(bat_col1),sg.Column(bat_col2)]]
@@ -1836,84 +1841,140 @@ while True:
         # If empty, use old file
         if bat_file_new is None or bat_file_new == '' or bat_file_new == ():
             continue
-        try:
-            clear_battery_plot()
-            bat_file = bat_file_new
-            df_bat, row_size, time_df, bat_volt_df, current_df, capacity_df, state_df = battery_xls2df(bat_file)
+        clear_battery_plot()
+        bat_file = bat_file_new
+        window['bat_combo_volt_col'].Update(disabled=False)
+        window['bat_combo_curr_col'].Update(disabled=False)
+        window['bat_combo_time_col'].Update(disabled=False)
+        window['bat_combo_rm_num_col'].Update(disabled=False) 
+        separate = None
+        battery_df = open_battery_data(bat_file,separate)
+        window['bat_df_display'].Update(battery_df.to_string())
+        
+        battery_header_list = battery_df.columns.tolist()
+        # print(battery_header_list)
+        battery_header_list.extend([''])
+        window['bat_combo_volt_col'].Update(values=battery_header_list) # Update combo list of battery header
+        window['bat_combo_curr_col'].Update(values=battery_header_list) # Update combo list of battery header
+        window['bat_combo_time_col'].Update(values=battery_header_list) # Update combo list of battery header
+        window['bat_combo_rm_num_col'].Update(values=battery_header_list) # Update combo list of battery header
+        
+    if event in ('bat_combo_volt_col','bat_combo_curr_col','bat_combo_time_col','bat_combo_rm_num_col'): 
+        
+        volt_col = values['bat_combo_volt_col']
+        values['bat_combo_volt_col'] = volt_col
+        if volt_col == '':
+            volt_col = None
+        
+        current_col = values['bat_combo_curr_col']
+        values['bat_combo_curr_col'] = current_col
+        if current_col == '':
+            current_col = None
+        
+        time_col = values['bat_combo_time_col']
+        values['bat_combo_time_col'] = time_col
+        if time_col == '':
+            time_col = None
+            
+        rm_num_col = values['bat_combo_rm_num_col']
+        values['bat_combo_rm_num_col'] = rm_num_col
+        if rm_num_col == '':
+            rm_num_col = None
+            
+        battery_df_filtered = df_select_column(battery_df,volt_col,current_col,time_col,rm_num_col)
+        window['bat_df_display'].Update(battery_df_filtered.to_string())
+        
+        # try:
+        #     separate = None
+        #     battery_df = open_battery_data(bat_file,separate)
+        #     window['bat_df_display'].Update(battery_df.to_string()) # Make sure to print all lines
+        # except Exception as file_error:
+        #     sg.popup(file_error, keep_on_top=True) 
+        #For display table
+        # df_display=dfE
+        # df_display=df_display.T
+        # df_display.columns = ['Volt','Current','Time']
+        # df_display.index = df_display.index + 1 # Start index at 1 for nice looking
+        # window['bat_df_display'].Update(battery_df.to_string()) # Make sure to print all lines
+        
+        # print(volt_col)
+        # battery_df, EE_arr, VE_arr, CE_arr, charge_group, discharge_group, rest_group, null_group = calculate_battery(battery_df,volt_col,current_col,time_col,rm_num_col,cycle_cv,voltage_name,current_name,time_name,charge_val,discharge_val,rest_val)
 
-            # Voltage difference with current interrupt method between C_CC and R
-            CIM_idx = search_pattern(list(state_df), ['C_CC','R'])
-            CIM_cv_volt_drop_list = []
-            for i in CIM_idx:
-                CIM_cv_volt_drop = bat_volt_df[i]-bat_volt_df[i+1]
-                CIM_cv_volt_drop_list.append(CIM_cv_volt_drop)
-            # Sequence information
-            charge_CC_seq, discharge_CC_seq, rest_seq, charge_CV_seq, discharge_CV_seq = find_state_seq(state_df)
-            VE_arr, CE_arr, EE_arr, charge_cap_arr, discharge_cap_arr, tot_cycle_number = get_battery_eff(row_size, time_df, bat_volt_df, current_df, capacity_df, state_df, charge_CC_seq, discharge_CC_seq)
+        
+        # df_bat, row_size, time_df, bat_volt_df, current_df, capacity_df, state_df = battery_xls2df(bat_file)
+        
+        # Voltage difference with current interrupt method between C_CC and R
+        # CIM_idx = search_pattern(list(state_df), ['C_CC','R'])
+        # CIM_cv_volt_drop_list = []
+        # for i in CIM_idx:
+        #     CIM_cv_volt_drop = bat_volt_df[i]-bat_volt_df[i+1]
+        #     CIM_cv_volt_drop_list.append(CIM_cv_volt_drop)
+        # # Sequence information
+        # charge_CC_seq, discharge_CC_seq, rest_seq, charge_CV_seq, discharge_CV_seq = find_state_seq(state_df)
+        # VE_arr, CE_arr, EE_arr, charge_cap_arr, discharge_cap_arr, tot_cycle_number = get_battery_eff(row_size, time_df, bat_volt_df, current_df, capacity_df, state_df, charge_CC_seq, discharge_CC_seq)
 
-            VE_avg = np.average(VE_arr[0:cycle_end])
-            CE_avg = np.average(CE_arr[0:cycle_end])
-            EE_avg = np.average(EE_arr[0:cycle_end])
-            charge_cap_avg = np.average(charge_cap_arr[0:cycle_end])
-            discharge_cap_avg = np.average(discharge_cap_arr[0:cycle_end])
-            #For display table
-            df_display=pd.DataFrame([charge_cap_arr,discharge_cap_arr,VE_arr,CE_arr,EE_arr]) # Create dataframe to display in multiline output
-            df_display=df_display.T
-            df_display.columns = ['Charge-Capacity','Discharge-Capacity','VE', 'CE', 'EE']
-            df_display.index = df_display.index + 1 # Start index at 1 for nice looking
+        # VE_avg = np.average(VE_arr[0:cycle_end])
+        # CE_avg = np.average(CE_arr[0:cycle_end])
+        # EE_avg = np.average(EE_arr[0:cycle_end])
+        # charge_cap_avg = np.average(charge_cap_arr[0:cycle_end])
+        # discharge_cap_avg = np.average(discharge_cap_arr[0:cycle_end])
+        # #For display table
+        # df_display=pd.DataFrame([charge_cap_arr,discharge_cap_arr,VE_arr,CE_arr,EE_arr]) # Create dataframe to display in multiline output
+        # df_display=df_display.T
+        # df_display.columns = ['Charge-Capacity','Discharge-Capacity','VE', 'CE', 'EE']
+        # df_display.index = df_display.index + 1 # Start index at 1 for nice looking
 
-            window['cycle_end'].Update(disabled=False)
-            window['cycle_start'].Update(disabled=False)
-            window['cb_cv_volt'].Update(disabled=False)
-            window['cb_current'].Update(disabled=False)
-            window['cb_eff'].Update(disabled=False)
-            window['cb_cap'].Update(disabled=False)
-            window['cb_cv_volt'].Update(True)
-            window['cb_current'].Update(True)
-            window['cb_eff'].Update(True)
-            window['cycle_start'].Update(range=(0,tot_cycle_number-1))
-            window['cycle_end'].Update(range=(1,tot_cycle_number))
-            window['bat_file_use'].Update(bat_file)
-            window['output_arr'].Update(df_display.to_string()) # Make sure to print all lines
-            window['tot_cycle'].Update(tot_cycle_number)
-            window['output_ve'].Update(np.round(VE_avg,3))
-            window['output_ce'].Update(np.round(CE_avg,3))
-            window['output_ee'].Update(np.round(EE_avg,3))
+        # window['cycle_end'].Update(disabled=False)
+        # window['cycle_start'].Update(disabled=False)
+        # window['cb_cv_volt'].Update(disabled=False)
+        # window['cb_current'].Update(disabled=False)
+        # window['cb_eff'].Update(disabled=False)
+        # window['cb_cap'].Update(disabled=False)
+        # window['cb_cv_volt'].Update(True)
+        # window['cb_current'].Update(True)
+        # window['cb_eff'].Update(True)
+        # window['cycle_start'].Update(range=(0,tot_cycle_number-1))
+        # window['cycle_end'].Update(range=(1,tot_cycle_number))
+        # window['bat_file_use'].Update(bat_file)
+        # window['output_arr'].Update(df_display.to_string()) # Make sure to print all lines
+        # window['tot_cycle'].Update(tot_cycle_number)
+        # window['output_ve'].Update(np.round(VE_avg,3))
+        # window['output_ce'].Update(np.round(CE_avg,3))
+        # window['output_ee'].Update(np.round(EE_avg,3))
 
-            cv_volt_line, = ax_bat_volt.plot(time_df, bat_volt_df, '-', label='Voltage', color='blue')
-            current_line, = ax_bat_current.plot(time_df, current_df, '--', label='Current', color='red')
+        # cv_volt_line, = ax_bat_volt.plot(time_df, bat_volt_df, '-', label='Voltage', color='blue')
+        # current_line, = ax_bat_current.plot(time_df, current_df, '--', label='Current', color='red')
 
-            cycle_idx = (charge_CC_seq)[:,1]
+        # cycle_idx = (charge_CC_seq)[:,1]
 
-            cycle_idx = cycle_idx[0:min((charge_CC_seq)[:,1].size,(discharge_CC_seq)[:,1].size)]
-            time_cycle = time_df[cycle_idx]
-            VE_marker, = ax_bat_eff.plot(time_df[cycle_idx], VE_arr, '*',color='blue',label='VE', markersize=8)
-            CE_marker, = ax_bat_eff.plot(time_df[cycle_idx], CE_arr, '.',color='red',label='CE', markersize=8)
-            EE_marker, = ax_bat_eff.plot(time_df[cycle_idx], EE_arr, '^',color='green',label='EE', markersize=4)
-            charge_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], charge_cap_arr, 's',color='orange',label='capacity', markersize=4)
-            dis_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], discharge_cap_arr, 'x',color='brown',label='capacity', markersize=4)
-            CIM_marker, = ax_bat_volt.plot(time_df[cycle_idx], np.array(CIM_cv_volt_drop_list)/0.65, 'o',color='blue',label='CIM', markersize=4)
+        # cycle_idx = cycle_idx[0:min((charge_CC_seq)[:,1].size,(discharge_CC_seq)[:,1].size)]
+        # time_cycle = time_df[cycle_idx]
+        # VE_marker, = ax_bat_eff.plot(time_df[cycle_idx], VE_arr, '*',color='blue',label='VE', markersize=8)
+        # CE_marker, = ax_bat_eff.plot(time_df[cycle_idx], CE_arr, '.',color='red',label='CE', markersize=8)
+        # EE_marker, = ax_bat_eff.plot(time_df[cycle_idx], EE_arr, '^',color='green',label='EE', markersize=4)
+        # charge_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], charge_cap_arr, 's',color='orange',label='capacity', markersize=4)
+        # dis_cap_marker, = ax_bat_cap.plot(time_df[cycle_idx], discharge_cap_arr, 'x',color='brown',label='capacity', markersize=4)
+        # CIM_marker, = ax_bat_volt.plot(time_df[cycle_idx], np.array(CIM_cv_volt_drop_list)/0.65, 'o',color='blue',label='CIM', markersize=4)
 
-            ax_bat_volt.autoscale()
-            ax_bat_current.autoscale()
-            ax_bat_eff.autoscale()
-            ax_bat_cap.autoscale()
-            # Set limit and ticks of bat_cycle
-            # Match cycle scale to time scale and plot efficiency.
-            cycle_plot = np.arange(0,tot_cycle_number,10)
-            ax_bat_cycle.set_xticks(cycle_plot)
-            ax_bat_cycle.set_xlim(left=0,right=tot_cycle_number)
+        # ax_bat_volt.autoscale()
+        # ax_bat_current.autoscale()
+        # ax_bat_eff.autoscale()
+        # ax_bat_cap.autoscale()
+        # # Set limit and ticks of bat_cycle
+        # # Match cycle scale to time scale and plot efficiency.
+        # cycle_plot = np.arange(0,tot_cycle_number,10)
+        # ax_bat_cycle.set_xticks(cycle_plot)
+        # ax_bat_cycle.set_xlim(left=0,right=tot_cycle_number)
 
-            # Set limit for efficiencies
-            ax_bat_eff.set_ylim(0,100)
+        # # Set limit for efficiencies
+        # ax_bat_eff.set_ylim(0,100)
 
-            ax_bat_volt.set_xlim(left=0,right=max(time_df))
+        # ax_bat_volt.set_xlim(left=0,right=max(time_df))
 
-            ax_bat_cycle.grid()
-            ax_bat_volt.grid(axis='y')
-            fig_agg_bat.draw()
-        except Exception as file_error:
-            sg.popup(file_error, keep_on_top=True)
+        # ax_bat_cycle.grid()
+        # ax_bat_volt.grid(axis='y')
+        # fig_agg_bat.draw()
+
     if event == 'cb_eff':
         if values['cb_eff'] == False:
             VE_marker.remove()
