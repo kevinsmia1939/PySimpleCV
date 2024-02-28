@@ -1,4 +1,5 @@
-import math
+import os
+# import math
 import numpy as np
 import numpy.polynomial.polynomial as poly
 import pandas as pd
@@ -93,6 +94,114 @@ def battery_xls2df(bat_file):
     else:
         raise Exception("Unknown file type, please choose .xls")
     return df_bat,row_size, time_df, volt_df, current_df, capacity_df, state_df
+
+def open_battery_data(file_path,separate,volt_tab,current_tab,time_tab,rm_num_column):
+    # file_path string
+    # separate string or None
+    # volt_tab string or None
+    # current_tab string or None
+    # time_tab string or None
+    # rm_num_column string or None
+    _, file_extension = os.path.splitext(file_path)
+    if file_extension == '.xlsx' or file_extension == '.xls':
+        df = pd.read_excel(file_path)
+    elif file_extension == '.csv':
+        df = pd.read_csv(file_path)
+    elif file_extension == '.txt':
+        df = pd.read_csv(file_path, sep=separate, header=None)
+    elif file_extension == '.ods':
+        df = pd.read_excel(file_path, engine='odf')
+    else:
+        print(f"Unsupported file format: {file_extension}. Please use .xlsx, .csv, .txt, .ods, or add a feature request")
+        return None
+    df = df[[col for col in [volt_tab,current_tab,time_tab] if col is not None]]
+    
+    if rm_num_column is not None:
+    # Create a mask where True indicates the value is numeric
+        df = df[df[rm_num_column].apply(lambda x: str(x).isnumeric())]
+    df = df.reset_index(drop=True)
+    return df
+
+def group_index(arr,key):
+    arr = np.array(arr)
+    state_ls = []
+    for i in np.arange(0,len(arr),1):
+      size = len(arr)
+      if arr[i] == key:
+        if i == 0 and arr[i+1] != key:
+          state_ls.append(0,1)
+        elif i == 0:
+          state_ls.append(0)
+        elif i > 0 and i < size-1:
+          if arr[i-1] != key:
+            state_ls.append(i)
+          if arr[i+1] != key:
+            state_ls.append(i+1)
+        elif i == size-1:
+            state_ls.append(i)
+        elif i == size-1 and arr[i-1] != key:
+          state_ls.append(size-1,size)
+    state_group = np.array(state_ls).reshape(-1, 2)
+    return state_group
+
+def calculate_battery(df,cycle_cv,voltage_name,current_name,time_name,charge_val,discharge_val,rest_val):
+    charge_val = sorted(charge_val)
+    discharge_val = sorted(discharge_val)
+    rest_val = sorted(rest_val)
+    # df = pd.read_csv(file, sep=',')
+    # df = df.drop('Id', axis=1)
+    # df = df.reset_index(drop=True)
+    state_list = []  
+    for i in np.arange(0,df.shape[0],1):
+        curve = df.loc[i, cycle_cv]
+        if curve > charge_val[0] and curve < charge_val[1]:
+            state_list.append("charge")
+        elif curve > discharge_val[0] and curve < discharge_val[1]:
+            state_list.append("discharge")
+        elif curve > rest_val[0] and curve < rest_val[1]:
+            state_list.append("rest")
+        else:
+            state_list.append("null")  #Does not fit into any condition
+    
+    df['state'] = np.array(state_list)
+    
+    charge_group = group_index(state_list,"charge")
+    discharge_group = group_index(state_list,"discharge")
+    rest_group = group_index(state_list,"rest")
+    null_group = group_index(state_list,"null")
+    
+    volt_area_charge_list = []
+    volt_area_discharge_list = []
+    index_time_size = 0.1869 # time between 2 index is 0.1869 s
+    for k in charge_group:
+        time = np.arange(k[0],k[1])*index_time_size
+        volt_area_charge = np.trapz(df[voltage_name][k[0]:k[1]],time)
+        volt_area_charge_list.append(volt_area_charge)
+    for l in discharge_group:
+        time = np.arange(l[0],l[1])*index_time_size
+        volt_area_discharge = np.trapz(df[voltage_name][l[0]:l[1]],time)
+        volt_area_discharge_list.append(volt_area_discharge)
+    
+    volt_area_charge_list = np.array(volt_area_charge_list)
+    volt_area_discharge_list = np.array(volt_area_discharge_list)
+    VE = np.array(volt_area_discharge_list)/np.array(volt_area_charge_list)
+
+    current_area_charge_list = []
+    current_area_discharge_list = []
+    for m in charge_group:
+        time = np.arange(m[0],m[1])*index_time_size
+        current_area_charge = np.trapz(df[current_name][m[0]:m[1]],time)
+        current_area_charge_list.append(current_area_charge)
+    for n in discharge_group:
+        time = np.arange(n[0],n[1])*index_time_size
+        current_area_discharge = np.trapz(df[current_name][n[0]:n[1]],time)
+        current_area_discharge_list.append(current_area_discharge)
+    
+    current_area_charge_list = np.abs(np.array(current_area_charge_list))
+    current_area_discharge_list = np.abs(np.array(current_area_discharge_list))
+    CE = np.array(current_area_discharge_list)/np.array(current_area_charge_list)
+    EE = CE*VE
+    return df, EE*100, VE*100, CE*100, charge_group, discharge_group, rest_group, null_group
 
 def find_seg_start_end(state_df,search_key):
     list_start_end_key_idx = []
