@@ -166,10 +166,10 @@ bat_col2 = [
     [sg.Text('Remove all non-numbers in column:'),sg.Combo(values=(), default_value='', readonly=False, key='bat_combo_rm_num_col', disabled=True, enable_events=True, size=(30,15))],
     [sg.Text('Determine charge-discharge cycle based on:'),sg.Combo(values=(), default_value='', readonly=False, key='bat_combo_cy_select', disabled=True, enable_events=True, size=(30,15))],  
     
-    [sg.Text('Charge:'),sg.Input(default_text=('2'), key='bat_charge_max',size=(3,5),disabled=True, enable_events=True),sg.Text('> value >'),sg.Input(default_text=('1'), key='bat_charge_min',size=(3,5),disabled=True, enable_events=True)], 
-    [sg.Text('Discharge:'),sg.Input(default_text=('2'), key='bat_discharge_max',size=(3,5),disabled=True, enable_events=True),sg.Text('> value >'),sg.Input(default_text=('1'), key='bat_discharge_min',size=(3,5),disabled=True, enable_events=True)],
-    [sg.Text('Rest:'),sg.Input(default_text=('2'), key='bat_rest_max',size=(3,5),disabled=True, enable_events=True),sg.Text('> value >'),sg.Input(default_text=('1'), key='bat_rest_min',size=(3,5),disabled=True, enable_events=True)],
-    [sg.Text('Value that does not fit between these conditions will be ignored')],
+    [sg.Text('Charge values are between'),sg.Input(default_text=('2'), key='bat_charge_max',size=(3,5),disabled=True, enable_events=True),sg.Text('and'),sg.Input(default_text=('1'), key='bat_charge_min',size=(3,5),disabled=True, enable_events=True)], 
+    [sg.Text('Discharge values are between'),sg.Input(default_text=('2'), key='bat_discharge_max',size=(3,5),disabled=True, enable_events=True),sg.Text('and'),sg.Input(default_text=('1'), key='bat_discharge_min',size=(3,5),disabled=True, enable_events=True)],
+    [sg.Text('Rest values are between (currently not use)'),sg.Input(default_text=('2'), key='bat_rest_max',size=(3,5),disabled=True, enable_events=True),sg.Text('and'),sg.Input(default_text=('1'), key='bat_rest_min',size=(3,5),disabled=True, enable_events=True)],
+    [sg.Text('Values that does not fit between these conditions will be ignored')],
     [sg.Text('To ignore any of the condition above, leave the box blank')],
     [sg.Text('Average voltage efficiency='),sg.Text('', key = 'output_ve'),sg.Text('%')],
     [sg.Text('Average coulombic efficiency='), sg.Text('', key = 'output_ce'),sg.Text('%')],
@@ -1855,8 +1855,12 @@ while True:
         window['bat_combo_time_col'].Update(disabled=False)
         window['bat_combo_rm_num_col'].Update(disabled=False) 
         window['bat_combo_cy_select'].Update(disabled=False) 
-        
-        
+        window['bat_charge_max'].Update(disabled=False)
+        window['bat_charge_min'].Update(disabled=False)
+        window['bat_discharge_max'].Update(disabled=False)
+        window['bat_discharge_min'].Update(disabled=False)
+        window['bat_rest_max'].Update(disabled=False)
+        window['bat_rest_min'].Update(disabled=False)        
         separate = None
         battery_df = open_battery_data(bat_file,separate)
         window['bat_df_display'].Update(battery_df.to_string())
@@ -1869,32 +1873,32 @@ while True:
         window['bat_combo_time_col'].Update(values=battery_header_list)
         window['bat_combo_rm_num_col'].Update(values=battery_header_list)
         window['bat_combo_cy_select'].Update(values=battery_header_list)
-    if event in ('bat_combo_volt_col','bat_combo_curr_col','bat_combo_time_col','bat_combo_rm_num_col','bat_combo_cy_select'): 
-        
+    if event in ('bat_combo_volt_col','bat_combo_curr_col','bat_combo_time_col','bat_combo_rm_num_col','bat_combo_cy_select','bat_charge_max','bat_charge_min','bat_discharge_max','bat_discharge_min','bat_rest_max','bat_rest_min'):         
         volt_col = values['bat_combo_volt_col']
         values['bat_combo_volt_col'] = volt_col
         if volt_col == '':
-            volt_col = None
-        
+            volt_col = None        
         current_col = values['bat_combo_curr_col']
         values['bat_combo_curr_col'] = current_col
         if current_col == '':
-            current_col = None
-        
+            current_col = None       
         time_col = values['bat_combo_time_col']
         values['bat_combo_time_col'] = time_col
         if time_col == '':
-            time_col = None
-            
+            time_col = None        
         rm_num_col = values['bat_combo_rm_num_col']
         values['bat_combo_rm_num_col'] = rm_num_col
         if rm_num_col == '':
             rm_num_col = None
-
-        battery_cy_select = values['bat_combo_cy_select']
-        values['bat_combo_cy_select'] = battery_cy_select
-        if battery_cy_select == '':
-            battery_cy_select = None
+        battery_cycle_select = values['bat_combo_cy_select']
+        values['bat_combo_cy_select'] = battery_cycle_select
+        if battery_cycle_select == '':
+            battery_cycle_select = None
+        
+        charge_val = [values['bat_charge_min'],values['bat_charge_max']]
+        discharge_val = [values['bat_discharge_min'],values['bat_discharge_max']]
+        rest_val = [values['bat_rest_min'],values['bat_rest_max']]
+        print(charge_val)
             
         battery_df_filtered = df_select_column(battery_df,volt_col,current_col,time_col,rm_num_col)
         window['bat_df_display'].Update(battery_df_filtered.to_string())
@@ -1912,8 +1916,8 @@ while True:
         # df_display.index = df_display.index + 1 # Start index at 1 for nice looking
         # window['bat_df_display'].Update(battery_df.to_string()) # Make sure to print all lines
         
-        # print(volt_col)
-        battery_df, EE_arr, VE_arr, CE_arr, charge_group, discharge_group, rest_group, null_group = calculate_battery(battery_df,volt_col,current_col,time_col,rm_num_col,battery_cy_select,volt_col,current_col,time_col,charge_val,discharge_val,rest_val)
+        if volt_col != None and current_col != None and battery_cycle_select != None: 
+            battery_df, EE_arr, VE_arr, CE_arr, charge_group, discharge_group, rest_group, null_group = calculate_battery(battery_df,volt_col,current_col,time_col,rm_num_col,battery_cycle_select,volt_col,current_col,time_col,charge_val,discharge_val,rest_val)
 
         
         # df_bat, row_size, time_df, bat_volt_df, current_df, capacity_df, state_df = battery_xls2df(bat_file)

@@ -143,25 +143,36 @@ def df_select_column(df,volt_col,current_col,time_col,rm_num_col):
     df = df.reset_index(drop=True)
     return df    
 
-def calculate_battery(df,volt_col,current_col,time_col,rm_num_col,battery_cy_select,voltage_name,current_name,time_name,charge_val,discharge_val,rest_val):
-    df = df_select_column(df,volt_col,current_col,time_col,rm_num_col)
-    if charge_val != None:
+def calculate_battery(df,volt_col,current_col,time_col,rm_num_col,battery_cycle_select,voltage_name,current_name,time_name,charge_val,discharge_val,rest_val):
+    try:
+        charge_val = [*map(float, charge_val)]    
         charge_val = sorted(charge_val)
-    if discharge_val != None:
-        discharge_val = sorted(discharge_val)
-    if rest_val != None:
+    except ValueError:
+        charge_val = None
+    try:
+        discharge_val = [*map(float, discharge_val)]
+        discharge_val = sorted(discharge_val)        
+    except ValueError:
+        discharge_val = None    
+    try:
+        rest_val = [*map(float, rest_val)]  
         rest_val = sorted(rest_val)
+    except ValueError:
+        rest_val = None    
+        
+    df = df_select_column(df,volt_col,current_col,time_col,rm_num_col)
+
     state_list = []  
     for i in np.arange(0,df.shape[0],1):
-        curve = df.loc[i, battery_cy_select]
+        curve = df.loc[i, battery_cycle_select]
         if charge_val != None:
-            if curve > charge_val[0] and curve < charge_val[1]:
+            if curve >= charge_val[0] and curve <= charge_val[1]:
                 state_list.append("charge")
         elif discharge_val != None:
-            if curve > discharge_val[0] and curve < discharge_val[1]:
+            if curve >= discharge_val[0] and curve <= discharge_val[1]:
                 state_list.append("discharge")
         elif rest_val != None:
-            if curve > rest_val[0] and curve < rest_val[1]:
+            if curve >= rest_val[0] and curve <= rest_val[1]:
                 state_list.append("rest")
         else:
             state_list.append("null")  #Does not fit into any condition
