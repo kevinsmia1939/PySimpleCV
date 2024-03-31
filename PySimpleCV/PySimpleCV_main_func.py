@@ -143,6 +143,12 @@ def df_select_column(df,volt_col,current_col,time_col,rm_num_col):
     df = df.reset_index(drop=True)
     return df    
 
+def cut_list_to_shortest(a,b):
+    min_length = min(len(a), len(b))
+    a = a[:min_length]
+    b = b[:min_length]
+    return a,b
+
 def calculate_battery(df,volt_col,current_col,time_col,rm_num_col,battery_cycle_select,voltage_name,current_name,time_name,charge_val,discharge_val,rest_val):
     try:
         charge_val = [*map(float, charge_val)]    
@@ -160,25 +166,23 @@ def calculate_battery(df,volt_col,current_col,time_col,rm_num_col,battery_cycle_
     except ValueError:
         rest_val = None    
         
-    df = df_select_column(df,volt_col,current_col,time_col,rm_num_col)
+    # df = df_select_column(df,volt_col,current_col,time_col,rm_num_col)
 
-    state_list = []  
+    state_list = []
+    
     for i in np.arange(0,df.shape[0],1):
         curve = df.loc[i, battery_cycle_select]
-        if charge_val != None:
-            if curve >= charge_val[0] and curve <= charge_val[1]:
+        if charge_val != None and curve >= charge_val[0] and curve <= charge_val[1]:
                 state_list.append("charge")
-        elif discharge_val != None:
-            if curve >= discharge_val[0] and curve <= discharge_val[1]:
+        elif discharge_val != None and curve >= discharge_val[0] and curve <= discharge_val[1]:
                 state_list.append("discharge")
-        elif rest_val != None:
-            if curve >= rest_val[0] and curve <= rest_val[1]:
+        elif rest_val != None and curve >= rest_val[0] and curve <= rest_val[1]:
                 state_list.append("rest")
         else:
             state_list.append("null")  #Does not fit into any condition
-    
-    df['state'] = np.array(state_list)
-    
+    # print(state_list)
+    state_col = np.array(state_list)
+    # print(df.to_string())
     charge_group = group_index(state_list,"charge")
     discharge_group = group_index(state_list,"discharge")
     rest_group = group_index(state_list,"rest")
@@ -196,8 +200,7 @@ def calculate_battery(df,volt_col,current_col,time_col,rm_num_col,battery_cycle_
         volt_area_discharge = np.trapz(df[voltage_name][l[0]:l[1]],time)
         volt_area_discharge_list.append(volt_area_discharge)
     
-    volt_area_charge_list = np.array(volt_area_charge_list)
-    volt_area_discharge_list = np.array(volt_area_discharge_list)
+    volt_area_discharge_list,volt_area_charge_list = cut_list_to_shortest(volt_area_discharge_list,volt_area_charge_list)
     VE = np.array(volt_area_discharge_list)/np.array(volt_area_charge_list)
 
     current_area_charge_list = []
@@ -210,12 +213,13 @@ def calculate_battery(df,volt_col,current_col,time_col,rm_num_col,battery_cycle_
         time = np.arange(n[0],n[1])*index_time_size
         current_area_discharge = np.trapz(df[current_name][n[0]:n[1]],time)
         current_area_discharge_list.append(current_area_discharge)
-    
-    current_area_charge_list = np.abs(np.array(current_area_charge_list))
-    current_area_discharge_list = np.abs(np.array(current_area_discharge_list))
-    CE = np.array(current_area_discharge_list)/np.array(current_area_charge_list)
+
+    current_area_discharge_list,current_area_charge_list = cut_list_to_shortest(current_area_discharge_list,current_area_charge_list)
+    cap_discharge_arr = np.abs(np.array(current_area_discharge_list))
+    cap_charge_arr = np.abs(np.array(current_area_charge_list))
+    CE = np.abs(np.array(current_area_discharge_list))/np.abs(np.array(current_area_charge_list))
     EE = CE*VE
-    return df, EE*100, VE*100, CE*100, charge_group, discharge_group, rest_group, null_group
+    return EE*100, VE*100, CE*100, cap_discharge_arr, cap_charge_arr, state_col
 
 def find_seg_start_end(state_df,search_key):
     list_start_end_key_idx = []

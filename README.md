@@ -1,4 +1,8 @@
 # PySimpleCV
+
+PySimpleCV are being rewritten with PyQt5 called PySimpleEChem https://github.com/kevinsmia1939/PySimpleEChem
+This should bring support for Wayland on Linux, more modern looking interface, and move away from now propiertary PySimpleGUI.
+
 Graphical user interface for plotting and analyzing the cyclic voltammograms (CV) with simple to use sliders. <br />
 PySimpleCV also plots battery cycles and calculates efficiencies. Written in pure Python. <br />
 
