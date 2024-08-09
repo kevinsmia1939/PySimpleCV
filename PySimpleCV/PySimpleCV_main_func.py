@@ -21,10 +21,12 @@ def CV_file2df(CV_file,cv_format):
         df_CV = pd.read_csv(CV_file,usecols=[0,1])
         file_scan_rate = float(0)
         df_CV = np.array(df_CV)
+        df_CV = pd.DataFrame(df_CV)
     elif cv_format == "text":
         df_CV = pd.read_table(CV_file, sep='\t', header=None, usecols=[0,1])
         file_scan_rate = float(0)
         df_CV = np.array(df_CV)
+        df_CV = pd.DataFrame(df_CV)
     elif cv_format == "VersaSTAT":
         # Search for line match beginning and end of CV data and give ln number
         start_segment = search_string_in_file(CV_file, 'Definition=Segment')[0][0]
@@ -61,6 +63,7 @@ def CV_file2df(CV_file,cv_format):
     else:
         raise Exception("Unknown file type, please choose . cor, .csv, .par, .txt")
     # Remove NaN
+    print(type(df_CV))
     df_CV = df_CV.dropna()
     df_CV = np.array(df_CV)
     return df_CV, file_scan_rate

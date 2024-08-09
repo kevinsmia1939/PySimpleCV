@@ -270,7 +270,7 @@ CE_leg = Line2D([0], [0], label='CE', color='red', marker='.', linestyle='None')
 EE_leg = Line2D([0], [0], label='EE', color='green', marker='^', linestyle='None')
 cap_leg = Line2D([0], [0], label='Capacity', color='orange', marker='s', linestyle='None')
 bat_legend = ax_bat_volt.legend(handles=[cv_volt_leg,current_leg,VE_leg,CE_leg,EE_leg,cap_leg],ncol=3, bbox_to_anchor=(0.5,-0.25),loc='lower center',fontsize=15, markerscale=3)
-for legobj in bat_legend.legendHandles:
+for legobj in bat_legend.get_lines():
     legobj.set_linewidth(3)
 
 ax_bat_cycle.grid()
